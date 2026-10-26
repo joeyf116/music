@@ -49,14 +49,16 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
   const all = useMemo(
     () => [
       ...BUILT_IN,
-      ...shared.map((c) => ({ ...c, sharedId: c.id, id: `shared:${c.id}`, source: 'shared', collection: SHARED, mine: Boolean(mine[c.id]) })),
+      ...shared.map((c) => ({ ...c, sharedId: c.id, id: `shared:${c.id}`, source: 'shared', collection: c.collection || SHARED, mine: Boolean(mine[c.id]) })),
       ...local.map((c) => ({ ...c, source: 'local', collection: MINE, mine: true })),
     ],
     [shared, local, mine],
   )
   const open = all.find((c) => c.id === openId) ?? null
 
-  const collections = [ALL, ...COLLECTIONS, ...(shared.length ? [SHARED] : []), ...(local.length || Object.keys(mine).length ? [MINE] : [])]
+  // Built-in shelves first, then any others the shared catalog uses (e.g. Folk & Country), then Shared and My charts.
+  const sharedShelves = [...new Set(shared.map((c) => c.collection).filter((c) => c && !COLLECTIONS.includes(c)))].sort()
+  const collections = [ALL, ...COLLECTIONS, ...sharedShelves, ...(shared.some((c) => !c.collection) ? [SHARED] : []), ...(local.length || Object.keys(mine).length ? [MINE] : [])]
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const visible = all
     .filter((c) => collection === ALL || c.collection === collection || (collection === MINE && c.mine))

@@ -134,3 +134,23 @@ describe('validateChart', () => {
     for (const chart of LIBRARY) expect(validateChart(chart, STYLES).error, chart.title).toBeUndefined()
   })
 })
+
+describe('seeded popular charts', async () => {
+  const { POPULAR_CHARTS } = await import('../../supabase/seed/popular-charts.js')
+
+  it('are 50 distinct, playable charts', () => {
+    expect(POPULAR_CHARTS).toHaveLength(50)
+    expect(new Set(POPULAR_CHARTS.map((c) => c.title.toLowerCase())).size).toBe(50)
+    for (const draft of POPULAR_CHARTS) {
+      const { chart, error } = validateChart(draft, STYLES)
+      expect(error, draft.title).toBeUndefined()
+      expect([chart.key, chart.style, chart.time], draft.title).toEqual([draft.key, draft.style, draft.time])
+      expect(draft.collection.length, draft.title).toBeLessThanOrEqual(30)
+    }
+  })
+
+  it("don't repeat a built-in chart's title", () => {
+    const builtIn = new Set(LIBRARY.map((c) => c.title.toLowerCase()))
+    for (const c of POPULAR_CHARTS) expect(builtIn.has(c.title.toLowerCase()), c.title).toBe(false)
+  })
+})

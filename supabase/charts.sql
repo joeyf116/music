@@ -43,6 +43,10 @@ create table if not exists public.charts (
   updated_at timestamptz not null default now()
 );
 
+-- Genre shelf for the Charts page filters (Jazz, Blues, ...). Charts visitors share have none and show under "Shared".
+alter table public.charts add column if not exists collection text not null default ''
+  check (char_length(collection) <= 30);
+
 alter table public.charts enable row level security;
 
 -- Visitors (the public "anon" key) can only read approved charts directly. Adding, editing, removing
@@ -52,13 +56,14 @@ create policy "Anyone can read approved charts" on public.charts
   for select to anon using (approved);
 
 revoke all on public.charts from anon, authenticated;
-grant select (id, title, composer, style, key, time_signature, tempo, sections, approved, created_at, updated_at) on public.charts to anon;
+grant select (id, title, composer, style, key, time_signature, tempo, sections, collection, approved, created_at, updated_at) on public.charts to anon;
 
--- Flood protection: refuse new charts once 20 have been added in the last 10 minutes.
+-- Flood protection: refuse new charts once visitors have shared 20 in the last 10 minutes.
+-- (Seeded charts have no owner token, so they don't count.)
 create or replace function public.charts_rate_limit() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if (select count(*) from public.charts where created_at > now() - interval '10 minutes') >= 20 then
+  if (select count(*) from public.charts where owner_token is not null and created_at > now() - interval '10 minutes') >= 20 then
     raise exception 'Too many new charts, slow down';
   end if;
   return new;
