@@ -35,3 +35,10 @@ The Charts page uses the same project for charts anyone can share. Run
 [`charts.sql`](./charts.sql) once in the SQL Editor (already done for `guitar-music`). Visitors can read
 approved charts, add a chart, edit or remove a chart they shared themselves (from the same browser) and
 report a chart; after 3 reports it's hidden. Review or delete rows in **Table Editor → charts**.
+
+### Seeding 50 popular charts
+
+[`seed/popular-charts.sql`](./seed/popular-charts.sql) adds 50 widely played tunes (jazz standards, blues, latin,
+pop & rock, folk & country) to the shared catalog, sorted onto genre shelves. Run it once in the SQL Editor
+after `charts.sql`; running it again skips titles that are already there. To change the list, edit
+[`seed/popular-charts.js`](./seed/popular-charts.js) and run `npm run seed:charts` to regenerate the SQL.

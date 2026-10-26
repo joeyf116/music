@@ -21,6 +21,7 @@ const fromRow = (row) => ({
   time: row.time_signature,
   tempo: row.tempo,
   sections: row.sections,
+  collection: row.collection ?? '',
   created_at: row.created_at,
   updated_at: row.updated_at,
 })
@@ -36,7 +37,7 @@ const toArgs = (chart) => ({
 
 export async function fetchSharedCharts(config = sharedConfig, fetchImpl = fetch) {
   const res = await fetchImpl(
-    `${config.url}/rest/v1/charts?select=id,title,composer,style,key,time_signature,tempo,sections,created_at,updated_at&order=title.asc`,
+    `${config.url}/rest/v1/charts?select=id,title,composer,style,key,time_signature,tempo,sections,collection,created_at,updated_at&order=title.asc`,
     { headers: headers(config) },
   )
   if (!res.ok) throw await failure(res, "Couldn't load shared charts")
