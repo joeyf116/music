@@ -175,6 +175,37 @@ export const scalePosition = (rootPc, intervals, tuning, degree) => {
   return notes
 }
 
+// Notes per string when running a scale diagonally: enough that each string starts a little higher up the neck.
+export const acrossNotesPerString = (count) => (count <= 4 ? 2 : count === 5 ? 3 : 4)
+
+/**
+ * A scale (or arpeggio) run that climbs diagonally across the neck instead of staying in one box:
+ * it starts on scale degree `degree` on the lowest string, like `scalePosition`, then plays a fixed number of
+ * notes on every string (4 for seven-note scales, 3 for pentatonics, 2 for arpeggios), so each string shifts
+ * up a position or two. Notes that would run past the last fret are dropped. Ordered low to high like `scalePosition`.
+ */
+export const scaleAcrossNeck = (rootPc, intervals, tuning, degree) => {
+  const pcs = intervals.map((i) => mod12(rootPc + i))
+  const perString = acrossNotesPerString(intervals.length)
+  let idx = degree % intervals.length
+  let pitch = tuning[0] + mod12(pcs[idx] - tuning[0])
+  let notes = []
+  // Arpeggio notes are far apart, so they move on sooner than a stretch would allow.
+  const maxSpan = intervals.length <= 4 ? 4 : 5
+  for (let string = 0; string < tuning.length; string++) {
+    const first = pitch - tuning[string]
+    for (let n = 0; n < perString && pitch - tuning[string] - first <= maxSpan; n++) {
+      notes.push({ string, fret: pitch - tuning[string], pitch, interval: intervals[idx] })
+      const next = (idx + 1) % intervals.length
+      pitch += mod12(intervals[next] - intervals[idx]) || 12
+      idx = next
+    }
+  }
+  // Very wide tunings can leave a string's first note behind the nut; start the whole run an octave up.
+  if (notes.some((n) => n.fret < 0)) notes = notes.map((n) => ({ ...n, fret: n.fret + 12, pitch: n.pitch + 12 }))
+  return notes.filter((n) => n.fret >= 0 && n.fret <= NUM_FRETS)
+}
+
 // Order of chord tones (low to high) for a given inversion.
 // Triads use close voicings; 4-note chords use drop-2 voicings (the standard guitar inversions).
 export const inversionOrder = (toneCount, inversion) => {

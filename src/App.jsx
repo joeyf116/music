@@ -23,6 +23,7 @@ import {
   mod12,
   noteToPc,
   pcName,
+  scaleAcrossNeck,
   scalePosition,
   usesFlats,
 } from './lib/theory.js'
@@ -38,6 +39,11 @@ const MODES = [
 const LABEL_OPTIONS = [
   { value: 'notes', label: 'Notes' },
   { value: 'intervals', label: 'Intervals' },
+]
+// In position = one vertical box; across the neck = a diagonal run that starts in that box and climbs through the next ones.
+const LAYOUT_OPTIONS = [
+  { value: 'position', label: 'In position' },
+  { value: 'across', label: 'Across the neck' },
 ]
 const INVERSION_SHORT = ['R', '1st', '2nd', '3rd']
 const PAGES = [
@@ -96,6 +102,7 @@ export default function App() {
   const [tuningId, setTuningId] = usePersistentState('music.tuning', 'standard')
   const [labels, setLabels] = usePersistentState('music.labels', 'notes')
   const [showAll, setShowAll] = usePersistentState('music.showAll', true)
+  const [layout, setLayout] = usePersistentState('music.scaleLayout', 'position')
   const [bpm, setBpm] = usePersistentState('music.bpm', 100)
   const [position, setPosition] = useState(0)
   const [stringSet, setStringSet] = useState(0)
@@ -117,9 +124,15 @@ export default function App() {
 
   const view = useMemo(() => {
     if (mode === 'scale') {
-      const positions = intervals.map((_, degree) => scalePosition(rootPc, intervals, tuning, degree))
-      const options = [...positions.map((p, i) => ({ label: `Position ${i + 1}`, hint: fretRange(p) })), { label: 'All', hint: 'whole neck' }]
-      if (position === ALL_POSITIONS) {
+      // "All" always walks the box shapes; the layout only changes how a single position is played.
+      const all = position === ALL_POSITIONS
+      const shapeOf = layout === 'across' && !all ? scaleAcrossNeck : scalePosition
+      const positions = intervals.map((_, degree) => shapeOf(rootPc, intervals, tuning, degree))
+      const options = [
+        ...positions.map((p, i) => ({ label: layout === 'across' && !all ? `From pos. ${i + 1}` : `Position ${i + 1}`, hint: fretRange(p) })),
+        { label: 'All', hint: 'whole neck' },
+      ]
+      if (all) {
         // Every position in one view: the tab climbs the neck one shape at a time (each ascending, labelled like
         // its button), and the neck lights the shape being played so you always know which box you're in.
         const order = positions.map((notes, i) => ({ notes, i, lo: Math.min(...notes.map((n) => n.fret)) })).sort((a, b) => a.lo - b.lo)
@@ -169,9 +182,9 @@ export default function App() {
       columnWidth: 70,
       defaultActive: 0,
     }
-  }, [mode, intervals, rootPc, tuning, position, stringSet, chordName])
+  }, [mode, intervals, rootPc, tuning, position, stringSet, chordName, layout])
 
-  const selection = [mode, safeKey, scaleType, chordType, inversionType, tuningId, view.optionIndex].join('|')
+  const selection = [mode, safeKey, scaleType, chordType, inversionType, tuningId, view.optionIndex, layout].join('|')
   const activeIndex = active?.selection === selection && active.index < view.columns.length ? active.index : view.defaultActive
   const activeColumn = activeIndex === null ? null : view.columns[activeIndex]
 
@@ -297,6 +310,7 @@ export default function App() {
               <Field label="Tuning">
                 <TuningSelect value={tuningId} onChange={setTuningId} />
               </Field>
+              {mode === 'scale' && !view.all && <Choice label="Layout" options={LAYOUT_OPTIONS} value={layout === 'across' ? 'across' : 'position'} onChange={setLayout} />}
               <Choice label="Note labels" options={LABEL_OPTIONS} value={labels} onChange={setLabels} />
               {!view.all && (
                 <Toggle checked={showAll} onChange={setShowAll}>
@@ -353,7 +367,7 @@ export default function App() {
               <h3>
                 Tab
                 <small>
-                  {mode === 'scale' && (view.all ? 'every position, up the neck' : 'ascending & descending')}
+                  {mode === 'scale' && (view.all ? 'every position, up the neck' : layout === 'across' ? 'climbing across the neck & back' : 'ascending & descending')}
                   {mode === 'chord' && 'voicings up the neck'}
                   {mode === 'inversion' && `${INVERSION_NAMES.slice(0, intervals.length).join(' → ')} moving up the neck`}
                 </small>

@@ -160,3 +160,18 @@ describe('player', () => {
     expect(strikeOrder({ notes, strum: 'up' }).map((n) => n.string)).toEqual([5, 3, 1])
   })
 })
+
+describe('across-the-neck layout', () => {
+  it('runs scale sequences diagonally instead of in one box', () => {
+    const settings = { exercise: 'scaleSequence', key: 'A', scale: 'minorPentatonic', sequence: 'straight', position: 0 }
+    const box = buildExercise({ ...settings, layout: 'position' }, STANDARD)
+    const across = buildExercise({ ...settings, layout: 'across' }, STANDARD)
+    const span = (score) => {
+      const frets = score.events.flatMap((e) => e.notes.map((n) => n.fret))
+      return Math.max(...frets) - Math.min(...frets)
+    }
+    expect(span(box)).toBeLessThanOrEqual(4)
+    expect(span(across)).toBeGreaterThan(10)
+    expect(across.events[0].notes[0]).toMatchObject({ string: 0, fret: 5 })
+  })
+})
