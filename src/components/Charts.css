@@ -1,0 +1,447 @@
+/* ---- Charts page ---- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.chart-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.chart-card-title {
+  font-weight: 700;
+}
+
+.chart-card-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+.chart-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.chart-key {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.chart-view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1rem;
+}
+
+.chart-title {
+  flex: 1 1 14rem;
+}
+
+.chart-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.chart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Player controls */
+.chart-player {
+  margin-top: 1rem;
+}
+
+.band-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+}
+
+.band-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+}
+
+.band-controls input[type='number'] {
+  width: 4.5rem;
+}
+
+.play-band {
+  min-width: 6.5rem;
+  padding: 0.55rem 1rem;
+}
+
+.band-status {
+  min-width: 7.5rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.transpose {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.transpose .icon-button {
+  min-width: 2.2rem;
+  font-weight: 700;
+}
+
+.tempo-slider {
+  flex: 0 1 10rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--accent);
+}
+
+.band-mixer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0.9rem 0 0.25rem;
+}
+
+.mixer-channel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mixer-channel button {
+  min-width: 4.5rem;
+}
+
+.mixer-channel input[type='range'] {
+  width: 7rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--accent);
+}
+
+.mixer-channel.muted input[type='range'] {
+  opacity: 0.4;
+}
+
+/* The lead sheet: cream paper like a printed chart, four bars to a line. */
+.chart-sheet {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.75rem 0.5rem;
+  border-radius: 10px;
+  background: #f7f4ec;
+  color: #1d1a14;
+}
+
+.chart-section {
+  position: relative;
+  padding-left: 2.1rem;
+  margin-bottom: 0.6rem;
+}
+
+.chart-label {
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  min-width: 1.6rem;
+  padding: 0.05rem 0.3rem;
+  border: 2px solid #1d1a14;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 2rem;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-right: 2px solid #1d1a14;
+}
+
+.chart-row + .chart-row {
+  margin-top: 0.25rem;
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.15rem;
+  min-height: 3.1rem;
+  min-width: 0;
+  padding: 0.2rem 0.3rem;
+  border: 0;
+  border-left: 2px solid #1d1a14;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.chart-bar:hover {
+  background: rgba(240, 160, 51, 0.15);
+}
+
+.chart-bar.start {
+  box-shadow: inset 0 -4px 0 var(--accent);
+}
+
+.chart-bar.playing {
+  background: var(--accent);
+}
+
+.chart-bar:focus-visible {
+  outline: 2px solid var(--third);
+  outline-offset: -2px;
+}
+
+.chart-chord {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.chart-chord sup {
+  font-size: 0.6em;
+  font-weight: 600;
+  vertical-align: 0.55em;
+  margin-left: 0.05em;
+}
+
+.chart-chord small {
+  font-size: 0.65em;
+  font-weight: 600;
+}
+
+.chart-slash,
+.chart-repeat,
+.chart-nc {
+  color: #6b675f;
+}
+
+.chart-nc {
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+.chart-repeat {
+  font-size: 1.2em;
+}
+
+/* Phones: smaller chords so four bars still fit across. */
+@media (max-width: 640px) {
+  .chart-sheet {
+    padding: 0.5rem 0.4rem 0.35rem;
+  }
+
+  .chart-section {
+    padding-left: 1.6rem;
+  }
+
+  .chart-label {
+    min-width: 1.3rem;
+    max-width: 1.5rem;
+    font-size: 0.7rem;
+    padding: 0 0.15rem;
+  }
+
+  .chart-bar {
+    flex-wrap: wrap;
+    min-height: 2.7rem;
+    padding: 0.15rem;
+    font-size: 0.95rem;
+  }
+
+  .band-controls {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .tempo-slider {
+    flex: 1 1 6rem;
+  }
+
+  .band-mixer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .mixer-channel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .mixer-channel button {
+    min-width: 0;
+  }
+
+  .mixer-channel input[type='range'] {
+    width: 100%;
+  }
+}
+
+/* Editor */
+.chart-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.editor-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem 0.75rem;
+  width: 100%;
+}
+
+.editor-fields label,
+.editor-section-head label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.editor-fields .wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .editor-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.chart-help {
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.chart-help summary {
+  cursor: pointer;
+  color: var(--text);
+}
+
+.chart-help ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.chart-help li + li {
+  margin-top: 0.3rem;
+}
+
+.editor-section {
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.editor-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.section-label {
+  width: 5.5rem;
+}
+
+.editor-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.editor-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.bar-input {
+  min-width: 0;
+  background: var(--panel);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+}
+
+.bar-input.invalid {
+  border-color: var(--root);
+  box-shadow: 0 0 0 1px var(--root);
+}
+
+.editor-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.editor-save {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editor-save .error {
+  margin: 0;
+}
+
+.editor-preview-head {
+  margin: 0.5rem 0 0;
+}
+
+.chart-editor .chart-player {
+  width: 100%;
+  margin-top: 0;
+}

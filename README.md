@@ -29,6 +29,13 @@ Music resources – a guitar practice site built with **Vite + React**.
 - **Practice resources catalog** – PDFs, tabs, lessons, videos and tools that anyone visiting can add to.
   Filter by type, tag, level and category, search every field, sort by newest, star favourites,
   and look a song up on Songsterr / Ultimate Guitar / YouTube with the tab finder.
+- **Charts page (iReal Pro style)** – a catalog of chord charts (jazz, blues, pop/rock, latin, traditional
+  and practice progressions) that play with a synthesized backing band: drums, bass and piano in
+  9 styles (swing, ballad, bossa nova, rock, pop, funk, blues shuffle, jazz waltz, country/folk).
+  Transpose to any key, change tempo and style, loop, count in, mix or mute each instrument, and
+  start from any bar. **+ New chart** opens an editor (type `Dm7 G7` into a bar box, or paste
+  `| C | Am | F G |`); charts can be kept in your browser or shared with everyone
+  ([`supabase/README.md`](supabase/README.md)). Built-in charts live in `src/lib/chartLibrary.js`.
 - Your last selections are remembered in the browser.
 
 ## Adding PDFs and links
