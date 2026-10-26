@@ -4,6 +4,7 @@ import { DIRECTIONS, INTERVALS, PRESETS, answerLabel, intervalInfo, pitchesOf, r
 import { pcName } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import Fretboard from './Fretboard.jsx'
+import TuningSelect from './TuningSelect.jsx'
 
 const RANGES = [
   { maxFret: 5, label: 'Frets 0–5' },
@@ -19,7 +20,7 @@ const DIRECTION_TEXT = { up: 'going up', down: 'going down', together: 'played t
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 /** "Guess the interval": the root is shown on the neck, the two notes are played, name the gap by ear. */
-export default function Quiz({ tuning, stringName }) {
+export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
   const [maxFret, setMaxFret] = usePersistentState('music.intervalFrets', 12)
   const [enabled, setEnabled] = usePersistentState('music.intervals', PRESETS[0].semitones)
   const [direction, setDirection] = usePersistentState('music.intervalDirection', 'up')
@@ -160,6 +161,7 @@ export default function Quiz({ tuning, stringName }) {
               </button>
             ))}
           </div>
+          <TuningSelect value={tuningId} onChange={onTuningChange} aria-label="Tuning" />
           <select value={maxFret} onChange={(e) => setMaxFret(Number(e.target.value))} aria-label="Fret range">
             {RANGES.map((r) => (
               <option key={r.maxFret} value={r.maxFret}>

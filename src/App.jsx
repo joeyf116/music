@@ -4,6 +4,7 @@ import PracticeTools from './components/PracticeTools.jsx'
 import Quiz from './components/Quiz.jsx'
 import Resources from './components/Resources.jsx'
 import Tab from './components/Tab.jsx'
+import TuningSelect from './components/TuningSelect.jsx'
 import { playChord, playPitch } from './lib/audio.js'
 import {
   CHORDS,
@@ -87,7 +88,8 @@ export default function App() {
   const safeKey = KEYS.includes(key) ? key : 'C'
   const rootPc = noteToPc(safeKey)
   const flats = usesFlats(safeKey)
-  const tuning = (TUNINGS[tuningId] ?? TUNINGS.standard).pitches
+  const tuningSpec = TUNINGS[tuningId] ?? TUNINGS.standard
+  const tuning = tuningSpec.pitches
   const scale = SCALES[scaleType] ?? SCALES.major
   const chord = CHORDS[chordType] ?? CHORDS.maj
   const inversionChord = CHORDS[INVERSION_CHORDS.includes(inversionType) ? inversionType : 'maj']
@@ -207,7 +209,8 @@ export default function App() {
   })()
 
   const columns = view.columns.map((c) => (mode === 'scale' ? { ...c, label: noteLabel(c.notes[0]) } : c))
-  const stringName = (s) => pcName(tuning[s], flats)
+  // Open strings follow the tuning's own spelling (Eb standard reads Eb, not D#), otherwise the key's.
+  const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? flats)
   const tuningNames = tuning.map((_, s) => (s === tuning.length - 1 ? stringName(s).toLowerCase() : stringName(s)))
   const title = mode === 'scale' ? `${safeKey} ${scale.name}` : mode === 'chord' ? `${chordName} – ${chord.name}` : `${chordName} inversions`
   const typeOptions = mode === 'scale' ? SCALES : mode === 'chord' ? CHORDS : Object.fromEntries(INVERSION_CHORDS.map((id) => [id, CHORDS[id]]))
@@ -237,7 +240,7 @@ export default function App() {
         {page === 'resources' ? (
           <Resources />
         ) : page === 'quiz' ? (
-          <Quiz tuning={tuning} stringName={stringName} />
+          <Quiz tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : (
           <section className="panel fretboard-panel">
             <div className="controls">
@@ -260,13 +263,7 @@ export default function App() {
               </label>
               <label>
                 Tuning
-                <select value={tuningId} onChange={(e) => setTuningId(e.target.value)}>
-                  {Object.entries(TUNINGS).map(([id, t]) => (
-                    <option key={id} value={id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
+                <TuningSelect value={tuningId} onChange={setTuningId} />
               </label>
               <div className="segmented small" aria-label="Note labels">
                 <button className={labels === 'notes' ? 'on' : ''} onClick={() => setLabels('notes')}>
