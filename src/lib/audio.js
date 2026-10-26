@@ -13,9 +13,10 @@ const audioContext = () => {
 
 export const midiToFrequency = (pitch) => 440 * 2 ** ((pitch - 69) / 12)
 
+// Returns a function that cuts the note short.
 export function playPitch(pitch, delay = 0, duration = 1.4) {
   const ac = audioContext()
-  if (!ac) return
+  if (!ac) return () => {}
   const start = ac.currentTime + delay
   const osc = ac.createOscillator()
   const filter = ac.createBiquadFilter()
@@ -31,6 +32,17 @@ export function playPitch(pitch, delay = 0, duration = 1.4) {
   osc.connect(filter).connect(gain).connect(ac.destination)
   osc.start(start)
   osc.stop(start + duration + 0.05)
+  return () => {
+    const now = ac.currentTime
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), now)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05)
+    try {
+      osc.stop(now + 0.06)
+    } catch {
+      // Already stopped.
+    }
+  }
 }
 
 // Strum several pitches (low to high) like a chord.
