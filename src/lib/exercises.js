@@ -463,10 +463,12 @@ const withDegree = (n, refPc, refIntervals) => {
   return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, refIntervals) }
 }
 
-// How a scale or arpeggio sits on the neck: in one position (a vertical box) or climbing diagonally across it.
+// How a scale or arpeggio is fingered: a box that stays in one position, or a diagonal run that starts in that
+// box and shifts up through the next positions. Positions are numbered the usual way (Position 1 = the shape
+// starting on the root on the low string), and both fingerings share that numbering.
 export const LAYOUTS = {
-  position: { name: 'In position', shape: scalePosition },
-  across: { name: 'Across the neck', shape: scaleAcrossNeck },
+  position: { name: 'Box', title: 'Stay in one position', shape: scalePosition },
+  across: { name: 'Diagonal', title: 'Start in the position and shift up the neck through the next ones', shape: scaleAcrossNeck },
 }
 
 export const layoutShape = (layout, rootPc, intervals, tuning, degree) => (LAYOUTS[layout] ?? LAYOUTS.position).shape(rootPc, intervals, tuning, degree)
