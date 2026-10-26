@@ -1,6 +1,6 @@
 # Practice resources
 
-Everything in this folder shows up in the **Practice resources** section of the site.
+Everything in this folder shows up on the **Resources** page of the site (top navigation).
 
 ## Add a PDF (or image, audio, Guitar Pro file…)
 

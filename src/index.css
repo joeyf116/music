@@ -3,6 +3,7 @@
   --panel: #1b2029;
   --panel-2: #232a35;
   --border: #2e3644;
+  --border-strong: #6b778b;
   --text: #e8ebf1;
   --muted: #9aa4b5;
   --accent: #f0a033;
@@ -46,6 +47,7 @@ select {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -72,7 +74,7 @@ button:disabled {
 input,
 select {
   background: var(--panel-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 0.4rem 0.6rem;
 }
@@ -81,4 +83,28 @@ code {
   background: var(--panel-2);
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
+}
+
+/* Touch screens: 44px targets (WCAG 2.5.8 asks for 24px; Apple and Google recommend 44-48px). */
+@media (pointer: coarse) {
+  button,
+  input,
+  select {
+    min-height: 44px;
+  }
+
+  /* 16px or larger stops iOS Safari zooming in when a field is focused. */
+  input,
+  select {
+    font-size: max(16px, 1em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

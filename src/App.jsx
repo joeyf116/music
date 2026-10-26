@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Fretboard from './components/Fretboard.jsx'
+import PracticeTools from './components/PracticeTools.jsx'
+import Quiz from './components/Quiz.jsx'
 import Resources from './components/Resources.jsx'
 import Tab from './components/Tab.jsx'
 import { playChord, playPitch } from './lib/audio.js'
@@ -20,6 +22,7 @@ import {
   scalePosition,
   usesFlats,
 } from './lib/theory.js'
+import useHashPage from './lib/useHashPage.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
 
@@ -29,6 +32,11 @@ const MODES = [
   { id: 'inversion', label: 'Inversions' },
 ]
 const INVERSION_SHORT = ['R', '1st', '2nd', '3rd']
+const PAGES = [
+  { id: 'fretboard', label: 'Fretboard' },
+  { id: 'quiz', label: 'Quiz' },
+  { id: 'resources', label: 'Resources' },
+]
 const LEVELS = { faint: 0, path: 1, shape: 2, active: 3 }
 const LEGEND = [
   ['root', 'Root'],
@@ -48,6 +56,7 @@ const fretRange = (notes) => {
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 export default function App() {
+  const page = useHashPage(PAGES.map((p) => p.id), 'fretboard')
   const [key, setKey] = usePersistentState('music.key', 'A')
   const [mode, setMode] = usePersistentState('music.mode', 'scale')
   const [scaleType, setScaleType] = usePersistentState('music.scale', 'minorPentatonic')
@@ -123,7 +132,7 @@ export default function App() {
     timers.current = []
     setPlaying(false)
   }, [])
-  useEffect(() => stop, [selection, stop])
+  useEffect(() => stop, [selection, page, stop])
 
   const playColumn = (col) => {
     const pitches = col.notes.map((n) => tuning[n.string] + n.fret)
@@ -153,7 +162,7 @@ export default function App() {
   const stepRef = useRef(null)
   useEffect(() => {
     stepRef.current = (delta) => {
-      if (!view.columns.length) return
+      if (page !== 'fretboard' || !view.columns.length) return
       const current = activeIndex ?? -1
       selectColumn((current + delta + view.columns.length) % view.columns.length)
     }
@@ -199,121 +208,129 @@ export default function App() {
         <h1>
           <span aria-hidden="true">🎸</span> Fretboard Practice
         </h1>
-        <nav>
-          <a href="#fretboard">Fretboard</a>
-          <a href="#resources">Resources</a>
+        <nav aria-label="Pages">
+          {PAGES.map((p) => (
+            <a key={p.id} href={`#${p.id}`} aria-current={page === p.id ? 'page' : undefined}>
+              {p.label}
+            </a>
+          ))}
         </nav>
       </header>
 
       <main>
-        <section className="panel fretboard-panel" id="fretboard">
-          <div className="controls">
-            <div className="segmented" role="tablist" aria-label="Mode">
-              {MODES.map((m) => (
-                <button key={m.id} role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'on' : ''} onClick={() => setMode(m.id)}>
-                  {m.label}
+        {page === 'resources' ? (
+          <Resources />
+        ) : page === 'quiz' ? (
+          <Quiz tuning={tuning} stringName={stringName} />
+        ) : (
+          <section className="panel fretboard-panel" id="fretboard">
+            <div className="controls">
+              <div className="segmented" role="tablist" aria-label="Mode">
+                {MODES.map((m) => (
+                  <button key={m.id} role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'on' : ''} onClick={() => setMode(m.id)}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <label>
+                {mode === 'scale' ? 'Scale' : 'Chord'}
+                <select value={typeValue} onChange={(e) => setType(e.target.value)}>
+                  {Object.entries(typeOptions).map(([id, t]) => (
+                    <option key={id} value={id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Tuning
+                <select value={tuningId} onChange={(e) => setTuningId(e.target.value)}>
+                  {Object.entries(TUNINGS).map(([id, t]) => (
+                    <option key={id} value={id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="segmented small" aria-label="Note labels">
+                <button className={labels === 'notes' ? 'on' : ''} onClick={() => setLabels('notes')}>
+                  Notes
+                </button>
+                <button className={labels === 'intervals' ? 'on' : ''} onClick={() => setLabels('intervals')}>
+                  Intervals
+                </button>
+              </div>
+              <label className="check">
+                <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
+                Show all notes on neck
+              </label>
+            </div>
+
+            <div className="keys" role="group" aria-label="Key">
+              {KEYS.map((k) => (
+                <button key={k} className={k === safeKey ? 'on' : ''} onClick={() => setKey(k)} aria-pressed={k === safeKey}>
+                  {k}
                 </button>
               ))}
             </div>
-            <label>
-              {mode === 'scale' ? 'Scale' : 'Chord'}
-              <select value={typeValue} onChange={(e) => setType(e.target.value)}>
-                {Object.entries(typeOptions).map(([id, t]) => (
-                  <option key={id} value={id}>
-                    {t.name}
-                  </option>
+
+            <div className="title-row">
+              <h2>{title}</h2>
+              <ul className="chips" aria-label="Notes">
+                {intervals.map((i) => (
+                  <li key={i} className={`chip ${i === 0 ? 'root' : ''}`}>
+                    <strong>{pcName(rootPc + i, flats)}</strong>
+                    <span>{intervalName(i, intervals)}</span>
+                  </li>
                 ))}
-              </select>
-            </label>
-            <label>
-              Tuning
-              <select value={tuningId} onChange={(e) => setTuningId(e.target.value)}>
-                {Object.entries(TUNINGS).map(([id, t]) => (
-                  <option key={id} value={id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="segmented small" aria-label="Note labels">
-              <button className={labels === 'notes' ? 'on' : ''} onClick={() => setLabels('notes')}>
-                Notes
-              </button>
-              <button className={labels === 'intervals' ? 'on' : ''} onClick={() => setLabels('intervals')}>
-                Intervals
-              </button>
+              </ul>
             </div>
-            <label className="check">
-              <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-              Show all notes on neck
-            </label>
-          </div>
 
-          <div className="keys" role="group" aria-label="Key">
-            {KEYS.map((k) => (
-              <button key={k} className={k === safeKey ? 'on' : ''} onClick={() => setKey(k)} aria-pressed={k === safeKey}>
-                {k}
-              </button>
-            ))}
-          </div>
+            <Fretboard tuning={tuning} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
 
-          <div className="title-row">
-            <h2>{title}</h2>
-            <ul className="chips" aria-label="Notes">
-              {intervals.map((i) => (
-                <li key={i} className={`chip ${i === 0 ? 'root' : ''}`}>
-                  <strong>{pcName(rootPc + i, flats)}</strong>
-                  <span>{intervalName(i, intervals)}</span>
+            <ul className="legend">
+              {LEGEND.map(([role, text]) => (
+                <li key={role}>
+                  <span className={`swatch ${role}`} /> {text}
                 </li>
               ))}
             </ul>
-          </div>
 
-          <Fretboard tuning={tuning} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
+            {view.options.length > 0 && (
+              <div className="options" role="group" aria-label={mode === 'scale' ? 'Scale position' : 'String set'}>
+                {view.options.map((o, i) => (
+                  <button key={o.label} className={i === view.optionIndex ? 'on' : ''} onClick={() => (mode === 'scale' ? setPosition(i) : setStringSet(i))}>
+                    {o.label}
+                    {o.hint && <small>{o.hint}</small>}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <ul className="legend">
-            {LEGEND.map(([role, text]) => (
-              <li key={role}>
-                <span className={`swatch ${role}`} /> {text}
-              </li>
-            ))}
-          </ul>
-
-          {view.options.length > 0 && (
-            <div className="options" role="group" aria-label={mode === 'scale' ? 'Scale position' : 'String set'}>
-              {view.options.map((o, i) => (
-                <button key={o.label} className={i === view.optionIndex ? 'on' : ''} onClick={() => (mode === 'scale' ? setPosition(i) : setStringSet(i))}>
-                  {o.label}
-                  {o.hint && <small>{o.hint}</small>}
+            <div className="tab-head">
+              <h3>
+                Tab
+                <small>
+                  {mode === 'scale' && 'ascending & descending'}
+                  {mode === 'chord' && 'voicings up the neck'}
+                  {mode === 'inversion' && `${INVERSION_NAMES.slice(0, intervals.length).join(' → ')} moving up the neck`}
+                </small>
+              </h3>
+              <div className="playback">
+                <label>
+                  BPM
+                  <input type="number" min="30" max="300" value={bpm} onChange={(e) => setBpm(e.target.value)} />
+                </label>
+                <button className="primary" onClick={togglePlay} disabled={!view.columns.length}>
+                  {playing ? '■ Stop' : '▶ Play'}
                 </button>
-              ))}
+                <PracticeTools bpm={bpm} dronePitch={40 + mod12(rootPc - 4)} droneName={safeKey} />
+              </div>
             </div>
-          )}
-
-          <div className="tab-head">
-            <h3>
-              Tab
-              <small>
-                {mode === 'scale' && 'ascending & descending'}
-                {mode === 'chord' && 'voicings up the neck'}
-                {mode === 'inversion' && `${INVERSION_NAMES.slice(0, intervals.length).join(' → ')} moving up the neck`}
-              </small>
-            </h3>
-            <div className="playback">
-              <label>
-                BPM
-                <input type="number" min="30" max="300" value={bpm} onChange={(e) => setBpm(e.target.value)} />
-              </label>
-              <button className="primary" onClick={togglePlay} disabled={!view.columns.length}>
-                {playing ? '■ Stop' : '▶ Play'}
-              </button>
-            </div>
-          </div>
-          <Tab columns={columns} tuningNames={tuningNames} columnWidth={view.columnWidth} active={activeIndex} onSelect={(i) => selectColumn(i)} />
-          <p className="hint">Click a tab column or fretboard note to hear it · ← / → step through the tab.</p>
-        </section>
-
-        <Resources />
+            <Tab columns={columns} tuningNames={tuningNames} columnWidth={view.columnWidth} active={activeIndex} onSelect={(i) => selectColumn(i)} />
+            <p className="hint">Click a tab column or fretboard note to hear it · ← / → step through the tab.</p>
+          </section>
+        )}
       </main>
     </div>
   )
