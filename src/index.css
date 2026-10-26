@@ -14,6 +14,7 @@
   --other: #c9a227;
   --wood: #4a2f1d;
   --wood-2: #5b3a24;
+  --tabbar-height: 4rem;
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -30,8 +31,14 @@
 }
 
 html {
-  /* The site header is sticky, so keep scrolled-to content from landing underneath it. */
-  scroll-padding-top: calc(var(--header-height, 0px) + 0.75rem);
+  /* Phones have a tab bar along the bottom, so keep scrolled-to fields from landing behind it. */
+  scroll-padding-bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 0.75rem);
+}
+
+@media (min-width: 720px) {
+  html {
+    scroll-padding-bottom: 0;
+  }
 }
 
 body {
