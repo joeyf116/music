@@ -31,7 +31,7 @@ drop policy if exists "Anyone can read approved links" on public.resources;
 create policy "Anyone can read approved links" on public.resources
   for select to anon using (approved);
 
-revoke all on public.resources from anon;
+revoke all on public.resources from anon, authenticated;
 grant select (id, title, url, category, type, level, tags, description, approved, created_at) on public.resources to anon;
 
 -- Flood protection: refuse new links once 20 have been added in the last 10 minutes.
@@ -81,7 +81,7 @@ create table if not exists public.resource_reports (
   created_at timestamptz not null default now()
 );
 alter table public.resource_reports enable row level security;
-revoke all on public.resource_reports from anon;
+revoke all on public.resource_reports from anon, authenticated;
 
 create or replace function public.report_resource(resource_id bigint, reason text default '') returns boolean
 language plpgsql security definer set search_path = public as $$
@@ -99,6 +99,7 @@ $$;
 revoke all on function public.add_resource(text, text, text, text, text, text[], text, uuid) from public;
 revoke all on function public.remove_resource(bigint, uuid) from public;
 revoke all on function public.report_resource(bigint, text) from public;
+revoke all on function public.resources_rate_limit() from public, anon, authenticated;
 grant execute on function public.add_resource(text, text, text, text, text, text[], text, uuid) to anon;
 grant execute on function public.remove_resource(bigint, uuid) to anon;
 grant execute on function public.report_resource(bigint, text) to anon;
