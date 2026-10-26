@@ -18,6 +18,7 @@ import {
 import { playEvent, startPlayback } from '../lib/player.js'
 import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, stringSets, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
+import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
@@ -25,7 +26,11 @@ import TuningSelect from './TuningSelect.jsx'
 const GROUPS = [...new Set(EXERCISES.map((e) => e.group))]
 const SEVEN_NOTE_SCALES = Object.entries(SCALES).filter(([, s]) => s.intervals.length === 7)
 const INVERSIONS = ['Root', '1st', '2nd']
-const ARP_DIRECTIONS = { up: 'Up', updown: 'Up & down', alternate: 'Alternate up / down' }
+const ARP_DIRECTIONS = [
+  { value: 'up', label: 'Up' },
+  { value: 'updown', label: 'Up & down' },
+  { value: 'alternate', label: 'Alternate', title: 'Alternate up / down' },
+]
 const SPEED_UPS = [0, 2, 5, 10]
 const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']
 // Tab column width by the shortest note in the exercise, so 16ths pack tighter than quarters.
@@ -170,12 +175,14 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
     <section className="panel exercises">
       <div className="section-head">
         <h2>Exercises</h2>
-        <TuningSelect value={tuningId} onChange={onTuningChange} aria-label="Tuning" />
+        <Field label="Tuning" className="head-field">
+          <TuningSelect value={tuningId} onChange={onTuningChange} />
+        </Field>
       </div>
 
       {/* One grouped menu at every width: the exercise, then just the settings that exercise uses. */}
       <label className="field exercise-field">
-        <span>Exercise</span>
+        <span className="field-label">Exercise</span>
         <select value={exercise.id} onChange={(e) => set({ exercise: e.target.value })}>
           {GROUPS.map((group) => (
             <optgroup key={group} label={group}>
@@ -196,7 +203,9 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
 
       {has('key') && (
         <div className="field">
-          <span id="exercise-key-label">Key</span>
+          <span className="field-label" id="exercise-key-label">
+            Key
+          </span>
           <div className="keys" role="group" aria-labelledby="exercise-key-label">
             {KEYS.map((k) => (
               <button key={k} className={k === key ? 'on' : ''} onClick={() => set({ key: k })} aria-pressed={k === key}>
@@ -209,7 +218,9 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
 
       {has('progression') && (
         <div className="field">
-          <span id="exercise-progression-label">Progression</span>
+          <span className="field-label" id="exercise-progression-label">
+            Progression
+          </span>
           <div className="progression-editor">
             <input
               type="text"
@@ -246,10 +257,10 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
       )}
 
       {/* Every setting is the same shape, so the row reflows cleanly from phone to desktop. */}
-      <div className="exercise-fields">
+      <div className="field-grid exercise-fields">
         {has('scale') && (
           <label className="field">
-            <span>Scale</span>
+            <span className="field-label">Scale</span>
             <select value={s.scale} onChange={(e) => set({ scale: e.target.value, position: 0 })}>
               {Object.entries(SCALES).map(([id, sc]) => (
                 <option key={id} value={id}>
@@ -261,7 +272,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('scale7') && (
           <label className="field">
-            <span>Scale</span>
+            <span className="field-label">Scale</span>
             <select value={s.scale7} onChange={(e) => set({ scale7: e.target.value })}>
               {SEVEN_NOTE_SCALES.map(([id, sc]) => (
                 <option key={id} value={id}>
@@ -273,7 +284,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('chord') && (
           <label className="field">
-            <span>Chord</span>
+            <span className="field-label">Chord</span>
             <select value={s.chord} onChange={(e) => set({ chord: e.target.value, position: 0 })}>
               {Object.entries(CHORDS).map(([id, c]) => (
                 <option key={id} value={id}>
@@ -285,7 +296,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('sequence') && (
           <label className="field">
-            <span>Pattern</span>
+            <span className="field-label">Pattern</span>
             <select value={s.sequence} onChange={(e) => set({ sequence: e.target.value })}>
               {Object.entries(SEQUENCES).map(([id, q]) => (
                 <option key={id} value={id}>
@@ -297,7 +308,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('string') && (
           <label className="field">
-            <span>String</span>
+            <span className="field-label">String</span>
             <select value={Math.min(s.string, tuning.length - 1)} onChange={(e) => set({ string: Number(e.target.value) })}>
               {tuning.map((_, i) => (
                 <option key={i} value={i}>
@@ -309,7 +320,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('fingers') && (
           <label className="field">
-            <span>Finger order</span>
+            <span className="field-label">Finger order</span>
             <select value={s.fingers} onChange={(e) => set({ fingers: e.target.value })}>
               {CHROMATIC_PATTERNS.map((p) => (
                 <option key={p} value={p}>
@@ -320,35 +331,25 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
           </label>
         )}
         {has('startFret') && (
-          <label className="field">
-            <span>Start fret</span>
-            <input type="number" min="1" max="19" value={s.startFret} onChange={(e) => set({ startFret: e.target.value })} />
-          </label>
+          <Stepper label="Start fret" value={s.startFret} onChange={(v) => set({ startFret: v })} min={1} max={19} fallback={5} />
         )}
         {has('arpSize') && (
-          <label className="field">
-            <span>Chords</span>
-            <select value={s.arpSize} onChange={(e) => set({ arpSize: e.target.value })}>
-              <option value="triads">Triads</option>
-              <option value="sevenths">7th chords</option>
-            </select>
-          </label>
+          <Choice
+            label="Chords"
+            options={[
+              { value: 'triads', label: 'Triads' },
+              { value: 'sevenths', label: '7th chords' },
+            ]}
+            value={s.arpSize}
+            onChange={(v) => set({ arpSize: v })}
+          />
         )}
         {has('arpDirection') && (
-          <label className="field">
-            <span>Direction</span>
-            <select value={s.arpDirection} onChange={(e) => set({ arpDirection: e.target.value })}>
-              {Object.entries(ARP_DIRECTIONS).map(([id, text]) => (
-                <option key={id} value={id}>
-                  {text}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Choice label="Direction" options={ARP_DIRECTIONS} value={s.arpDirection} onChange={(v) => set({ arpDirection: v })} />
         )}
         {has('stringSet') && (
           <label className="field">
-            <span>Strings</span>
+            <span className="field-label">Strings</span>
             <select value={Math.min(s.stringSet, sets.length - 1)} onChange={(e) => set({ stringSet: Number(e.target.value) })}>
               {sets.map((strings, i) => (
                 <option key={i} value={i}>
@@ -359,38 +360,33 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
           </label>
         )}
         {has('inversion') && (
-          <label className="field">
-            <span>Inversion</span>
-            <select value={s.inversion} onChange={(e) => set({ inversion: Number(e.target.value) })}>
-              {INVERSIONS.map((text, i) => (
-                <option key={text} value={i}>
-                  {text}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Choice label="Inversion" options={INVERSIONS.map((text, i) => ({ value: i, label: text }))} value={Number(s.inversion)} onChange={(v) => set({ inversion: v })} />
         )}
         {has('triadStyle') && (
-          <label className="field">
-            <span>Played as</span>
-            <select value={s.triadStyle} onChange={(e) => set({ triadStyle: e.target.value })}>
-              <option value="arpeggio">Arpeggiated</option>
-              <option value="block">Block chords</option>
-            </select>
-          </label>
+          <Choice
+            label="Played as"
+            options={[
+              { value: 'arpeggio', label: 'Arpeggiated' },
+              { value: 'block', label: 'Block chords' },
+            ]}
+            value={s.triadStyle}
+            onChange={(v) => set({ triadStyle: v })}
+          />
         )}
         {has('sevenths') && (
-          <label className="field">
-            <span>Chord type</span>
-            <select value={s.sevenths ? 'sevenths' : 'triads'} onChange={(e) => set({ sevenths: e.target.value === 'sevenths' })}>
-              <option value="triads">As written</option>
-              <option value="sevenths">7th chords</option>
-            </select>
-          </label>
+          <Choice
+            label="Chord type"
+            options={[
+              { value: false, label: 'As written' },
+              { value: true, label: '7th chords' },
+            ]}
+            value={Boolean(s.sevenths)}
+            onChange={(v) => set({ sevenths: v })}
+          />
         )}
         {has('chordLength') && (
           <label className="field">
-            <span>Each chord</span>
+            <span className="field-label">Each chord</span>
             <select value={s.chordLength} onChange={(e) => set({ chordLength: Number(e.target.value) })}>
               {Object.entries(CHORD_LENGTHS).map(([id, c]) => (
                 <option key={id} value={id}>
@@ -402,7 +398,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('neck') && (
           <label className="field">
-            <span>Voicings</span>
+            <span className="field-label">Voicings</span>
             <select value={s.neck} onChange={(e) => set({ neck: e.target.value })}>
               {Object.entries(NECK_AREAS).map(([id, a]) => (
                 <option key={id} value={id}>
@@ -414,7 +410,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('strum') && (
           <label className="field">
-            <span>Strum</span>
+            <span className="field-label">Strum</span>
             <select value={s.strum} onChange={(e) => set({ strum: e.target.value })}>
               {Object.entries(STRUMS).map(([id, p]) => (
                 <option key={id} value={id}>
@@ -426,7 +422,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('picking') && (
           <label className="field">
-            <span>Picking</span>
+            <span className="field-label">Picking</span>
             <select value={s.picking} onChange={(e) => set({ picking: e.target.value })}>
               {Object.entries(PICKING).map(([id, p]) => (
                 <option key={id} value={id}>
@@ -438,7 +434,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         )}
         {has('rate') && (
           <label className="field">
-            <span>Note value</span>
+            <span className="field-label">Note value</span>
             <select value={s.rate} onChange={(e) => set({ rate: e.target.value })}>
               {Object.entries(RATES).map(([id, r]) => (
                 <option key={id} value={id} disabled={!rateFits(id, meter)}>
@@ -449,7 +445,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
           </label>
         )}
         <label className="field">
-          <span>Time signature</span>
+          <span className="field-label">Time signature</span>
           <select value={meter.id} onChange={(e) => set({ meter: e.target.value })}>
             {Object.keys(METERS).map((id) => (
               <option key={id} value={id}>
@@ -462,7 +458,9 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
 
       {positions.length > 0 && (
         <div className="field">
-          <span id="exercise-position-label">Position</span>
+          <span className="field-label" id="exercise-position-label">
+            Position
+          </span>
           <div className="options" role="group" aria-labelledby="exercise-position-label">
             {positions.map((hint, i) => (
               <button key={i} className={Math.min(s.position, positions.length - 1) === i ? 'on' : ''} onClick={() => set({ position: i })}>
@@ -482,14 +480,17 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
           </small>
         </h3>
         {melodic && (
-          <div className="segmented small" role="group" aria-label="Note labels">
-            <button className={labels === 'notes' ? 'on' : ''} onClick={() => setLabels('notes')}>
-              Notes
-            </button>
-            <button className={labels !== 'notes' ? 'on' : ''} onClick={() => setLabels('degrees')}>
-              {exercise.id === 'chromatic' ? 'Fingers' : 'Intervals'}
-            </button>
-          </div>
+          <Choice
+            label="Note labels"
+            hideLabel
+            size="small"
+            options={[
+              { value: 'notes', label: 'Notes' },
+              { value: 'degrees', label: exercise.id === 'chromatic' ? 'Fingers' : 'Intervals' },
+            ]}
+            value={labels === 'notes' ? 'notes' : 'degrees'}
+            onChange={setLabels}
+          />
         )}
       </div>
 
@@ -498,38 +499,31 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         <button type="button" className="primary play-button" onClick={togglePlay} disabled={!events.length} aria-pressed={playing}>
           {playing ? '■ Stop' : '▶ Play'}
         </button>
-        <label className="field tempo-field">
-          <span>{meter.unit === 8 ? 'BPM (8ths)' : 'BPM'}</span>
-          <input type="number" min="30" max="300" value={bpm} onChange={(e) => setBpm(e.target.value)} />
-        </label>
+        <Stepper label={meter.unit === 8 ? 'BPM (8ths)' : 'BPM'} value={bpm} onChange={setBpm} min={30} max={300} step={5} fallback={80} className="tempo-field" />
         <span className="transport-status" aria-live="polite">
           {countBeat ? `Count-in ${countBeat}…` : liveBpm ? `Now ${liveBpm} BPM` : ''}
         </span>
         <details className="transport-options" open={showOptions} onToggle={(e) => setShowOptions(e.currentTarget.open)}>
           <summary>Playback</summary>
           <div className="transport-panel">
-            <label className="check">
-              <input type="checkbox" checked={click} onChange={(e) => setClick(e.target.checked)} />
-              Click
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={countIn} onChange={(e) => setCountIn(e.target.checked)} />
-              Count-in
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
-              Loop
-            </label>
-            <label className="field">
-              <span>Speed up</span>
-              <select value={speedUp} onChange={(e) => setSpeedUp(Number(e.target.value))} disabled={!loop}>
-                {SPEED_UPS.map((n) => (
-                  <option key={n} value={n}>
-                    {n ? `+${n} BPM each loop` : 'Off'}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="toggles">
+              <Toggle checked={click} onChange={setClick}>
+                Click
+              </Toggle>
+              <Toggle checked={countIn} onChange={setCountIn}>
+                Count-in
+              </Toggle>
+              <Toggle checked={loop} onChange={setLoop}>
+                Loop
+              </Toggle>
+            </div>
+            <Choice
+              label="Speed up each loop"
+              size="small"
+              options={SPEED_UPS.map((n) => ({ value: n, label: n ? `+${n}` : 'Off', title: n ? `+${n} BPM each loop` : undefined, disabled: !loop }))}
+              value={speedUp}
+              onChange={setSpeedUp}
+            />
           </div>
         </details>
       </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { ALL_KEYS, badTokens, CHART_LIMITS, TIME_SIGNATURES, validateChart } from '../lib/chart.js'
 import ChartPlayer from './ChartPlayer.jsx'
+import { Choice, Field, Stepper } from './controls.jsx'
 
 const NEXT_LABEL = { A: 'B', B: 'C', C: 'D', Verse: 'Chorus', Chorus: 'Bridge', Intro: 'A' }
 
@@ -57,16 +58,13 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
   return (
     <form className="chart-editor" onSubmit={save}>
       <div className="editor-fields">
-        <label className="wide">
-          Title
+        <Field label="Title" className="wide">
           <input value={draft.title} maxLength={CHART_LIMITS.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Blues for practice" required />
-        </label>
-        <label className="wide">
-          Composer
-          <input value={draft.composer} maxLength={CHART_LIMITS.composer} onChange={(e) => set({ composer: e.target.value })} placeholder="optional" />
-        </label>
-        <label>
-          Style
+        </Field>
+        <Field label="Composer" hint="optional" className="wide">
+          <input value={draft.composer} maxLength={CHART_LIMITS.composer} onChange={(e) => set({ composer: e.target.value })} />
+        </Field>
+        <Field label="Style">
           <select value={draft.style} onChange={(e) => set({ style: e.target.value, tempo: STYLES[e.target.value].tempo })}>
             {STYLE_IDS.map((id) => (
               <option key={id} value={id}>
@@ -74,29 +72,27 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          Key
+        </Field>
+        <Field label="Key">
           <select value={draft.key} onChange={(e) => set({ key: e.target.value })}>
-            {ALL_KEYS.map((k) => (
-              <option key={k} value={k}>
-                {k.endsWith('m') ? `${k.slice(0, -1)} minor` : `${k} major`}
-              </option>
-            ))}
+            <optgroup label="Major">
+              {ALL_KEYS.filter((k) => !k.endsWith('m')).map((k) => (
+                <option key={k} value={k}>
+                  {k} major
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Minor">
+              {ALL_KEYS.filter((k) => k.endsWith('m')).map((k) => (
+                <option key={k} value={k}>
+                  {k.slice(0, -1)} minor
+                </option>
+              ))}
+            </optgroup>
           </select>
-        </label>
-        <label>
-          Time
-          <select value={draft.time} onChange={(e) => set({ time: e.target.value })}>
-            {TIME_SIGNATURES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Tempo
-          <input type="number" min="40" max="300" value={draft.tempo} onChange={(e) => set({ tempo: e.target.value })} />
-        </label>
+        </Field>
+        <Choice label="Time" options={TIME_SIGNATURES} value={draft.time} onChange={(time) => set({ time })} size="small" />
+        <Stepper label="Tempo (BPM)" value={draft.tempo} onChange={(tempo) => set({ tempo })} min={40} max={300} step={5} fallback={120} />
       </div>
 
       <details className="chart-help">
@@ -121,10 +117,9 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
         <fieldset className="editor-section" key={s}>
           <legend className="visually-hidden">Section {s + 1}</legend>
           <div className="editor-section-head">
-            <label>
-              Section
+            <Field label="Section">
               <input className="section-label" value={section.label} maxLength={CHART_LIMITS.label} onChange={(e) => setSection(s, { label: e.target.value })} placeholder="A" />
-            </label>
+            </Field>
             <span className="resource-count">{section.bars.length} bars</span>
             <span className="editor-section-actions">
               <button type="button" className="icon-button" onClick={() => move(s, -1)} disabled={s === 0} aria-label="Move section up">

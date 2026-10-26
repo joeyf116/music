@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { CHANNELS, playBand } from '../lib/band.js'
 import { ALL_KEYS, compileChart, isMinorKey, keyDistance, transposeChart, transposeKey } from '../lib/chart.js'
@@ -6,6 +6,7 @@ import usePersistentState from '../lib/usePersistentState.js'
 import { barSymbols } from '../lib/voicings.js'
 import ChartSheet from './ChartSheet.jsx'
 import ChordReference from './ChordReference.jsx'
+import { Field, Stepper, Toggle } from './controls.jsx'
 
 const CHANNEL_LABELS = { drums: 'Drums', bass: 'Bass', piano: 'Piano' }
 const DEFAULT_MIX = { drums: 0.8, bass: 0.9, piano: 0.7 }
@@ -24,6 +25,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
   const [activeBar, setActiveBar] = useState(null)
   const [count, setCount] = useState(null)
   const [startBar, setStartBar] = useState(0)
+  const id = useId()
   const band = useRef(null)
   const position = useRef(0)
 
@@ -105,20 +107,33 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
 
   return (
     <div className="chart-player">
-      <div className="band-controls">
+      <div className="band-transport">
         <button type="button" className="primary play-band" onClick={toggle} disabled={!totalBars} aria-pressed={playing}>
           {playing ? '■ Stop' : '▶ Play'}
         </button>
         <span className="band-status" aria-live="polite">
           {count ? `Count ${count}` : activeBar !== null ? `Bar ${activeBar + 1} / ${totalBars}` : startBar > 0 ? `Start at bar ${startBar + 1}` : `${totalBars} bars`}
         </span>
-        <label>
-          Key
-          <span className="transpose">
-            <button type="button" className="icon-button" onClick={() => transposeBy(-1)} aria-label="Down a half step">
+        <div className="toggles">
+          <Toggle checked={loop} onChange={setLoop}>
+            Loop
+          </Toggle>
+          <Toggle checked={countIn} onChange={setCountIn}>
+            Count-in
+          </Toggle>
+        </div>
+      </div>
+
+      <div className="field-grid band-controls">
+        <div className="field">
+          <span className="field-label" id={`${id}-key`}>
+            Key
+          </span>
+          <div className="transpose">
+            <button type="button" onClick={() => transposeBy(-1)} aria-label="Key down a half step" title="Down a half step">
               −
             </button>
-            <select value={shown.key} onChange={(e) => setKey(e.target.value)}>
+            <select value={shown.key} onChange={(e) => setKey(e.target.value)} aria-labelledby={`${id}-key`}>
               {keyOptions.map((k) => (
                 <option key={k} value={k}>
                   {k}
@@ -126,34 +141,24 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
                 </option>
               ))}
             </select>
-            <button type="button" className="icon-button" onClick={() => transposeBy(1)} aria-label="Up a half step">
+            <button type="button" onClick={() => transposeBy(1)} aria-label="Key up a half step" title="Up a half step">
               +
             </button>
-          </span>
-        </label>
-        <label>
-          Tempo
-          <input type="number" min="40" max="300" value={tempo} onChange={(e) => setTempo(e.target.value)} />
-        </label>
-        <input type="range" className="tempo-slider" min="40" max="300" value={bpm} onChange={(e) => setTempo(Number(e.target.value))} aria-label="Tempo" />
-        <label>
-          Style
+          </div>
+        </div>
+        <div className="tempo-control">
+          <Stepper label="Tempo (BPM)" value={tempo} onChange={setTempo} min={40} max={300} step={5} fallback={chart.tempo} />
+          <input type="range" className="tempo-slider" min="40" max="300" value={bpm} onChange={(e) => setTempo(Number(e.target.value))} aria-label="Tempo slider" />
+        </div>
+        <Field label="Style">
           <select value={style} onChange={(e) => setStyle(e.target.value)}>
-            {STYLE_IDS.map((id) => (
-              <option key={id} value={id}>
-                {STYLES[id].name}
+            {STYLE_IDS.map((sid) => (
+              <option key={sid} value={sid}>
+                {STYLES[sid].name}
               </option>
             ))}
           </select>
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
-          Loop
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={countIn} onChange={(e) => setCountIn(e.target.checked)} />
-          Count-in
-        </label>
+        </Field>
       </div>
 
       <div className="band-mixer" role="group" aria-label="Band mixer">

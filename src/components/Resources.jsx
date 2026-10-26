@@ -4,6 +4,7 @@ import { fileResources, filterResources, LEVELS, linkResources, SORTS, sortResou
 import { addSharedLink, COOLDOWN_MS, fetchSharedLinks, newOwnerToken, removeSharedLink, reportSharedLink, sharingEnabled } from '../lib/sharedResources.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import AddResource from './AddResource.jsx'
+import { Field } from './controls.jsx'
 import ResourceCard from './ResourceCard.jsx'
 import TabFinder from './TabFinder.jsx'
 
@@ -32,6 +33,7 @@ export default function Resources() {
   const [adding, setAdding] = useState(false)
   const [allTags, setAllTags] = useState(false)
   const [notice, setNotice] = useState('')
+  const [moreOpen, setMoreOpen] = useState(false)
 
   useEffect(() => {
     if (!CAN_SHARE) return
@@ -56,6 +58,7 @@ export default function Resources() {
   const visible = sortResources(filterResources(all, { ...filters, starred }), sort)
   const grouped = sort === 'category' ? visible.reduce((acc, r) => ((acc[r.category] ??= []).push(r), acc), {}) : { '': visible }
   const filtering = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS)
+  const extraCount = (filters.level ? 1 : 0) + (filters.category !== 'All' ? 1 : 0) + filters.tags.length
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
   const tagFilter = (t) => set({ tags: toggle(filters.tags, t) })
   // Keep chosen tags visible in the cloud even when they're rarely used.
@@ -116,61 +119,79 @@ export default function Resources() {
       {adding && <AddResource canShare={CAN_SHARE} categories={categories} popularTags={tags} onSubmit={addLink} onClose={() => setAdding(false)} />}
 
       <div className="catalog-controls">
-        <input
-          type="search"
-          className="catalog-search"
-          placeholder="Search titles, tags, sites, notes…"
-          value={filters.query}
-          onChange={(e) => set({ query: e.target.value })}
-          aria-label="Search resources"
-        />
-        <div className="filter-row">
-          <div className="type-chips" role="group" aria-label="Filter by type">
-            {typeCounts.map(([type, count]) => (
-              <button type="button" key={type} className={`filter-chip${filters.types.includes(type) ? ' on' : ''}`} aria-pressed={filters.types.includes(type)} onClick={() => set({ types: toggle(filters.types, type) })}>
-                {type} <span>{count}</span>
-              </button>
+        <div className="search-row">
+          <input
+            type="search"
+            className="catalog-search"
+            placeholder="Search titles, tags, sites, notes…"
+            value={filters.query}
+            onChange={(e) => set({ query: e.target.value })}
+            aria-label="Search resources"
+            enterKeyHint="search"
+          />
+          <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort resources">
+            {Object.entries(SORTS).map(([value, label]) => (
+              <option key={value} value={value}>
+                Sort: {label}
+              </option>
             ))}
-            <button type="button" className={`filter-chip${filters.starredOnly ? ' on' : ''}`} aria-pressed={filters.starredOnly} onClick={() => set({ starredOnly: !filters.starredOnly })}>
-              ★ Starred <span>{all.filter((r) => starred.includes(r.url)).length}</span>
-            </button>
-          </div>
-          <div className="filter-selects">
-            <select value={filters.level} onChange={(e) => set({ level: e.target.value })} aria-label="Filter by level">
-              <option value="">Any level</option>
-              {LEVELS.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </select>
-            <select value={categories.includes(filters.category) ? filters.category : 'All'} onChange={(e) => set({ category: e.target.value })} aria-label="Filter by category">
-              <option value="All">All categories</option>
-              {categories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort resources">
-              {Object.entries(SORTS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  Sort: {label}
-                </option>
-              ))}
-            </select>
-          </div>
+          </select>
         </div>
-        {tags.length > 0 && (
-          <div className="tag-cloud" role="group" aria-label="Filter by tag">
-            {cloud.map(([t, count]) => (
-              <button type="button" key={t} className={`tag${filters.tags.includes(t) ? ' on' : ''}`} aria-pressed={filters.tags.includes(t)} onClick={() => tagFilter(t)}>
-                #{t} <span>{count}</span>
-              </button>
-            ))}
-            {tags.length > TAG_CLOUD_SIZE && (
-              <button type="button" className="link-button" onClick={() => setAllTags(!allTags)}>
-                {allTags ? 'Fewer tags' : `All ${tags.length} tags`}
-              </button>
+        <div className="type-chips" role="group" aria-label="Filter by type">
+          {typeCounts.map(([type, count]) => (
+            <button type="button" key={type} className={`filter-chip${filters.types.includes(type) ? ' on' : ''}`} aria-pressed={filters.types.includes(type)} onClick={() => set({ types: toggle(filters.types, type) })}>
+              {type} <span>{count}</span>
+            </button>
+          ))}
+          <button type="button" className={`filter-chip${filters.starredOnly ? ' on' : ''}`} aria-pressed={filters.starredOnly} onClick={() => set({ starredOnly: !filters.starredOnly })}>
+            ★ Starred <span>{all.filter((r) => starred.includes(r.url)).length}</span>
+          </button>
+        </div>
+        {/* Level, category and tags fold away so the list stays the main thing on screen. */}
+        <details className="more-filters" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+          <summary>
+            More filters{extraCount > 0 && <span className="filter-count">{extraCount}</span>}
+          </summary>
+          <div className="more-filters-body">
+            <div className="field-grid">
+              <Field label="Level">
+                <select value={filters.level} onChange={(e) => set({ level: e.target.value })}>
+                  <option value="">Any level</option>
+                  {LEVELS.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Category">
+                <select value={categories.includes(filters.category) ? filters.category : 'All'} onChange={(e) => set({ category: e.target.value })}>
+                  <option value="All">All categories</option>
+                  {categories.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            {tags.length > 0 && (
+              <div className="field">
+                <span className="field-label" id="resource-tags-label">
+                  Tags
+                </span>
+                <div className="tag-cloud" role="group" aria-labelledby="resource-tags-label">
+                  {cloud.map(([t, count]) => (
+                    <button type="button" key={t} className={`tag${filters.tags.includes(t) ? ' on' : ''}`} aria-pressed={filters.tags.includes(t)} onClick={() => tagFilter(t)}>
+                      #{t} <span>{count}</span>
+                    </button>
+                  ))}
+                  {tags.length > TAG_CLOUD_SIZE && (
+                    <button type="button" className="link-button" onClick={() => setAllTags(!allTags)}>
+                      {allTags ? 'Fewer tags' : `All ${tags.length} tags`}
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
-        )}
+        </details>
         {filtering && (
           <button type="button" className="link-button clear-filters" onClick={() => setFilters(NO_FILTERS)}>
             Clear filters
