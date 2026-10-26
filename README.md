@@ -17,7 +17,11 @@ Music resources – a guitar practice site built with **Vite + React**.
 - **Tablature under the fretboard** for whatever is selected. Click a column to highlight it on the
   fretboard and hear it, use ← / → to step through, or press **Play** (with adjustable BPM).
 - Alternate tunings (Drop D, DADGAD, Open G, Open D, half‑step down).
-- **Practice resources** – your PDFs and favourite links, searchable and grouped by category.
+- **Metronome and drone** next to the tab player – a click at the current BPM and a held root note for the selected key.
+- **Quiz page** – "find the note" on a given string, with score, streak and a fret-range setting.
+- Note roles also have shapes (square roots, diamond 7ths) so the fretboard reads without colour.
+- Works on phones: 44px touch targets, the neck scrolls to the selected shape, and the tab reflows to the screen width.
+- **Practice resources page** (from the top navigation) – your PDFs and favourite links, searchable and grouped by category.
 - Your last selections are remembered in the browser.
 
 ## Adding PDFs and links

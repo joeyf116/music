@@ -1,15 +1,21 @@
 .app {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1rem 3rem;
+  /* Keep content clear of notches and rounded corners on phones (needs viewport-fit=cover). */
+  padding: 0 max(1rem, env(safe-area-inset-right)) max(3rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
 }
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 0;
+  gap: 0.5rem 1rem;
+  padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
+  background: var(--bg);
 }
 
 .site-header h1 {
@@ -23,7 +29,15 @@
 }
 
 .site-header nav a {
+  padding: 0.3rem 0.1rem;
   text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.site-header nav a[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
 }
 
 .panel {
@@ -148,13 +162,13 @@
 /* ---- Fretboard ---- */
 .fretboard-scroll {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding-bottom: 0.25rem;
 }
 
 .fretboard {
   display: block;
   width: 100%;
-  min-width: 980px;
   height: auto;
   user-select: none;
 }
@@ -199,13 +213,13 @@
   cursor: pointer;
 }
 
-.note circle {
+.note .dot {
   stroke: rgba(0, 0, 0, 0.45);
   stroke-width: 1.5;
 }
 
 .note text {
-  fill: #fff;
+  fill: #12151b;
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
@@ -213,27 +227,58 @@
   pointer-events: none;
 }
 
-.note.root circle { fill: var(--root); }
-.note.third circle { fill: var(--third); }
-.note.fifth circle { fill: var(--fifth); }
-.note.seventh circle { fill: var(--seventh); }
-.note.other circle { fill: var(--other); }
+.note.root .dot { fill: var(--root); }
+.note.third .dot { fill: var(--third); }
+.note.fifth .dot { fill: var(--fifth); }
+.note.seventh .dot { fill: var(--seventh); }
+.note.other .dot { fill: var(--other); }
 
-.note.faint {
-  opacity: 0.28;
+/* Fade only the circle so the label stays readable (light text on the dimmed fill). */
+.note.faint .dot {
+  opacity: 0.3;
 }
 
-.note.path {
-  opacity: 0.6;
+.note.path .dot {
+  opacity: 0.45;
 }
 
-.note.active circle {
+.note.faint text,
+.note.path text {
+  fill: var(--text);
+}
+
+.note.correct .dot { fill: var(--fifth); }
+.note.wrong .dot { fill: var(--root); }
+
+.note.hidden .dot {
+  opacity: 0;
+}
+
+.note.active .dot {
   stroke: #fff;
   stroke-width: 3.5;
 }
 
-.note:hover {
-  opacity: 1;
+@media (hover: hover) {
+  .note:hover .dot {
+    opacity: 1;
+  }
+
+  .note.hidden:hover .dot {
+    opacity: 0.35;
+    fill: var(--text);
+  }
+
+  .note:hover text {
+    fill: #12151b;
+  }
+}
+
+.scroll-hint {
+  display: none;
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .legend {
@@ -255,10 +300,10 @@
   vertical-align: -1px;
 }
 
-.swatch.root { background: var(--root); }
+.swatch.root { background: var(--root); border-radius: 2px; }
 .swatch.third { background: var(--third); }
 .swatch.fifth { background: var(--fifth); }
-.swatch.seventh { background: var(--seventh); }
+.swatch.seventh { background: var(--seventh); border-radius: 1px; transform: rotate(45deg) scale(0.85); }
 .swatch.other { background: var(--other); }
 
 .options {
@@ -316,6 +361,33 @@
 
 .playback input {
   width: 4.5rem;
+}
+
+.playback {
+  flex-wrap: wrap;
+}
+
+.practice-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.beats {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.beat {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+}
+
+.beat.lit {
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 button.primary {
@@ -392,7 +464,7 @@ button.primary {
 }
 
 .tab-sublabel {
-  fill: #7a756b;
+  fill: #6b675f;
   font-weight: 400;
 }
 
@@ -400,6 +472,41 @@ button.primary {
 .empty {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* ---- Quiz ---- */
+.quiz-prompt {
+  margin: 0.75rem 0 1rem;
+  font-size: 1.25rem;
+}
+
+.quiz-prompt strong {
+  color: var(--accent);
+}
+
+.quiz-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.quiz-feedback {
+  margin: 0;
+  min-height: 1.45em;
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.quiz-score {
+  color: var(--muted);
 }
 
 /* ---- Resources ---- */
@@ -430,7 +537,7 @@ button.primary {
 
 .resource-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: 0.6rem;
   margin: 0;
   padding: 0;
@@ -507,20 +614,83 @@ button.primary {
 }
 
 .add-link .error {
-  color: var(--root);
+  color: #ff7a7d;
 }
 
 @media (max-width: 640px) {
-  .controls label,
-  .resource-filters {
-    flex-wrap: wrap;
-    max-width: 100%;
+  .site-header h1 {
+    font-size: 1.15rem;
   }
 
-  .controls select,
-  .resource-filters input,
-  .resource-filters select {
-    max-width: 100%;
+  .site-header nav a {
+    padding: 0.6rem 0.1rem;
+  }
+
+  .panel {
+    padding: 0.9rem;
+    border-radius: 12px;
+  }
+
+  .controls {
+    gap: 0.6rem;
+  }
+
+  .controls .segmented {
+    display: flex;
+    width: 100%;
+  }
+
+  .controls .segmented button {
+    flex: 1;
+  }
+
+  .controls label:not(.check) {
+    width: 100%;
+  }
+
+  .controls select {
+    flex: 1;
     min-width: 0;
+  }
+
+  .title-row h2 {
+    font-size: 1.25rem;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
+
+  .tab-head h3 small {
+    display: block;
+    margin: 0.15rem 0 0;
+  }
+
+  .resource-filters,
+  .quiz-settings {
+    width: 100%;
+  }
+
+  .resource-filters input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .resource-filters select {
+    max-width: 35%;
+  }
+
+  .add-link input {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .quiz-actions {
+    width: 100%;
+  }
+
+  .quiz-actions button {
+    flex: 1;
+    white-space: nowrap;
   }
 }
