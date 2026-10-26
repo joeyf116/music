@@ -445,3 +445,190 @@
   width: 100%;
   margin-top: 0;
 }
+
+/* ---- Chord shapes reference (fold-away strip above the chart) ---- */
+.chord-ref {
+  margin-top: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.chord-ref summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.chord-ref summary::-webkit-details-marker {
+  display: none;
+}
+
+.chord-ref summary::before {
+  content: '▸';
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.chord-ref[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.chord-ref-count {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.chord-ref-body {
+  padding: 0 0.9rem 0.75rem;
+}
+
+.chord-ref-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.chord-ref-head .hint {
+  margin: 0;
+}
+
+.chord-strip {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0 0 0.4rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  list-style: none;
+}
+
+.chord-card {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 7.5rem;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  scroll-snap-align: start;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.chord-card.playing {
+  border-color: var(--accent);
+  background: rgba(240, 160, 51, 0.12);
+}
+
+.chord-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.chord-name sup {
+  font-size: 0.7em;
+}
+
+.chord-name small {
+  font-size: 0.8em;
+}
+
+.chord-shape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.2rem;
+  border: 0;
+  background: none;
+}
+
+.chord-diagram {
+  display: block;
+  width: 100%;
+  max-width: 6.5rem;
+  height: auto;
+}
+
+.chord-string,
+.chord-fret {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.chord-nut {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.chord-open,
+.chord-base {
+  fill: var(--muted);
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.chord-open.root {
+  fill: var(--root);
+  font-weight: 700;
+}
+
+.chord-base {
+  text-anchor: end;
+  font-size: 9px;
+}
+
+.chord-dot,
+.chord-barre {
+  fill: var(--text);
+}
+
+.chord-dot.root {
+  fill: var(--root);
+}
+
+.chord-dot.bass {
+  fill: var(--third);
+}
+
+.chord-frets {
+  color: var(--muted);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.chord-note {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.chord-cycle {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chord-cycle .icon-button {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}

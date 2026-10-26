@@ -254,7 +254,7 @@ export default function App() {
         ) : page === 'exercises' ? (
           <Exercises tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : page === 'charts' ? (
-          <Charts />
+          <Charts tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} />
         ) : page === 'quiz' ? (
           <Quiz tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : (
