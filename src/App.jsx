@@ -33,9 +33,21 @@ const MODES = [
 ]
 const INVERSION_SHORT = ['R', '1st', '2nd', '3rd']
 const PAGES = [
-  { id: 'fretboard', label: 'Fretboard' },
-  { id: 'quiz', label: 'Quiz' },
-  { id: 'resources', label: 'Resources' },
+  {
+    id: 'fretboard',
+    label: 'Fretboard',
+    icon: <path d="M4 6h16M4 10h16M4 14h16M4 18h16M8 4v16M14 4v16" />,
+  },
+  {
+    id: 'quiz',
+    label: 'Quiz',
+    icon: <path d="M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V14M12 17.5v.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />,
+  },
+  {
+    id: 'resources',
+    label: 'Resources',
+    icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5ZM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z" />,
+  },
 ]
 const LEVELS = { faint: 0, path: 1, shape: 2, active: 3 }
 const LEGEND = [
@@ -71,38 +83,6 @@ export default function App() {
   const [active, setActive] = useState(null)
   const [playing, setPlaying] = useState(false)
   const timers = useRef([])
-  const headerRef = useRef(null)
-
-  // Publish the sticky header's height so scrolling to a focused field or anchor stops below it.
-  useEffect(() => {
-    const header = headerRef.current
-    if (!header || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(() => {
-      document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`)
-    })
-    observer.observe(header)
-    return () => observer.disconnect()
-  }, [])
-
-  // On phones the header tucks away while scrolling down and comes back on any scroll up,
-  // so it never sits over the content being read (the CSS only applies this on narrow screens).
-  const [tucked, setTucked] = useState(false)
-  useEffect(() => {
-    let last = window.scrollY
-    const onScroll = () => {
-      const y = window.scrollY
-      if (Math.abs(y - last) < 8) return
-      setTucked(y > last && y > (headerRef.current?.offsetHeight ?? 0))
-      last = y
-    }
-    const show = () => setTucked(false)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('hashchange', show)
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('hashchange', show)
-    }
-  }, [])
 
   const safeKey = KEYS.includes(key) ? key : 'C'
   const rootPc = noteToPc(safeKey)
@@ -236,14 +216,18 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className={`site-header${tucked ? ' tucked' : ''}`} ref={headerRef} onFocus={() => setTucked(false)}>
-        <h1>
+      <header className="site-header">
+        <a className="brand" href="#fretboard">
           <span aria-hidden="true">🎸</span> Fretboard Practice
-        </h1>
-        <nav aria-label="Pages">
+        </a>
+        {/* Phones get this as a bottom tab bar (in thumb reach, never over the top of the page); wider screens show it inline. */}
+        <nav className="page-nav" aria-label="Pages">
           {PAGES.map((p) => (
             <a key={p.id} href={`#${p.id}`} aria-current={page === p.id ? 'page' : undefined} onClick={() => page === p.id && window.scrollTo(0, 0)}>
-              {p.label}
+              <svg className="page-icon" viewBox="0 0 24 24" aria-hidden="true">
+                {p.icon}
+              </svg>
+              <span>{p.label}</span>
             </a>
           ))}
         </nav>

@@ -2,49 +2,147 @@
   max-width: 1400px;
   margin: 0 auto;
   /* Keep content clear of notches and rounded corners on phones (needs viewport-fit=cover). */
-  padding: 0 max(1rem, env(safe-area-inset-right)) max(3rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  /* The bottom padding clears the phone tab bar (see .page-nav). */
+  padding: 0 max(1rem, env(safe-area-inset-right)) calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 2rem) max(1rem, env(safe-area-inset-left));
 }
 
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
-  background: var(--bg);
-  transition: transform 0.2s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-header {
-    transition: none;
+@media (min-width: 720px) {
+  .app {
+    padding-bottom: max(3rem, env(safe-area-inset-bottom));
   }
 }
 
-.site-header h1 {
-  margin: 0;
-  font-size: 1.4rem;
+/* ---- Header (mobile first) ----
+   Phones: a small title that scrolls away with the page, and a bottom tab bar for the pages.
+   Nothing is pinned to the top, so nothing can cover what you are reading. */
+.site-header {
+  padding: max(0.75rem, env(safe-area-inset-top)) 0 0.75rem;
 }
 
-.site-header nav {
-  display: flex;
-  gap: 1rem;
-}
-
-.site-header nav a {
-  padding: 0.3rem 0.1rem;
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-}
-
-.site-header nav a[aria-current='page'] {
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
   color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  display: flex;
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+
+.page-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: var(--tabbar-height);
+  color: var(--muted);
+  font-size: 0.75rem;
   font-weight: 600;
-  border-bottom-color: var(--accent);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-icon {
+  width: 3.5rem;
+  height: 1.9rem;
+  padding: 0.25rem 0;
+  border-radius: 999px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: background 0.15s;
+}
+
+.page-nav a[aria-current='page'] {
+  color: var(--text);
+}
+
+.page-nav a[aria-current='page'] .page-icon {
+  color: var(--accent);
+  background: rgba(240, 160, 51, 0.16);
+}
+
+.page-nav a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+
+/* The on-screen keyboard pushes fixed bars up; get the tab bar out of the way while typing. */
+body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .page-nav {
+  display: none;
+}
+
+/* Wider screens: one row with the title on the left and the pages as tabs on the right. */
+@media (min-width: 720px) {
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
+  }
+
+  .brand {
+    font-size: 1.4rem;
+  }
+
+  .page-nav,
+  body:has(input:focus, textarea:focus) .page-nav {
+    position: static;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  .page-nav a {
+    flex-direction: row;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+  }
+
+  .page-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    padding: 0;
+  }
+
+  .page-nav a:hover {
+    color: var(--text);
+  }
+
+  .page-nav a[aria-current='page'] {
+    background: rgba(240, 160, 51, 0.16);
+  }
+
+  .page-nav a[aria-current='page'] .page-icon {
+    background: none;
+  }
+
+  .page-nav a:focus-visible {
+    outline-offset: 2px;
+    border-radius: 999px;
+  }
 }
 
 .panel {
@@ -728,24 +826,6 @@ button.primary {
 }
 
 @media (max-width: 640px) {
-  .site-header {
-    padding-top: max(0.6rem, env(safe-area-inset-top));
-    padding-bottom: 0.4rem;
-    row-gap: 0.1rem;
-  }
-
-  .site-header.tucked {
-    transform: translateY(-100%);
-  }
-
-  .site-header h1 {
-    font-size: 1.15rem;
-  }
-
-  .site-header nav a {
-    padding: 0.5rem 0.1rem;
-  }
-
   .panel {
     padding: 0.9rem;
     border-radius: 12px;
