@@ -71,6 +71,18 @@ export default function App() {
   const [active, setActive] = useState(null)
   const [playing, setPlaying] = useState(false)
   const timers = useRef([])
+  const headerRef = useRef(null)
+
+  // Publish the sticky header's height so scrolling to a focused field or anchor stops below it.
+  useEffect(() => {
+    const header = headerRef.current
+    if (!header || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--header-height', `${header.offsetHeight}px`)
+    })
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
 
   const safeKey = KEYS.includes(key) ? key : 'C'
   const rootPc = noteToPc(safeKey)
@@ -204,13 +216,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="site-header">
+      <header className="site-header" ref={headerRef}>
         <h1>
           <span aria-hidden="true">🎸</span> Fretboard Practice
         </h1>
         <nav aria-label="Pages">
           {PAGES.map((p) => (
-            <a key={p.id} href={`#${p.id}`} aria-current={page === p.id ? 'page' : undefined}>
+            <a key={p.id} href={`#${p.id}`} aria-current={page === p.id ? 'page' : undefined} onClick={() => page === p.id && window.scrollTo(0, 0)}>
               {p.label}
             </a>
           ))}
@@ -223,7 +235,7 @@ export default function App() {
         ) : page === 'quiz' ? (
           <Quiz tuning={tuning} stringName={stringName} />
         ) : (
-          <section className="panel fretboard-panel" id="fretboard">
+          <section className="panel fretboard-panel">
             <div className="controls">
               <div className="segmented" role="tablist" aria-label="Mode">
                 {MODES.map((m) => (

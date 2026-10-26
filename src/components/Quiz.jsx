@@ -81,7 +81,7 @@ export default function Quiz({ tuning, stringName }) {
   const byPosition = new Map(notes.map((n) => [`${n.string}-${n.fret}`, n]))
 
   return (
-    <section className="panel quiz" id="quiz">
+    <section className="panel quiz">
       <div className="section-head">
         <h2>Find the note</h2>
         <div className="quiz-settings">
