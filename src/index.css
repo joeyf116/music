@@ -29,6 +29,11 @@
   box-sizing: border-box;
 }
 
+html {
+  /* The site header is sticky, so keep scrolled-to content from landing underneath it. */
+  scroll-padding-top: calc(var(--header-height, 0px) + 0.75rem);
+}
+
 body {
   margin: 0;
   min-width: 320px;

@@ -34,7 +34,7 @@ export default function Resources() {
   const removeLink = (resource) => setSaved(saved.filter((_, i) => i !== resource.index))
 
   return (
-    <section className="panel resources" id="resources">
+    <section className="panel resources">
       <div className="section-head">
         <h2>Practice resources</h2>
         <div className="resource-filters">
