@@ -42,3 +42,6 @@ report a chart; after 3 reports it's hidden. Review or delete rows in **Table Ed
 pop & rock, folk & country) to the shared catalog, sorted onto genre shelves. Run it once in the SQL Editor
 after `charts.sql`; running it again skips titles that are already there. To change the list, edit
 [`seed/popular-charts.js`](./seed/popular-charts.js) and run `npm run seed:charts` to regenerate the SQL.
+
+If the catalog was seeded before a chord fix to `popular-charts.js`, run the matching fix file once as well
+(for example [`seed/accuracy-fixes.sql`](./seed/accuracy-fixes.sql)); it only updates the seeded copies.

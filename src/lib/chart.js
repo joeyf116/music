@@ -1,7 +1,7 @@
 // Lead-sheet charts (iReal Pro style): a chart is sections of bars, each bar a few chord symbols.
 // Bars are plain text such as "Dm7 G7". "/" holds the previous chord for one slot, "%" repeats the
 // previous bar, an empty bar keeps the last chord ringing and "NC" is a rest for the band.
-import { KEYS, mod12, noteToPc, pcName, usesFlats } from './theory.js'
+import { mod12, noteToPc, pcName, spellFrom, usesFlats } from './theory.js'
 
 export const TIME_SIGNATURES = ['4/4', '3/4', '2/4', '5/4', '6/4']
 export const CHART_LIMITS = { title: 80, composer: 60, label: 12, bar: 40, sections: 16, barsPerSection: 64, totalBars: 256 }
@@ -24,7 +24,8 @@ const normalizeQuality = (q) =>
     .replace(/\s+/g, '')
     .replace(/6\/9/, '69')
     .replace(/^(M|Ma|Maj|MAJ)(?=\d)/, 'maj')
-    .replace(/^(M|Ma|Maj|MAJ)$/, '')
+    .replace(/^(M|Ma|Maj|MAJ|maj)$/, '')
+    .replace(/^mM(?=\d)/, 'mmaj')
     .replace(/[Δ△^]/g, 'maj')
     .replace(/^-/, 'm')
     .replace(/^min/, 'm')
@@ -161,27 +162,50 @@ export const beatsPerBar = (time) => Number(String(time).split('/')[0]) || 4
 
 export const isMinorKey = (key) => /m$/.test(key)
 export const keyTonic = (key) => String(key).replace(/m$/, '')
-// Minor keys borrow the spelling of their relative major (Dm reads like F, so flats).
+// Key names as they're usually written, by pitch class: Db and Ab major (5 and 4 flats rather than 7 and 8 sharps),
+// C# and G# minor (4 and 5 sharps rather than 8 and 7 flats).
+const MAJOR_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+const MINOR_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
+// A tonic written with a flat or sharp keeps it; otherwise minor keys borrow the spelling of their relative major
+// (Dm reads like F, so flats).
 export const keyUsesFlats = (key) => {
-  const pc = noteToPc(keyTonic(key))
-  return usesFlats(KEYS[isMinorKey(key) ? mod12(pc + 3) : pc])
+  const tonic = keyTonic(key)
+  if (/[#b]/.test(tonic)) return tonic.includes('b')
+  const pc = noteToPc(tonic)
+  return usesFlats(isMinorKey(key) ? MAJOR_NAMES[mod12(pc + 3)] : tonic)
 }
-export const ALL_KEYS = [...KEYS, ...KEYS.map((k) => `${k}m`)]
+// Both names for the keys guitarists see either way (C#/Db, F#/Gb, D#m/Ebm, G#m/Abm), so older charts still load.
+export const ALL_KEYS = [
+  ...['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
+  ...['C', 'C#', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].map((k) => `${k}m`),
+]
 /** The same key (major or minor) moved `semitones` up, spelled the way it's usually written. */
 export const transposeKey = (key, semitones) => {
   const minor = isMinorKey(key)
   const pc = mod12(noteToPc(keyTonic(key)) + semitones)
-  const names = minor ? ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'] : KEYS
-  return `${names[pc]}${minor ? 'm' : ''}`
+  return `${(minor ? MINOR_NAMES : MAJOR_NAMES)[pc]}${minor ? 'm' : ''}`
 }
 export const keyDistance = (from, to) => mod12(noteToPc(keyTonic(to)) - noteToPc(keyTonic(from)))
 
-/** Moves a chord symbol by `semitones`, keeping its quality text as written. */
-export const transposeSymbol = (symbol, semitones, flats) => {
+const LETTERS = 'CDEFGAB'
+/**
+ * Moves a chord symbol by `semitones`, keeping its quality text as written. With `letters` (how many letter names
+ * the key moves, e.g. 2 from Bb to D) roots keep their letter's place in the key, so a passing C#dim7 in Bb becomes
+ * G#dim7 in F (not Abdim7); without it, or when that would need E#, B#, Fb, Cb or a double accidental, roots use
+ * the `flats` spelling.
+ */
+export const transposeSymbol = (symbol, semitones, flats, letters = null) => {
   const chord = parseChord(symbol)
   if (!chord || !semitones) return symbol
-  const name = (pc) => pcName(pc + semitones, flats)
-  return `${name(chord.root)}${chord.quality}${chord.bass === null ? '' : `/${name(chord.bass)}`}`
+  const text = String(symbol).trim()
+  const rootText = ROOT_RE.exec(text)[0]
+  const name = (pc, written) => {
+    const spelled = letters === null ? null : spellFrom(written, pc + semitones, letters, flats)
+    // E#, B#, Fb and Cb are correct but hard to read on a chart, so those fall back to the key's sharps or flats.
+    return spelled && !/##|bb|E#|B#|Fb|Cb/.test(spelled) ? spelled : pcName(pc + semitones, flats)
+  }
+  const bassText = chord.bass === null ? '' : text.slice(text.lastIndexOf('/') + 1)
+  return `${name(chord.root, rootText)}${chord.quality}${chord.bass === null ? '' : `/${name(chord.bass, bassText)}`}`
 }
 
 /** Display pieces of a chord symbol: root, quality (with real ♭/♯) and slash bass. */
@@ -204,10 +228,11 @@ export const transposeChart = (chart, toKey) => {
   const shift = keyDistance(chart.key, toKey)
   if (!shift) return chart
   const flats = keyUsesFlats(toKey)
+  const letters = LETTERS.indexOf(keyTonic(toKey)[0]) - LETTERS.indexOf(keyTonic(chart.key)[0])
   const moveBar = (bar) =>
     String(bar)
       .split(/(\s+)/)
-      .map((t) => (t.trim() && t !== '/' && t !== '%' ? transposeSymbol(t, shift, flats) : t))
+      .map((t) => (t.trim() && t !== '/' && t !== '%' ? transposeSymbol(t, shift, flats, letters) : t))
       .join('')
   return { ...chart, key: toKey, sections: chart.sections.map((s) => ({ ...s, bars: s.bars.map(moveBar) })) }
 }

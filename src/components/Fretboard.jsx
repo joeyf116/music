@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { NUM_FRETS, noteRole } from '../lib/theory.js'
+import { NUM_FRETS, degreeRole, noteRole } from '../lib/theory.js'
 
 const LABEL_W = 26
 const OPEN_W = 44
@@ -31,9 +31,10 @@ const noteX = (fret) => (fret === 0 ? LABEL_W + OPEN_W / 2 : (FRET_X[fret - 1] +
 /**
  * SVG guitar neck. `notes` is a list of { string, fret, interval, level } where level is
  * 'faint' (in key), 'shape' (part of the selected shape) or 'active' (currently selected/playing).
- * An optional `role` overrides the colour/shape picked from the interval. `frets` draws a shorter neck.
+ * Roles (colour/shape) come from the interval read against `intervals` (the scale or chord formula), or from a
+ * note's `degree` name ('♭3', '♯4') when it has one. An optional `role` overrides both. `frets` draws a shorter neck.
  */
-export default function Fretboard({ tuning, notes, label, stringName, onNoteClick, frets = NUM_FRETS }) {
+export default function Fretboard({ tuning, intervals = [], notes, label, stringName, onNoteClick, frets = NUM_FRETS }) {
   const strings = tuning.length
   const width = FRET_X[frets] + 12
   const boardBottom = TOP + (strings - 1) * STRING_GAP
@@ -90,7 +91,7 @@ export default function Fretboard({ tuning, notes, label, stringName, onNoteClic
           ))}
 
           {notes.map((n) => {
-            const role = n.role ?? noteRole(n.interval)
+            const role = n.role ?? (n.degree ? degreeRole(n.degree) : noteRole(n.interval, intervals))
             return (
               <g key={`${n.string}-${n.fret}`} className={`note ${role} ${n.level}`} transform={`translate(${noteX(n.fret)} ${y(n.string)})`} onClick={() => onNoteClick?.(n)}>
                 <NoteMark role={role} />

@@ -9,7 +9,7 @@ export const POPULAR_CHARTS = [
   c('Jazz', 'Autumn Leaves', 'Joseph Kosma', 'swing', 'Gm', '4/4', 140, [
     S('A', 'Cm7', 'F7', 'Bbmaj7', 'Ebmaj7', 'Am7b5', 'D7b9', 'Gm6', '%'),
     S('A', 'Cm7', 'F7', 'Bbmaj7', 'Ebmaj7', 'Am7b5', 'D7b9', 'Gm6', '%'),
-    S('B', 'Am7b5', 'D7b9', 'Gm6', '%', 'Cm7', 'F7', 'Bbmaj7', 'Ebmaj7', 'Am7b5', 'D7b9', 'Gm7 Gb7', 'Fm7 E7', 'Am7b5', 'D7b9', 'Gm6', '%'),
+    S('B', 'Am7b5', 'D7b9', 'Gm6', '%', 'Cm7', 'F7', 'Bbmaj7', 'Ebmaj7', 'Am7b5', 'D7b9', 'Gm7 Gb7', 'Fm7 E7', 'Ebmaj7', 'Am7b5 D7b9', 'Gm6', '%'),
   ]),
   c('Jazz', 'All the Things You Are', 'Jerome Kern', 'swing', 'Ab', '4/4', 160, [
     S('A', 'Fm7', 'Bbm7', 'Eb7', 'Abmaj7', 'Dbmaj7', 'G7', 'Cmaj7', '%'),
@@ -49,7 +49,7 @@ export const POPULAR_CHARTS = [
   c('Jazz', 'Misty', 'Erroll Garner', 'ballad', 'Eb', '4/4', 66, [
     S('A', 'Ebmaj7', 'Bbm7 Eb7', 'Abmaj7', 'Abm7 Db7', 'Ebmaj7 Cm7', 'Fm7 Bb7', 'Gm7 C7', 'Fm7 Bb7'),
     S('A', 'Ebmaj7', 'Bbm7 Eb7', 'Abmaj7', 'Abm7 Db7', 'Ebmaj7 Cm7', 'Fm7 Bb7', 'Eb6', 'Bbm7 Eb7'),
-    S('B', 'Bbm7', 'Eb7b9', 'Abmaj7', '%', 'Am7 D7', 'Gm7b5 C7b9', 'Fm7', 'Bb7'),
+    S('B', 'Bbm7', 'Eb7b9', 'Abmaj7', '%', 'Am7 D7', 'Gm7 C7', 'Cm7 F7', 'Fm7 Bb7'),
     S('A', 'Ebmaj7', 'Bbm7 Eb7', 'Abmaj7', 'Abm7 Db7', 'Ebmaj7 Cm7', 'Fm7 Bb7', 'Eb6', 'Fm7 Bb7'),
   ]),
   c('Jazz', 'So What', 'Miles Davis', 'swing', 'Dm', '4/4', 136, [
@@ -76,7 +76,7 @@ export const POPULAR_CHARTS = [
     S('B', 'D7', '%', 'G7', '%', 'C7', '%', 'F7', '%'),
     S('A', 'Bb6 G7', 'Cm7 F7', 'Bb6 G7', 'Cm7 F7', 'Bb Bb7', 'Eb Ebm6', 'Bb/F F7', 'Bb6'),
   ]),
-  c('Jazz', 'Body and Soul', 'Johnny Green', 'ballad', 'C#', '4/4', 60, [
+  c('Jazz', 'Body and Soul', 'Johnny Green', 'ballad', 'Db', '4/4', 60, [
     S('A', 'Ebm7 Bb7b9', 'Ebm7 D7', 'Dbmaj7 Gb7', 'Fm7 Edim7', 'Ebm7 / Cm7b5 F7', 'Bbm7 Eb7', 'Ebm7 Ab7', 'Db6 Bb7'),
     S('A', 'Ebm7 Bb7b9', 'Ebm7 D7', 'Dbmaj7 Gb7', 'Fm7 Edim7', 'Ebm7 / Cm7b5 F7', 'Bbm7 Eb7', 'Ebm7 Ab7', 'Db6 A7'),
     S('B', 'Dmaj7', 'Em7 / Gm7 C7', 'F#m7 Bm7', 'Em7 A7', 'Dmaj7', 'Dm7 G7', 'Cmaj7 Ebdim7 Dm7 G7', 'C7 B7 Bb7 /'),

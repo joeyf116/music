@@ -12,6 +12,9 @@ import {
   pcName,
   scaleAcrossNeck,
   scalePosition,
+  spellFrom,
+  spellInterval,
+  spellNotes,
   stringSets,
   usesFlats,
   voiceInversion,
@@ -63,10 +66,11 @@ export const countLabel = (tick, meter) => {
   return COUNTS[meter.beatTicks]?.[offset] ?? ''
 }
 
-const makeNote = (tuning, string, fret, refPc, refIntervals) => {
+// `refName` is the reference root as spelled (e.g. 'Bb'), so the note gets its proper letter name too.
+const makeNote = (tuning, string, fret, refPc, refIntervals, refName) => {
   const pitch = tuning[string] + fret
   const interval = mod12(pitch - refPc)
-  return { string, fret, pitch, interval, degree: intervalName(interval, refIntervals) }
+  return { string, fret, pitch, interval, degree: intervalName(interval, refIntervals), name: refName && spellInterval(refName, interval, refIntervals) }
 }
 
 // Give a note a fret on the string that keeps it closest to the frets lo-hi.
@@ -195,7 +199,7 @@ export const parseChord = (token, keyPc) => {
     const shift = acc === 'b' || acc === '♭' ? -1 : acc ? 1 : 0
     const degree = NUMERALS.indexOf(numeral.toUpperCase())
     // A flattened numeral (bVII) is spelled with flats, a sharpened one with sharps.
-    return { rootPc: mod12(keyPc + MAJOR_STEPS[degree] + shift), type, numeral: true, flats: shift ? shift < 0 : undefined }
+    return { rootPc: mod12(keyPc + MAJOR_STEPS[degree] + shift), type, numeral: true, degree, flats: shift ? shift < 0 : undefined }
   }
   const letter = token.match(LETTER)
   if (letter) {
@@ -204,7 +208,7 @@ export const parseChord = (token, keyPc) => {
     if (entry === undefined) return null
     const type = Array.isArray(entry) ? entry[0] : entry
     const shift = acc === 'b' || acc === '♭' ? -1 : acc ? 1 : 0
-    return { rootPc: mod12(noteToPc(name) + shift), type, flats: shift < 0 ? true : shift > 0 ? false : undefined }
+    return { rootPc: mod12(noteToPc(name) + shift), rootName: `${name}${shift < 0 ? 'b' : shift > 0 ? '#' : ''}`, type, flats: shift < 0 ? true : shift > 0 ? false : undefined }
   }
   return null
 }
@@ -232,7 +236,9 @@ export const parseProgression = (text, key, { sevenths = false } = {}) => {
     }
     if (sevenths) chord = addSeventh(chord, keyPc)
     const def = CHORDS[chord.type]
-    chords.push({ ...chord, intervals: def.intervals, name: `${pcName(chord.rootPc, chord.flats ?? flats)}${def.symbol}` })
+    // A numeral's root sits on its scale degree's letter: iii in C# is E#m, bVI in Eb is Cb.
+    const rootName = chord.rootName ?? (chord.numeral ? spellFrom(key, chord.rootPc, chord.degree, chord.flats ?? flats) : pcName(chord.rootPc, chord.flats ?? flats))
+    chords.push({ ...chord, rootName, intervals: def.intervals, name: `${rootName}${def.symbol}` })
   }
   return { chords, errors }
 }
@@ -267,8 +273,8 @@ const MOVES = {
     'vii°': ['I', 'iii'],
   },
   minor: {
-    i: ['iv', 'bVI', 'bVII', 'v', 'bIII', 'iiø'],
-    iiø: ['V', 'v'],
+    i: ['iv', 'bVI', 'bVII', 'v', 'bIII', 'ii°'],
+    'ii°': ['V', 'v'],
     bIII: ['bVI', 'iv', 'bVII'],
     iv: ['V', 'bVII', 'i', 'v'],
     v: ['i', 'bVI', 'iv'],
@@ -335,7 +341,8 @@ export const voiceProgression = (chords, tuning, area = 'open') => {
     previous = voicingPosition(best)
     return best.map((n) => {
       const interval = mod12(n.pitch - chord.rootPc)
-      return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, chord.intervals) }
+      const name = chord.rootName && spellInterval(chord.rootName, interval, chord.intervals)
+      return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, chord.intervals), name }
     })
   })
 }
@@ -454,13 +461,15 @@ export const diatonicChord = (intervals, degree, size) =>
   Array.from({ length: size }, (_, k) => mod12(intervals[(degree + 2 * k) % intervals.length] - intervals[degree]))
 
 export const chordSymbol = (intervals) => {
+  // Every chord stacked from the seven-note scales has a type, including harmonic/melodic minor's maj7♯5.
   const match = Object.values(CHORDS).find((c) => c.intervals.join() === intervals.join())
   return match ? match.symbol : ''
 }
 
-const withDegree = (n, refPc, refIntervals) => {
+const withDegree = (n, refPc, refIntervals, refName) => {
   const interval = mod12(n.pitch - refPc)
-  return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, refIntervals) }
+  const name = refName && spellInterval(refName, interval, refIntervals)
+  return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, refIntervals), name }
 }
 
 // How a scale or arpeggio is fingered: a box that stays in one position, or a diagonal run that starts in that
@@ -477,7 +486,8 @@ const scaleNotes = (s, tuning) => {
   const scale = SCALES[s.scale] ?? SCALES.major
   const rootPc = noteToPc(s.key)
   const position = Math.min(s.position, scale.intervals.length - 1)
-  const notes = layoutShape(s.layout, rootPc, scale.intervals, tuning, position).map((n) => withDegree(n, rootPc, scale.intervals))
+  const { root } = spellNotes(s.key, scale.intervals, true)
+  const notes = layoutShape(s.layout, rootPc, scale.intervals, tuning, position).map((n) => withDegree(n, rootPc, scale.intervals, root))
   return { scale, rootPc, notes }
 }
 
@@ -498,7 +508,8 @@ const BUILDERS = {
     const string = Math.min(s.string, tuning.length - 1)
     const start = mod12(rootPc - tuning[string])
     const steps = [...scale.intervals, 12].filter((i) => start + i <= NUM_FRETS)
-    const up = steps.map((i) => makeNote(tuning, string, start + i, rootPc, scale.intervals))
+    const { root } = spellNotes(s.key, scale.intervals, true)
+    const up = steps.map((i) => makeNote(tuning, string, start + i, rootPc, scale.intervals, root))
     const items = [...up, ...up.slice(1, -1).reverse()].map((n) => single(n))
     const ticks = rateTicks(s.rate, meter)
     return finalize(layoutLine(items, meter, () => ticks), meter)
@@ -524,7 +535,8 @@ const BUILDERS = {
     const items = []
     const add = (string, finger) => {
       const n = makeNote(tuning, string, start + finger - 1, tuning[0], [])
-      items.push(single({ ...n, degree: String(finger) }))
+      // Finger numbers, not scale degrees, so the notes aren't coloured as 3rds or 5ths.
+      items.push(single({ ...n, degree: String(finger), role: 'other' }))
     }
     strings.forEach((string) => fingers.forEach((f) => add(string, f)))
     ;[...strings].reverse().forEach((string) => [...fingers].reverse().forEach((f) => add(string, f)))
@@ -535,7 +547,7 @@ const BUILDERS = {
   diatonicArpeggios(s, tuning, meter) {
     const scale = sevenNoteScale(s.scale)
     const rootPc = noteToPc(s.key)
-    const flats = usesFlats(s.key)
+    const { names } = spellNotes(s.key, scale.intervals, true)
     const position = Math.min(s.position, 6)
     const shape = scalePosition(rootPc, scale.intervals, tuning, position)
     const frets = shape.map((n) => n.fret)
@@ -552,11 +564,11 @@ const BUILDERS = {
       let order = size === 3 ? [...tones, 12] : tones
       if (s.arpDirection === 'updown') order = [...order, ...order.slice(1, -1).reverse()]
       if (s.arpDirection === 'alternate' && k % 2 === 1) order = [...order].reverse()
-      const name = `${pcName(chordRoot, flats)}${chordSymbol(tones)}`
+      const name = `${names[degree]}${chordSymbol(tones)}`
       order.forEach((semis, i) => {
         const pitch = rootPitch + semis
         const placed = byPitch.get(pitch) ?? placePitch(pitch, tuning, lo, hi)
-        items.push(single(placed && withDegree(placed, chordRoot, tones), { heading: i === 0 ? name : undefined }))
+        items.push(single(placed && withDegree(placed, chordRoot, tones, names[degree]), { heading: i === 0 ? name : undefined }))
       })
     })
     const ticks = rateTicks(s.rate, meter)
@@ -567,7 +579,7 @@ const BUILDERS = {
     const chord = CHORDS[s.chord] ?? CHORDS.maj7
     const rootPc = noteToPc(s.key)
     const position = Math.min(s.position, chord.intervals.length - 1)
-    const notes = layoutShape(s.layout, rootPc, chord.intervals, tuning, position).map((n) => withDegree(n, rootPc, chord.intervals))
+    const notes = layoutShape(s.layout, rootPc, chord.intervals, tuning, position).map((n) => withDegree(n, rootPc, chord.intervals, s.key))
     const name = `${s.key}${chord.symbol}`
     const items = sequenceIndices(notes.length, [0]).map((i, k) => single(notes[i], { heading: k === 0 ? name : undefined }))
     const ticks = rateTicks(s.rate, meter)
@@ -577,7 +589,7 @@ const BUILDERS = {
   triadSets(s, tuning, meter) {
     const scale = sevenNoteScale(s.scale)
     const rootPc = noteToPc(s.key)
-    const flats = usesFlats(s.key)
+    const { names } = spellNotes(s.key, scale.intervals, true)
     const sets = stringSets(3, tuning.length)
     const strings = sets[Math.min(s.stringSet, sets.length - 1)]
     const items = []
@@ -590,8 +602,8 @@ const BUILDERS = {
       const shape = voiceInversion(chordRoot, tones, tuning, strings, inversion, minFret) ?? voiceInversion(chordRoot, tones, tuning, strings, inversion, 0)
       if (!shape) break
       minFret = Math.min(...shape.map((n) => n.fret))
-      const notes = shape.map((n) => withDegree(n, chordRoot, tones))
-      const heading = `${pcName(chordRoot, flats)}${chordSymbol(tones)}`
+      const notes = shape.map((n) => withDegree(n, chordRoot, tones, names[degree]))
+      const heading = `${names[degree]}${chordSymbol(tones)}`
       if (s.triadStyle === 'block') items.push({ notes, heading })
       else [0, 1, 2, 1].forEach((i, k) => items.push(single(notes[i], { heading: k === 0 ? heading : undefined })))
     }
