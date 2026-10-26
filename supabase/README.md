@@ -28,3 +28,10 @@ links, add a link, remove a link they added themselves (from the same browser) a
 - Want to approve every link before it shows? Run
   `alter table public.resources alter column approved set default false;`
   in the SQL Editor, then tick **approved** on the ones you want to keep.
+
+## Shared charts
+
+The Charts page uses the same project for charts anyone can share. Run
+[`charts.sql`](./charts.sql) once in the SQL Editor (already done for `guitar-music`). Visitors can read
+approved charts, add a chart, edit or remove a chart they shared themselves (from the same browser) and
+report a chart; after 3 reports it's hidden. Review or delete rows in **Table Editor → charts**.
