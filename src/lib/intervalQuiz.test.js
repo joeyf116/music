@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PRESETS, answerLabel, intervalInfo, pitchesOf, positionsOf, randomQuestion } from './intervalQuiz.js'
+import { PRESETS, answerLabel, gameReducer, initialGame, intervalInfo, pitchesOf, positionsOf, randomQuestion, roundState } from './intervalQuiz.js'
 import { TUNINGS } from './theory.js'
 
 const standard = TUNINGS.standard.pitches
@@ -50,5 +50,72 @@ describe('interval quiz', () => {
     expect(answerLabel({ semitones: 12, direction: 'together' })).toBe('P8')
     expect(intervalInfo(6).name).toBe('Tritone')
     expect(PRESETS[0].semitones).toEqual([4, 7, 12])
+  })
+})
+
+describe('interval quiz lifecycle', () => {
+  const q = (semitones) => ({ root: { string: 0, fret: 3 }, target: { string: 1, fret: 3 }, semitones, direction: 'up' })
+  const start = (semitones = 7) => initialGame(q(semitones))
+
+  it('scores a right first answer and builds the streak', () => {
+    const g = gameReducer(start(), { type: 'guess', size: 7 })
+    expect(roundState(g)).toBe('solved')
+    expect(g.score).toEqual({ right: 1, tries: 1 })
+    expect(g.streak).toBe(1)
+    expect(g.stats[7]).toEqual({ right: 1, tries: 1 })
+  })
+
+  it('keeps the best streak after the streak ends', () => {
+    let g = initialGame(q(7), { best: 1 })
+    g = gameReducer(g, { type: 'guess', size: 7 })
+    g = gameReducer(g, { type: 'next', question: q(7) })
+    g = gameReducer(g, { type: 'guess', size: 7 })
+    expect(g.best).toBe(2)
+    g = gameReducer(gameReducer(g, { type: 'next', question: q(7) }), { type: 'guess', size: 5 })
+    expect(g.streak).toBe(0)
+    expect(g.best).toBe(2)
+  })
+
+  it('stays on the same question after a wrong answer', () => {
+    const g = gameReducer(start(), { type: 'guess', size: 5 })
+    expect(roundState(g)).toBe('asking')
+    expect(g.question.semitones).toBe(7)
+    expect(g.guesses).toEqual([5])
+    expect(g.score).toEqual({ right: 0, tries: 1 })
+    expect(g.streak).toBe(0)
+  })
+
+  it('only scores the first answer to a question', () => {
+    let g = gameReducer({ ...start(), streak: 3 }, { type: 'guess', size: 5 })
+    g = gameReducer(g, { type: 'guess', size: 5 })
+    g = gameReducer(g, { type: 'guess', size: 7 })
+    expect(roundState(g)).toBe('solved')
+    expect(g.score).toEqual({ right: 0, tries: 1 })
+    expect(g.streak).toBe(0)
+    expect(g.stats[7]).toEqual({ right: 0, tries: 1 })
+  })
+
+  it('ignores answers once the question is over', () => {
+    const solved = gameReducer(start(), { type: 'guess', size: 7 })
+    expect(gameReducer(solved, { type: 'guess', size: 5 })).toBe(solved)
+    expect(gameReducer(solved, { type: 'reveal' })).toBe(solved)
+  })
+
+  it('counts showing the answer as a miss', () => {
+    const g = gameReducer({ ...start(), streak: 2 }, { type: 'reveal' })
+    expect(roundState(g)).toBe('revealed')
+    expect(g.score).toEqual({ right: 0, tries: 1 })
+    expect(g.streak).toBe(0)
+  })
+
+  it('skipping ends the streak without scoring, moving on after an answer keeps it', () => {
+    const skipped = gameReducer({ ...start(), streak: 2 }, { type: 'next', question: q(4) })
+    expect(skipped.streak).toBe(0)
+    expect(skipped.score).toEqual({ right: 0, tries: 0 })
+    const solved = gameReducer(start(), { type: 'guess', size: 7 })
+    const next = gameReducer(solved, { type: 'next', question: q(4) })
+    expect(next.streak).toBe(1)
+    expect(roundState(next)).toBe('asking')
+    expect(next.guesses).toEqual([])
   })
 })

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { playPitch } from '../lib/audio.js'
-import { DIRECTIONS, INTERVALS, PRESETS, answerLabel, intervalInfo, pitchesOf, randomQuestion } from '../lib/intervalQuiz.js'
+import { DIRECTIONS, INTERVALS, PRESETS, answerLabel, gameReducer, initialGame, intervalInfo, pitchesOf, randomQuestion, roundState } from '../lib/intervalQuiz.js'
 import { pcName } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import Fretboard from './Fretboard.jsx'
@@ -11,13 +11,34 @@ const RANGES = [
   { maxFret: 12, label: 'Frets 0–12' },
   { maxFret: 22, label: 'Whole neck' },
 ]
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
 // Seconds between the two notes, how long each rings, and the pause before a loop repeats.
 const GAP = 0.9
 const RING = 1.4
 const LOOP_PAUSE = 0.8
 const DIRECTION_TEXT = { up: 'going up', down: 'going down', together: 'played together' }
+// Keyboard shortcuts for the answer buttons, in order.
+const ANSWER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=']
+const STATS_KEY = 'music.intervalStats'
+const BEST_KEY = 'music.intervalBest'
+const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name.toLowerCase()}`
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
+
+const load = (key, fallback) => {
+  try {
+    const stored = window.localStorage.getItem(key)
+    return stored === null ? fallback : JSON.parse(stored)
+  } catch {
+    return fallback
+  }
+}
+const save = (key, value) => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // Storage may be unavailable (private mode); stats just won't persist.
+  }
+}
 
 /** "Guess the interval": the root is shown on the neck, the two notes are played, name the gap by ear. */
 export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
@@ -26,17 +47,22 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
   const [direction, setDirection] = usePersistentState('music.intervalDirection', 'up')
   const [loop, setLoop] = usePersistentState('music.intervalLoop', false)
   const [autoPlay, setAutoPlay] = usePersistentState('music.intervalAutoPlay', true)
-  const [best, setBest] = usePersistentState('music.intervalBest', 0)
+  // Settings start folded on phones so the game itself is on screen first.
+  const [settingsOpen, setSettingsOpen] = usePersistentState('music.intervalSettingsOpen', !window.matchMedia?.('(max-width: 640px)').matches)
   const choices = INTERVALS.filter((i) => enabled.includes(i.semitones))
   const semitones = choices.length ? choices.map((i) => i.semitones) : PRESETS[0].semitones
-  const [question, setQuestion] = useState(() => randomQuestion(tuning, maxFret, semitones, direction))
-  const [guesses, setGuesses] = useState([])
-  const [revealed, setRevealed] = useState(false)
-  const [score, setScore] = useState({ right: 0, tries: 0 })
-  const [streak, setStreak] = useState(0)
-  const [feedback, setFeedback] = useState('')
+  const [game, dispatch] = useReducer(gameReducer, null, () =>
+    initialGame(randomQuestion(tuning, maxFret, semitones, direction), { stats: load(STATS_KEY, {}), best: load(BEST_KEY, 0) }),
+  )
   const [playing, setPlaying] = useState(false)
   const sound = useRef({ timers: [], stops: [] })
+  const nextButton = useRef(null)
+
+  const { question, guesses, score, streak, best, stats } = game
+  const state = roundState(game)
+  const done = state === 'solved' || state === 'revealed'
+  useEffect(() => save(STATS_KEY, stats), [stats])
+  useEffect(() => save(BEST_KEY, best), [best])
 
   const stop = () => {
     sound.current.timers.forEach(clearTimeout)
@@ -46,8 +72,10 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
   }
 
   // Plays root then second note (or both at once), repeating until stopped when `repeat` is on.
-  const play = (q = question, { repeat = loop, size = q.semitones } = {}) => {
+  // `size` plays a different interval from the same root, for comparing after an answer.
+  const play = (q = question, { repeat = loop, size = q?.semitones } = {}) => {
     stop()
+    if (!q) return
     const [root] = pitchesOf(q, tuning)
     const second = root + (q.direction === 'down' ? -size : size)
     const together = q.direction === 'together'
@@ -59,62 +87,44 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
     setPlaying(true)
     round()
   }
+  const togglePlay = () => (playing ? stop() : play())
 
-  const next = () => {
+  // `sound` is false when settings change, so fiddling with options never starts a new sound.
+  const next = ({ sound: withSound = autoPlay } = {}) => {
     const q = randomQuestion(tuning, maxFret, semitones, direction, Math.random, question)
-    setQuestion(q)
-    setGuesses([])
-    setRevealed(false)
-    setFeedback('')
-    if (autoPlay && q) play(q)
+    dispatch({ type: 'next', question: q })
+    if (withSound && q) play(q)
     else stop()
   }
 
-  // A new tuning or setting makes the current question unfair, so start a fresh one.
+  // A new tuning or setting makes the current question unfair, so start a fresh one (quietly).
   const settingsKey = `${tuning.join(',')}|${maxFret}|${semitones.join(',')}|${direction}`
   const lastSettings = useRef(settingsKey)
   useEffect(() => {
     if (lastSettings.current === settingsKey) return
     lastSettings.current = settingsKey
-    next()
+    next({ sound: false })
   })
   useEffect(() => stop, [])
 
-  const solved = question && guesses.includes(question.semitones)
-  const done = solved || revealed
-  const firstTry = guesses.length === 0 && !revealed
-
-  const finish = (correct) => {
-    if (firstTry) setScore({ right: score.right + (correct ? 1 : 0), tries: score.tries + 1 })
-    const nextStreak = correct && firstTry ? streak + 1 : 0
-    setStreak(nextStreak)
-    if (nextStreak > best) setBest(nextStreak)
-  }
+  // Once a question is over, move focus to "Next" so Enter carries on.
+  useEffect(() => {
+    if (done) nextButton.current?.focus({ preventScroll: true })
+  }, [done])
 
   const answer = (size) => {
     if (!question) return
-    const info = intervalInfo(size)
-    // After the answer is known, every button just plays that interval from the same root for comparison.
+    // After the answer is known, every button plays that interval from the same root for comparison.
     if (done) return play(question, { repeat: false, size })
     if (guesses.includes(size)) return
-    setGuesses([...guesses, size])
-    if (size === question.semitones) {
-      finish(true)
-      const cue = question.direction === 'up' ? ` Think “${info.song}”.` : ''
-      setFeedback(`${firstTry ? 'Correct!' : 'Got it.'} That's a ${info.name.toLowerCase()} (${size} frets apart).${cue}`)
-      play(question, { repeat: false })
-    } else {
-      if (firstTry) finish(false)
-      setFeedback(`Not a ${info.name.toLowerCase()}: that's how one sounds. Listen again and try another.`)
-      play(question, { repeat: false, size })
-    }
+    dispatch({ type: 'guess', size })
+    // A right answer replays the pair so the sound sticks with the shape now shown on the neck.
+    // A wrong one stays on this question and stays quiet; Play repeats it.
+    if (size === question.semitones) play(question, { repeat: false })
   }
 
   const reveal = () => {
-    finish(false)
-    setRevealed(true)
-    const info = intervalInfo(question.semitones)
-    setFeedback(`It was a ${info.name.toLowerCase()} (${question.semitones} frets apart). Think “${info.song}”.`)
+    dispatch({ type: 'reveal' })
     play(question, { repeat: false })
   }
 
@@ -123,17 +133,22 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
     if (list.length) setEnabled(list)
   }
 
-  // Space plays/stops and N (or Enter once answered) moves on, unless a field or button has focus.
+  // Space plays/stops anywhere on the page (it never presses a focused button, so it can't skip a
+  // question), number keys answer, and N or Enter moves on once the question is over.
   const keyRef = useRef(null)
   useEffect(() => {
     keyRef.current = (e) => {
-      if (isTyping(document.activeElement)) return
+      if (isTyping(document.activeElement) || e.ctrlKey || e.metaKey || e.altKey) return
       const onButton = document.activeElement?.tagName === 'BUTTON'
-      if (e.key === ' ' && !onButton) {
+      const index = ANSWER_KEYS.indexOf(e.key)
+      if (e.key === ' ') {
         e.preventDefault()
-        if (playing) stop()
-        else play()
-      } else if (e.key === 'n' || e.key === 'N' || (e.key === 'Enter' && done && !onButton)) next()
+        togglePlay()
+      } else if (index >= 0 && choices[index]) {
+        answer(choices[index].semitones)
+      } else if (e.key === 'n' || e.key === 'N' || (e.key === 'Enter' && done && !onButton)) {
+        next()
+      }
     }
   })
   useEffect(() => {
@@ -142,17 +157,48 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const info = question && intervalInfo(question.semitones)
+  const wrongGuesses = guesses.filter((g) => g !== question?.semitones)
+  const feedback = (() => {
+    if (!question) return ''
+    if (state === 'solved') {
+      const cue = question.direction === 'up' ? ` Think “${info.song}”.` : ''
+      return `${wrongGuesses.length ? 'Got it.' : 'Correct!'} That's ${withArticle(info.name)}, ${question.semitones} frets apart.${cue}`
+    }
+    if (state === 'revealed') return `It was ${withArticle(info.name)}, ${question.semitones} frets apart. Think “${info.song}”.`
+    if (wrongGuesses.length) {
+      const last = intervalInfo(wrongGuesses[wrongGuesses.length - 1])
+      return `Not ${withArticle(last.name)}. Same notes, try again: press Play to hear them.`
+    }
+    return 'Press Play, listen, then pick the interval.'
+  })()
+  const compareHint = done && wrongGuesses.length ? `Tap ${wrongGuesses.map((g) => intervalInfo(g).short).join(', ')} and ${info.short} to hear the difference.` : done ? 'Tap any interval to hear it from this root.' : ''
+
   const stringLabel = (s) => `${ORDINALS[tuning.length - s] ?? ''} string`
   const notes = []
   if (question) {
-    notes.push({ ...question.root, role: 'root', level: 'shape' })
+    notes.push({ ...question.root, role: 'root', level: playing ? 'active' : 'shape' })
     if (done) notes.push({ ...question.target, role: 'correct', level: 'shape' })
   }
+
+  const presetName = PRESETS.find((p) => p.semitones.join() === semitones.join())?.label
+  const settingsSummary = [DIRECTIONS.find((d) => d.id === direction)?.label, presetName ?? choices.map((i) => i.short).join(' '), RANGES.find((r) => r.maxFret === maxFret)?.label].join(' · ')
+  const statRows = choices.map((i) => ({ ...i, ...(stats[i.semitones] ?? { right: 0, tries: 0 }) }))
+  const tried = statRows.filter((r) => r.tries)
 
   return (
     <section className="panel quiz">
       <div className="section-head">
         <h2>Guess the interval</h2>
+        <span className="quiz-score" aria-live="polite">
+          Score {score.right}/{score.tries} · Streak {streak} · Best {best}
+        </span>
+      </div>
+
+      <details className="quiz-settings-panel" open={settingsOpen} onToggle={(e) => setSettingsOpen(e.currentTarget.open)}>
+        <summary>
+          Settings <span className="settings-summary">{settingsSummary}</span>
+        </summary>
         <div className="quiz-settings">
           <div className="segmented small" role="group" aria-label="Direction">
             {DIRECTIONS.map((d) => (
@@ -169,46 +215,43 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
               </option>
             ))}
           </select>
+          <label className="check">
+            <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
+            Loop until stopped
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} />
+            Auto-play next
+          </label>
         </div>
-      </div>
-
-      <div className="interval-picker">
-        <span className="picker-label">Intervals</span>
-        <div className="presets" role="group" aria-label="Interval presets">
-          {PRESETS.map((p) => (
-            <button key={p.id} type="button" className={p.semitones.join() === semitones.join() ? 'on' : ''} onClick={() => setEnabled(p.semitones)}>
-              {p.label}
-            </button>
-          ))}
+        <div className="interval-picker">
+          <span className="picker-label">Intervals</span>
+          <div className="presets" role="group" aria-label="Interval presets">
+            {PRESETS.map((p) => (
+              <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} onClick={() => setEnabled(p.semitones)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="interval-toggles" role="group" aria-label="Intervals to practise">
+            {INTERVALS.map((i) => (
+              <button key={i.semitones} type="button" className={enabled.includes(i.semitones) ? 'on' : ''} aria-pressed={enabled.includes(i.semitones)} title={i.name} onClick={() => toggleInterval(i.semitones)}>
+                {i.short}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="interval-toggles" role="group" aria-label="Intervals to practise">
-          {INTERVALS.map((i) => (
-            <button key={i.semitones} type="button" className={enabled.includes(i.semitones) ? 'on' : ''} aria-pressed={enabled.includes(i.semitones)} title={i.name} onClick={() => toggleInterval(i.semitones)}>
-              {i.short}
-            </button>
-          ))}
-        </div>
-      </div>
+      </details>
 
       {question ? (
         <>
           <div className="quiz-listen">
-            <button type="button" className="primary play-button" onClick={() => (playing ? stop() : play())} aria-pressed={playing}>
-              {playing ? '■ Stop' : '▶ Play'}
+            <button type="button" className="primary play-button" onClick={togglePlay} aria-pressed={playing}>
+              {playing ? '■ Stop' : done ? '▶ Replay' : '▶ Play'}
             </button>
             <p className="quiz-prompt">
               The root is <strong>{pcName(pitchesOf(question, tuning)[0])}</strong> on the {stringLabel(question.root.string)}. Name the interval {DIRECTION_TEXT[question.direction]}.
             </p>
-            <div className="listen-options">
-              <label className="check">
-                <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
-                Loop until stopped
-              </label>
-              <label className="check">
-                <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} />
-                Auto-play next
-              </label>
-            </div>
           </div>
 
           <Fretboard
@@ -220,35 +263,72 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
             frets={maxFret}
           />
 
-          <div className="interval-answers" role="group" aria-label="Your answer">
-            {choices.map((i) => {
-              const state = done && i.semitones === question.semitones ? 'correct' : guesses.includes(i.semitones) ? 'wrong' : ''
+          <p className={`quiz-feedback ${state}${wrongGuesses.length && !done ? ' missed' : ''}`} aria-live="polite">
+            {feedback}
+            {compareHint && <small>{compareHint}</small>}
+          </p>
+
+          <div className={`interval-answers${done ? ' comparing' : ''}`} role="group" aria-label={done ? 'Hear an interval from this root' : 'Your answer'}>
+            {choices.map((i, index) => {
+              const mark = done && i.semitones === question.semitones ? 'correct' : guesses.includes(i.semitones) ? 'wrong' : ''
               return (
-                <button key={i.semitones} type="button" className={`answer ${state}`} onClick={() => answer(i.semitones)}>
-                  <strong>{i.short}</strong>
+                <button
+                  key={i.semitones}
+                  type="button"
+                  className={`answer ${mark}`}
+                  onClick={() => answer(i.semitones)}
+                  disabled={!done && mark === 'wrong'}
+                  aria-label={done ? `Hear ${withArticle(i.name)}` : i.name}
+                >
+                  {ANSWER_KEYS[index] && <kbd>{ANSWER_KEYS[index]}</kbd>}
+                  <strong>
+                    {done && <span aria-hidden="true">🔊 </span>}
+                    {i.short}
+                  </strong>
                   <small>{i.name}</small>
                 </button>
               )
             })}
           </div>
 
-          <div className="quiz-footer">
-            <p className="quiz-feedback" aria-live="polite">
-              {feedback || (done ? '' : 'Press Play, listen, then pick the interval.')}
-            </p>
-            <div className="quiz-actions">
-              <span className="quiz-score">
-                Score {score.right}/{score.tries} · Streak {streak} · Best {best}
-              </span>
-              <button type="button" onClick={reveal} disabled={done}>
-                Show answer
+          <div className="quiz-actions">
+            {!done && (
+              <>
+                <button type="button" onClick={reveal}>
+                  Show answer
+                </button>
+                <button type="button" onClick={() => next()}>
+                  Skip
+                </button>
+              </>
+            )}
+            {done && (
+              <button type="button" className="primary next-button" ref={nextButton} onClick={() => next()}>
+                Next interval →
               </button>
-              <button type="button" className="primary" onClick={() => next()}>
-                Next interval
-              </button>
-            </div>
+            )}
           </div>
-          <p className="hint">Space plays or stops · N for the next interval · after answering, tap any interval to hear it from the same root.</p>
+          <p className="hint keys-hint">Keys: Space play/stop · 1–{Math.min(choices.length, 9)} answer · Enter or N next.</p>
+
+          {tried.length > 0 && (
+            <details className="quiz-stats">
+              <summary>Accuracy by interval</summary>
+              <ul>
+                {statRows.map((r) => (
+                  <li key={r.semitones}>
+                    <span className="stat-name">{r.short}</span>
+                    <span className="stat-bar" aria-hidden="true">
+                      <span style={{ width: `${r.tries ? (r.right / r.tries) * 100 : 0}%` }} />
+                    </span>
+                    <span className="stat-value">{r.tries ? `${Math.round((r.right / r.tries) * 100)}% of ${r.tries}` : 'not yet'}</span>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" onClick={() => dispatch({ type: 'resetStats' })}>
+                Reset stats
+              </button>
+            </details>
+          )}
         </>
       ) : (
         <p className="empty">None of these intervals fit in this fret range. Try a wider range.</p>
