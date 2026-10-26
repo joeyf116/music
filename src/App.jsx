@@ -67,6 +67,7 @@ const PAGES = [
     icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5ZM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z" />,
   },
 ]
+const ALL_POSITIONS = 'all'
 const LEVELS = { faint: 0, path: 1, shape: 2, active: 3 }
 const LEGEND = [
   ['root', 'Root'],
@@ -117,11 +118,27 @@ export default function App() {
   const view = useMemo(() => {
     if (mode === 'scale') {
       const positions = intervals.map((_, degree) => scalePosition(rootPc, intervals, tuning, degree))
+      const options = [...positions.map((p, i) => ({ label: `Position ${i + 1}`, hint: fretRange(p) })), { label: 'All', hint: 'whole neck' }]
+      if (position === ALL_POSITIONS) {
+        // Every position in one view: the tab climbs the neck one shape at a time (each ascending, labelled like
+        // its button), and the neck lights the shape being played so you always know which box you're in.
+        const order = positions.map((notes, i) => ({ notes, i, lo: Math.min(...notes.map((n) => n.fret)) })).sort((a, b) => a.lo - b.lo)
+        return {
+          options,
+          optionIndex: positions.length,
+          path: findPositions(tuning, intervals.map((i) => rootPc + i)),
+          columns: order.flatMap(({ notes, i }, k) => notes.map((n, j) => ({ notes: [n], shape: notes, heading: j === 0 ? `Position ${i + 1} · ${fretRange(notes)}` : undefined, groupStart: j === 0 && k > 0 }))),
+          columnWidth: 28,
+          defaultActive: null,
+          shape: null,
+          all: true,
+        }
+      }
       const index = Math.min(position, positions.length - 1)
       const notes = positions[index]
       const run = [...notes, ...notes.slice(0, -1).reverse()]
       return {
-        options: positions.map((p, i) => ({ label: `Position ${i + 1}`, hint: fretRange(p) })),
+        options,
         optionIndex: index,
         path: [],
         columns: run.map((n) => ({ notes: [n] })),
@@ -221,6 +238,8 @@ export default function App() {
     if (showAll) findPositions(tuning, intervals.map((i) => rootPc + i)).forEach((n) => add(n, 'faint'))
     view.path.forEach((n) => add(n, 'path'))
     view.shape?.forEach((n) => add(n, 'shape'))
+    // All positions: every note is shown; until a note plays, all of them read as one full-strength neck.
+    if (view.all) (activeColumn?.shape ?? view.path).forEach((n) => add(n, 'shape'))
     activeColumn?.notes.forEach((n) => add(n, mode === 'scale' ? 'active' : 'shape'))
     return [...map.values()].sort((a, b) => LEVELS[a.level] - LEVELS[b.level])
   })()
@@ -279,9 +298,11 @@ export default function App() {
                 <TuningSelect value={tuningId} onChange={setTuningId} />
               </Field>
               <Choice label="Note labels" options={LABEL_OPTIONS} value={labels} onChange={setLabels} />
-              <Toggle checked={showAll} onChange={setShowAll}>
-                Show every note on the neck
-              </Toggle>
+              {!view.all && (
+                <Toggle checked={showAll} onChange={setShowAll}>
+                  Show every note on the neck
+                </Toggle>
+              )}
             </div>
 
             <span className="field-label key-label" id="fretboard-key-label">
@@ -320,7 +341,7 @@ export default function App() {
             {view.options.length > 0 && (
               <div className="options" role="group" aria-label={mode === 'scale' ? 'Scale position' : 'String set'}>
                 {view.options.map((o, i) => (
-                  <button key={o.label} className={i === view.optionIndex ? 'on' : ''} onClick={() => (mode === 'scale' ? setPosition(i) : setStringSet(i))}>
+                  <button key={o.label} className={i === view.optionIndex ? 'on' : ''} onClick={() => (mode === 'scale' ? setPosition(i === view.options.length - 1 ? ALL_POSITIONS : i) : setStringSet(i))}>
                     {o.label}
                     {o.hint && <small>{o.hint}</small>}
                   </button>
@@ -332,7 +353,7 @@ export default function App() {
               <h3>
                 Tab
                 <small>
-                  {mode === 'scale' && 'ascending & descending'}
+                  {mode === 'scale' && (view.all ? 'every position, up the neck' : 'ascending & descending')}
                   {mode === 'chord' && 'voicings up the neck'}
                   {mode === 'inversion' && `${INVERSION_NAMES.slice(0, intervals.length).join(' → ')} moving up the neck`}
                 </small>
