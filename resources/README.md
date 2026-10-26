@@ -1,6 +1,7 @@
 # Practice resources
 
-Everything in this folder shows up on the **Resources** page of the site (top navigation).
+Everything in this folder shows up on the **Resources** page of the site, together with links
+visitors share from the page itself (see [`supabase/README.md`](../supabase/README.md)).
 
 ## Add a PDF (or image, audio, Guitar Pro file…)
 
@@ -21,11 +22,20 @@ Add an entry to [`links.json`](./links.json):
   "title": "My favourite lesson",
   "url": "https://example.com/lesson",
   "category": "Lessons",
+  "type": "Lesson",
+  "level": "Beginner",
+  "tags": ["strumming", "rhythm"],
   "description": "Optional short note"
 }
 ```
 
-Only `http(s)` URLs are accepted.
+- `type` is one of `Tab, Lesson, Video, Backing track, Tool, Article, PDF, Other`
+  (left out, it's guessed from the URL: YouTube is a Video, Songsterr/Ultimate Guitar a Tab, `.pdf` a PDF).
+- `level` is optional: `Beginner`, `Intermediate` or `Advanced`.
+- `tags` power the tag filter on the page; keep them short and lower-case.
+- Only `http(s)` URLs are accepted.
 
-> Tip: the **Quick-save a link** form on the site stores links in your browser only –
-> add them here to keep them permanently and on every device.
+Files get their sub-folder names as tags, and Guitar Pro / MusicXML files are listed as Tabs.
+
+> Links added on the site with **Just me** stay in that browser only. Links added with
+> **Everyone** are shared with every visitor (once shared links are switched on).
