@@ -84,6 +84,26 @@ export default function App() {
     return () => observer.disconnect()
   }, [])
 
+  // On phones the header tucks away while scrolling down and comes back on any scroll up,
+  // so it never sits over the content being read (the CSS only applies this on narrow screens).
+  const [tucked, setTucked] = useState(false)
+  useEffect(() => {
+    let last = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      if (Math.abs(y - last) < 8) return
+      setTucked(y > last && y > (headerRef.current?.offsetHeight ?? 0))
+      last = y
+    }
+    const show = () => setTucked(false)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('hashchange', show)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('hashchange', show)
+    }
+  }, [])
+
   const safeKey = KEYS.includes(key) ? key : 'C'
   const rootPc = noteToPc(safeKey)
   const flats = usesFlats(safeKey)
@@ -216,7 +236,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="site-header" ref={headerRef}>
+      <header className={`site-header${tucked ? ' tucked' : ''}`} ref={headerRef} onFocus={() => setTucked(false)}>
         <h1>
           <span aria-hidden="true">🎸</span> Fretboard Practice
         </h1>

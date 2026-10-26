@@ -16,6 +16,13 @@
   gap: 0.5rem 1rem;
   padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
   background: var(--bg);
+  transition: transform 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
+  }
 }
 
 .site-header h1 {
@@ -475,6 +482,109 @@ button.primary {
 }
 
 /* ---- Quiz ---- */
+.quiz-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.interval-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.9rem 0 0.25rem;
+}
+
+.picker-label {
+  color: var(--muted);
+}
+
+.presets,
+.interval-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.interval-toggles button {
+  min-width: 2.75rem;
+  font-weight: 600;
+}
+
+.quiz-listen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin: 0.9rem 0;
+}
+
+.play-button {
+  min-width: 7.5rem;
+  padding: 0.65rem 1.1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.quiz-listen .quiz-prompt {
+  flex: 1 1 18rem;
+  margin: 0;
+}
+
+.listen-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  color: var(--muted);
+}
+
+.listen-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.interval-answers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.55rem 0.4rem;
+}
+
+.answer strong {
+  font-size: 1.15rem;
+}
+
+.answer small {
+  color: var(--muted);
+}
+
+.answer.correct {
+  background: var(--fifth);
+  border-color: var(--fifth);
+  color: #0d1a12;
+}
+
+.answer.correct small {
+  color: inherit;
+}
+
+.answer.wrong {
+  border-color: var(--root);
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
 .quiz-prompt {
   margin: 0.75rem 0 1rem;
   font-size: 1.25rem;
@@ -618,12 +728,22 @@ button.primary {
 }
 
 @media (max-width: 640px) {
+  .site-header {
+    padding-top: max(0.6rem, env(safe-area-inset-top));
+    padding-bottom: 0.4rem;
+    row-gap: 0.1rem;
+  }
+
+  .site-header.tucked {
+    transform: translateY(-100%);
+  }
+
   .site-header h1 {
     font-size: 1.15rem;
   }
 
   .site-header nav a {
-    padding: 0.6rem 0.1rem;
+    padding: 0.5rem 0.1rem;
   }
 
   .panel {
