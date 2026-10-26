@@ -3,12 +3,82 @@
     "title": "All Guitar Chords – Scales",
     "url": "https://www.all-guitar-chords.com/scales",
     "category": "Scales",
+    "type": "Tool",
+    "tags": [
+      "scales",
+      "theory",
+      "reference"
+    ],
     "description": "Interactive scale charts with tab for every key."
   },
   {
     "title": "Metronome Online",
     "url": "https://www.metronomeonline.com/",
     "category": "Practice tools",
+    "type": "Tool",
+    "tags": [
+      "timing",
+      "metronome"
+    ],
     "description": "Simple browser metronome for timed practice."
+  },
+  {
+    "title": "Songsterr",
+    "url": "https://www.songsterr.com/",
+    "category": "Tabs",
+    "type": "Tab",
+    "tags": [
+      "songs",
+      "interactive",
+      "playback"
+    ],
+    "description": "Interactive tabs that play along, with speed control and looping."
+  },
+  {
+    "title": "Ultimate Guitar",
+    "url": "https://www.ultimate-guitar.com/",
+    "category": "Tabs",
+    "type": "Tab",
+    "tags": [
+      "songs",
+      "chords"
+    ],
+    "description": "Huge library of community tabs and chord sheets."
+  },
+  {
+    "title": "Classtab",
+    "url": "https://www.classtab.org/",
+    "category": "Tabs",
+    "type": "Tab",
+    "level": "Intermediate",
+    "tags": [
+      "classical",
+      "fingerstyle"
+    ],
+    "description": "Free tabs for thousands of classical guitar pieces."
+  },
+  {
+    "title": "musictheory.net lessons",
+    "url": "https://www.musictheory.net/lessons",
+    "category": "Theory",
+    "type": "Lesson",
+    "level": "Beginner",
+    "tags": [
+      "theory",
+      "ear training"
+    ],
+    "description": "Short visual lessons and exercises on notes, intervals, scales and chords."
+  },
+  {
+    "title": "Chordify",
+    "url": "https://chordify.net/",
+    "category": "Practice tools",
+    "type": "Tool",
+    "tags": [
+      "chords",
+      "songs",
+      "play along"
+    ],
+    "description": "Shows the chords of a song in time with the recording."
   }
 ]

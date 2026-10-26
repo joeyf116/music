@@ -21,7 +21,9 @@ Music resources – a guitar practice site built with **Vite + React**.
 - **Quiz page** – "find the note" on a given string, with score, streak and a fret-range setting.
 - Note roles also have shapes (square roots, diamond 7ths) so the fretboard reads without colour.
 - Works on phones: 44px touch targets, the neck scrolls to the selected shape, and the tab reflows to the screen width.
-- **Practice resources page** (from the top navigation) – your PDFs and favourite links, searchable and grouped by category.
+- **Practice resources catalog** – PDFs, tabs, lessons, videos and tools that anyone visiting can add to.
+  Filter by type, tag, level and category, search every field, sort by newest, star favourites,
+  and look a song up on Songsterr / Ultimate Guitar / YouTube with the tab finder.
 - Your last selections are remembered in the browser.
 
 ## Adding PDFs and links
@@ -30,6 +32,8 @@ See [`resources/README.md`](resources/README.md). In short:
 
 - Drop a PDF (or image, audio, Guitar Pro file…) into `resources/` – sub-folders become categories.
 - Add links to `resources/links.json`.
+- Or press **+ Add a resource** on the site. With shared links switched on
+  ([`supabase/README.md`](supabase/README.md)) everyone sees it straight away.
 
 Push to `main` and the site rebuilds with the new resources.
 
