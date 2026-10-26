@@ -1,7 +1,7 @@
 // Tiny Web Audio "plucked string" synth so shapes can be heard while practising.
 let ctx = null
 
-const audioContext = () => {
+export const audioContext = () => {
   if (!ctx) {
     const Ctx = window.AudioContext || window.webkitAudioContext
     if (!Ctx) return null
@@ -14,7 +14,7 @@ const audioContext = () => {
 export const midiToFrequency = (pitch) => 440 * 2 ** ((pitch - 69) / 12)
 
 // Returns a function that cuts the note short.
-export function playPitch(pitch, delay = 0, duration = 1.4) {
+export function playPitch(pitch, delay = 0, duration = 1.4, volume = 0.18) {
   const ac = audioContext()
   if (!ac) return () => {}
   const start = ac.currentTime + delay
@@ -27,7 +27,7 @@ export function playPitch(pitch, delay = 0, duration = 1.4) {
   filter.frequency.setValueAtTime(3000, start)
   filter.frequency.exponentialRampToValueAtTime(400, start + duration)
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.exponentialRampToValueAtTime(0.18, start + 0.005)
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.005)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
   osc.connect(filter).connect(gain).connect(ac.destination)
   osc.start(start)

@@ -18,6 +18,11 @@ Music resources – a guitar practice site built with **Vite + React**.
   fretboard and hear it, use ← / → to step through, or press **Play** (with adjustable BPM).
 - Alternate tunings (Drop D, DADGAD, Open G, Open D, half‑step down).
 - **Metronome and drone** next to the tab player – a click at the current BPM and a held root note for the selected key.
+- **Exercises page** – generated practice in any key, time signature (2/4 to 12/8) and tuning, with tab that
+  plays back in sync (moving cursor, count-in, click, loop and a speed trainer that adds BPM each loop):
+  scale sequences (3s, 4s, 3rds, 4ths, 6ths), scales on one string, a subdivision ladder, chromatic finger
+  permutations, arpeggios through the key, chord arpeggio shapes, triads on a string set, chord progressions
+  (presets, your own Roman numerals or chord names, or random) with strum patterns, and Travis/fingerpicking patterns.
 - **Quiz page** – "find the note" on a given string, with score, streak and a fret-range setting.
 - Note roles also have shapes (square roots, diamond 7ths) so the fretboard reads without colour.
 - Works on phones: 44px touch targets, the neck scrolls to the selected shape, and the tab reflows to the screen width.

@@ -1157,3 +1157,179 @@ button.primary {
     white-space: nowrap;
   }
 }
+
+/* ---- Exercises ---- */
+.exercise-picker {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.exercise-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+}
+
+.exercise-group .picker-label {
+  min-width: 7.5rem;
+  font-size: 0.85rem;
+}
+
+.exercise-select {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+.exercise-select select {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.exercise-about {
+  max-width: 70ch;
+  margin: 0.5rem 0 1rem;
+  color: var(--muted);
+}
+
+.exercise-controls input[type='number'] {
+  width: 4.5rem;
+}
+
+.progression-editor {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.progression-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
+.progression-input input {
+  flex: 1;
+  min-width: 0;
+  max-width: 34rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+.progression-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.progression-editor .controls {
+  margin-bottom: 0;
+}
+
+.progression-error {
+  margin: 0;
+  color: #ff8b8e;
+  font-size: 0.85rem;
+}
+
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.transport label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+}
+
+.transport label.check {
+  cursor: pointer;
+}
+
+.transport input[type='number'] {
+  width: 4.5rem;
+}
+
+.transport .play-button {
+  min-width: 6.5rem;
+  min-height: 44px;
+}
+
+.transport-status {
+  min-width: 8rem;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab-heading {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #8a4b00;
+}
+
+.exercises .tab {
+  margin-bottom: 0.25rem;
+}
+
+.exercises .fretboard-scroll {
+  margin-top: 1rem;
+}
+
+/* While the tab scrolls along during playback, phones keep a Stop button in reach above the tab bar. */
+.floating-stop {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .floating-stop {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 0.75rem);
+    z-index: 11;
+    display: block;
+    min-height: 48px;
+    padding: 0 1.25rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  }
+
+  .exercise-select {
+    display: flex;
+  }
+
+  .exercise-picker {
+    display: none;
+  }
+
+  .progression-input {
+    flex-wrap: wrap;
+  }
+
+  .progression-input input {
+    flex-basis: 100%;
+  }
+
+  .transport .play-button {
+    flex: 1 1 100%;
+  }
+
+  .transport-status {
+    min-width: 0;
+  }
+}
