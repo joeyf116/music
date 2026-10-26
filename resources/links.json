@@ -1,0 +1,20 @@
+[
+  {
+    "title": "All Guitar Chords – Scales",
+    "url": "https://www.all-guitar-chords.com/scales",
+    "category": "Scales",
+    "description": "Interactive scale charts with tab for every key."
+  },
+  {
+    "title": "JustinGuitar – Lessons",
+    "url": "https://www.justinguitar.com/",
+    "category": "Lessons",
+    "description": "Free structured guitar course from beginner to advanced."
+  },
+  {
+    "title": "Metronome Online",
+    "url": "https://www.metronomeonline.com/",
+    "category": "Practice tools",
+    "description": "Simple browser metronome for timed practice."
+  }
+]
