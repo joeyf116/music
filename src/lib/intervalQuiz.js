@@ -73,3 +73,52 @@ export const pitchesOf = (question, tuning) => [tuning[question.root.string] + q
 /** Short label like "M3 ↑" for the answer reveal. */
 export const answerLabel = (question) => `${intervalInfo(question.semitones).short} ${question.direction === 'down' ? '↓' : question.direction === 'up' ? '↑' : ''}`.trim()
 
+
+// ---- Game lifecycle ----
+// Each question is "asking" until the right interval is picked ("solved") or the answer is shown
+// ("revealed"). Only the first answer to a question is scored; wrong picks just narrow the choices.
+
+export const newRound = (question) => ({ question, guesses: [], revealed: false })
+
+export const roundState = (round) => {
+  if (!round.question) return 'empty'
+  if (round.guesses.includes(round.question.semitones)) return 'solved'
+  return round.revealed ? 'revealed' : 'asking'
+}
+
+export const initialGame = (question, { stats = {}, best = 0 } = {}) => ({ ...newRound(question), score: { right: 0, tries: 0 }, streak: 0, best, stats })
+
+/** Counts one first-try result in the score, streak, best streak and per-interval `stats`. */
+const scoreFirstTry = (game, correct) => {
+  const size = game.question.semitones
+  const stat = game.stats?.[size] ?? { right: 0, tries: 0 }
+  const streak = correct ? game.streak + 1 : 0
+  return {
+    score: { right: game.score.right + (correct ? 1 : 0), tries: game.score.tries + 1 },
+    streak,
+    best: Math.max(game.best ?? 0, streak),
+    stats: { ...game.stats, [size]: { right: stat.right + (correct ? 1 : 0), tries: stat.tries + 1 } },
+  }
+}
+
+export function gameReducer(game, action) {
+  const state = roundState(game)
+  const firstTry = game.guesses.length === 0 && !game.revealed
+  switch (action.type) {
+    case 'guess': {
+      if (state !== 'asking' || game.guesses.includes(action.size)) return game
+      const correct = action.size === game.question.semitones
+      return { ...game, ...(firstTry ? scoreFirstTry(game, correct) : {}), guesses: [...game.guesses, action.size] }
+    }
+    case 'reveal':
+      if (state !== 'asking') return game
+      return { ...game, ...(firstTry ? scoreFirstTry(game, false) : { streak: 0 }), revealed: true }
+    case 'next':
+      // Skipping an unanswered question doesn't score, but it does end the streak.
+      return { ...game, ...newRound(action.question), streak: state === 'asking' && game.question ? 0 : game.streak }
+    case 'resetStats':
+      return { ...game, stats: {} }
+    default:
+      return game
+  }
+}
