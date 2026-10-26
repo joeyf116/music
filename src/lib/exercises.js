@@ -10,6 +10,7 @@ import {
   mod12,
   noteToPc,
   pcName,
+  scaleAcrossNeck,
   scalePosition,
   stringSets,
   usesFlats,
@@ -462,11 +463,19 @@ const withDegree = (n, refPc, refIntervals) => {
   return { string: n.string, fret: n.fret, pitch: n.pitch, interval, degree: intervalName(interval, refIntervals) }
 }
 
+// How a scale or arpeggio sits on the neck: in one position (a vertical box) or climbing diagonally across it.
+export const LAYOUTS = {
+  position: { name: 'In position', shape: scalePosition },
+  across: { name: 'Across the neck', shape: scaleAcrossNeck },
+}
+
+export const layoutShape = (layout, rootPc, intervals, tuning, degree) => (LAYOUTS[layout] ?? LAYOUTS.position).shape(rootPc, intervals, tuning, degree)
+
 const scaleNotes = (s, tuning) => {
   const scale = SCALES[s.scale] ?? SCALES.major
   const rootPc = noteToPc(s.key)
   const position = Math.min(s.position, scale.intervals.length - 1)
-  const notes = scalePosition(rootPc, scale.intervals, tuning, position).map((n) => withDegree(n, rootPc, scale.intervals))
+  const notes = layoutShape(s.layout, rootPc, scale.intervals, tuning, position).map((n) => withDegree(n, rootPc, scale.intervals))
   return { scale, rootPc, notes }
 }
 
@@ -556,7 +565,7 @@ const BUILDERS = {
     const chord = CHORDS[s.chord] ?? CHORDS.maj7
     const rootPc = noteToPc(s.key)
     const position = Math.min(s.position, chord.intervals.length - 1)
-    const notes = scalePosition(rootPc, chord.intervals, tuning, position).map((n) => withDegree(n, rootPc, chord.intervals))
+    const notes = layoutShape(s.layout, rootPc, chord.intervals, tuning, position).map((n) => withDegree(n, rootPc, chord.intervals))
     const name = `${s.key}${chord.symbol}`
     const items = sequenceIndices(notes.length, [0]).map((i, k) => single(notes[i], { heading: k === 0 ? name : undefined }))
     const ticks = rateTicks(s.rate, meter)
@@ -598,7 +607,7 @@ export const EXERCISES = [
     id: 'scaleSequence',
     group: 'Scales',
     name: 'Scale sequences',
-    controls: ['key', 'scale', 'position', 'sequence', 'rate'],
+    controls: ['key', 'scale', 'layout', 'position', 'sequence', 'rate'],
     about: 'Playing a scale in groups and intervals breaks the straight up-and-down habit, builds picking control across strings and gives you ready-made melodic phrases.',
   },
   {
@@ -612,7 +621,7 @@ export const EXERCISES = [
     id: 'ladder',
     group: 'Technique',
     name: 'Subdivision ladder',
-    controls: ['key', 'scale', 'position'],
+    controls: ['key', 'scale', 'layout', 'position'],
     about: 'One bar each of quarters, 8ths, triplets and 16ths at the same tempo. Switching cleanly between subdivisions is the quickest way to tighten your timing.',
   },
   {
@@ -633,7 +642,7 @@ export const EXERCISES = [
     id: 'chordArpeggio',
     group: 'Arpeggios',
     name: 'Chord arpeggio shapes',
-    controls: ['key', 'chord', 'position', 'rate'],
+    controls: ['key', 'chord', 'layout', 'position', 'rate'],
     about: 'One chord type in each of its shapes up the neck. Learn where the root, 3rd, 5th and 7th sit in every position.',
   },
   {
@@ -665,6 +674,7 @@ export const DEFAULT_SETTINGS = {
   scale: 'minorPentatonic',
   scale7: 'major',
   position: 0,
+  layout: 'position',
   sequence: 'threes',
   rate: 'eighth',
   meter: '4/4',

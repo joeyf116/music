@@ -9,10 +9,12 @@ import {
   findPositions,
   intervalName,
   inversionOrder,
+  NUM_FRETS,
   mod12,
   noteToPc,
   pcName,
   pitchName,
+  scaleAcrossNeck,
   scalePosition,
   stringSets,
   tuningNotes,
@@ -176,5 +178,33 @@ describe('tunings', () => {
       const sets = chordInversions(0, CHORDS.maj.intervals, t.pitches)
       expect(sets.every((set) => set.shapes.length > 0)).toBe(true)
     }
+  })
+})
+
+describe('scaleAcrossNeck', () => {
+  const STD = TUNINGS.standard.pitches
+  const run = (rootPc, intervals, degree = 0) => scaleAcrossNeck(rootPc, intervals, STD, degree)
+
+  it('climbs the neck string by string, always ascending in pitch', () => {
+    const notes = run(7, SCALES.major.intervals)
+    expect(notes[0]).toMatchObject({ string: 0, fret: 3, interval: 0 })
+    notes.slice(1).forEach((n, i) => expect(n.pitch).toBeGreaterThan(notes[i].pitch))
+    const lowest = (s) => Math.min(...notes.filter((n) => n.string === s).map((n) => n.fret))
+    expect(lowest(5) - lowest(0)).toBeGreaterThanOrEqual(7)
+  })
+
+  it('stays in the scale with playable stretches on each string', () => {
+    const intervals = SCALES.minorPentatonic.intervals
+    const notes = run(9, intervals)
+    notes.forEach((n) => expect(intervals).toContain(mod12(n.pitch - 9)))
+    for (let s = 0; s < 6; s++) {
+      const frets = notes.filter((n) => n.string === s).map((n) => n.fret)
+      expect(Math.max(...frets) - Math.min(...frets)).toBeLessThanOrEqual(5)
+    }
+  })
+
+  it('never runs past the last fret', () => {
+    const notes = run(9, SCALES.major.intervals, 3)
+    expect(Math.max(...notes.map((n) => n.fret))).toBeLessThanOrEqual(NUM_FRETS)
   })
 })

@@ -4,6 +4,7 @@ import {
   CHROMATIC_PATTERNS,
   DEFAULT_SETTINGS,
   EXERCISES,
+  LAYOUTS,
   METERS,
   NECK_AREAS,
   PICKING,
@@ -12,11 +13,12 @@ import {
   SEQUENCES,
   STRUMS,
   buildExercise,
+  layoutShape,
   randomProgression,
   rateFits,
 } from '../lib/exercises.js'
 import { playEvent, startPlayback } from '../lib/player.js'
-import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, stringSets, usesFlats } from '../lib/theory.js'
+import { CHORDS, KEYS, SCALES, noteToPc, pcName, stringSets, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
@@ -159,7 +161,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
     if (!has('position')) return []
     const rootPc = noteToPc(key)
     const intervals = exercise.id === 'chordArpeggio' ? (CHORDS[s.chord] ?? CHORDS.maj7).intervals : scale.intervals
-    return intervals.map((_, i) => fretHint(scalePosition(rootPc, intervals, tuning, i)))
+    return intervals.map((_, i) => fretHint(layoutShape(s.layout, rootPc, intervals, tuning, i)))
   })()
   const sets = stringSets(3, tuning.length)
   const stringLabel = (i) => `${ORDINALS[tuning.length - i]} (${stringName(i)})`
@@ -456,10 +458,19 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         </label>
       </div>
 
+      {has('layout') && (
+        <Choice
+          label="Layout"
+          options={Object.entries(LAYOUTS).map(([value, l]) => ({ value, label: l.name }))}
+          value={LAYOUTS[s.layout] ? s.layout : 'position'}
+          onChange={(v) => set({ layout: v })}
+        />
+      )}
+
       {positions.length > 0 && (
         <div className="field">
           <span className="field-label" id="exercise-position-label">
-            Position
+            {s.layout === 'across' ? 'Start from position' : 'Position'}
           </span>
           <div className="options" role="group" aria-labelledby="exercise-position-label">
             {positions.map((hint, i) => (
