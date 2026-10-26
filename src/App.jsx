@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Exercises from './components/Exercises.jsx'
 import Fretboard from './components/Fretboard.jsx'
 import PracticeTools from './components/PracticeTools.jsx'
 import Quiz from './components/Quiz.jsx'
@@ -38,6 +39,11 @@ const PAGES = [
     id: 'fretboard',
     label: 'Fretboard',
     icon: <path d="M4 6h16M4 10h16M4 14h16M4 18h16M8 4v16M14 4v16" />,
+  },
+  {
+    id: 'exercises',
+    label: 'Exercises',
+    icon: <path d="M9 3h6l3.5 18h-13ZM12 15l5-9M7.5 15h9" />,
   },
   {
     id: 'quiz',
@@ -239,6 +245,8 @@ export default function App() {
       <main>
         {page === 'resources' ? (
           <Resources />
+        ) : page === 'exercises' ? (
+          <Exercises tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : page === 'quiz' ? (
           <Quiz tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : (
