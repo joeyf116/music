@@ -3,6 +3,7 @@ import {
   CHORDS,
   SCALES,
   TUNINGS,
+  TUNING_GROUPS,
   chordInversions,
   chordVoicings,
   findPositions,
@@ -14,6 +15,7 @@ import {
   pitchName,
   scalePosition,
   stringSets,
+  tuningNotes,
   usesFlats,
   voiceInversion,
 } from './theory.js'
@@ -146,6 +148,33 @@ describe('chord voicings', () => {
           notes.forEach((n) => expect(n.interval).toBeDefined())
         }
       }
+    }
+  })
+})
+
+describe('tunings', () => {
+  it('spells each tuning from its pitches', () => {
+    expect(tuningNotes(TUNINGS.standard)).toBe('E A D G B E')
+    expect(tuningNotes(TUNINGS.halfDown)).toBe('Eb Ab Db Gb Bb Eb')
+    expect(tuningNotes(TUNINGS.cSharpStandard)).toBe('C# F# B E G# C#')
+    expect(tuningNotes(TUNINGS.dropC)).toBe('C G C F A D')
+    expect(tuningNotes(TUNINGS.dadgad)).toBe('D A D G A D')
+    expect(tuningNotes(TUNINGS.openG)).toBe('D G D G B D')
+  })
+
+  it('has six rising strings in a known group for every tuning', () => {
+    for (const t of Object.values(TUNINGS)) {
+      expect(t.pitches).toHaveLength(6)
+      t.pitches.slice(1).forEach((p, i) => expect(p).toBeGreaterThan(t.pitches[i]))
+      expect(TUNING_GROUPS).toContain(t.group)
+    }
+  })
+
+  it('finds chord shapes and inversions in every tuning', () => {
+    for (const t of Object.values(TUNINGS)) {
+      expect(chordVoicings(0, CHORDS.maj.intervals, t.pitches).length).toBeGreaterThan(0)
+      const sets = chordInversions(0, CHORDS.maj.intervals, t.pitches)
+      expect(sets.every((set) => set.shapes.length > 0)).toBe(true)
     }
   })
 })

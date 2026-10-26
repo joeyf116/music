@@ -10,13 +10,32 @@ export const KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb',
 export const NUM_FRETS = 22
 
 // Tunings are listed from the lowest (6th) string to the highest (1st) string.
+// `flats` spells the string names with flats (Eb, Bb) instead of sharps; `group` sorts the picker.
+export const TUNING_GROUPS = ['Standard', 'Drop', 'Open', 'Other']
+
 export const TUNINGS = {
-  standard: { name: 'Standard (E A D G B E)', pitches: [40, 45, 50, 55, 59, 64] },
-  halfDown: { name: 'Half step down (Eb Ab Db Gb Bb Eb)', pitches: [39, 44, 49, 54, 58, 63] },
-  dropD: { name: 'Drop D (D A D G B E)', pitches: [38, 45, 50, 55, 59, 64] },
-  dadgad: { name: 'DADGAD', pitches: [38, 45, 50, 55, 57, 62] },
-  openG: { name: 'Open G (D G D G B D)', pitches: [38, 43, 50, 55, 59, 62] },
-  openD: { name: 'Open D (D A D F# A D)', pitches: [38, 45, 50, 54, 57, 62] },
+  standard: { name: 'Standard', group: 'Standard', pitches: [40, 45, 50, 55, 59, 64] },
+  halfDown: { name: 'Eb standard', group: 'Standard', flats: true, pitches: [39, 44, 49, 54, 58, 63] },
+  dStandard: { name: 'D standard', group: 'Standard', flats: true, pitches: [38, 43, 48, 53, 57, 62] },
+  cSharpStandard: { name: 'C# standard', group: 'Standard', pitches: [37, 42, 47, 52, 56, 61] },
+  cStandard: { name: 'C standard', group: 'Standard', flats: true, pitches: [36, 41, 46, 51, 55, 60] },
+  bStandard: { name: 'B standard', group: 'Standard', pitches: [35, 40, 45, 50, 54, 59] },
+  dropD: { name: 'Drop D', group: 'Drop', pitches: [38, 45, 50, 55, 59, 64] },
+  doubleDropD: { name: 'Double drop D', group: 'Drop', pitches: [38, 45, 50, 55, 59, 62] },
+  dropCSharp: { name: 'Drop C#', group: 'Drop', pitches: [37, 44, 49, 54, 58, 63] },
+  dropC: { name: 'Drop C', group: 'Drop', pitches: [36, 43, 48, 53, 57, 62] },
+  dropB: { name: 'Drop B', group: 'Drop', pitches: [35, 42, 47, 52, 56, 61] },
+  dropA: { name: 'Drop A', group: 'Drop', pitches: [33, 40, 45, 50, 54, 59] },
+  openG: { name: 'Open G', group: 'Open', pitches: [38, 43, 50, 55, 59, 62] },
+  openD: { name: 'Open D', group: 'Open', pitches: [38, 45, 50, 54, 57, 62] },
+  openE: { name: 'Open E', group: 'Open', pitches: [40, 47, 52, 56, 59, 64] },
+  openA: { name: 'Open A', group: 'Open', pitches: [40, 45, 52, 57, 61, 64] },
+  openC: { name: 'Open C', group: 'Open', pitches: [36, 43, 48, 55, 60, 64] },
+  openDMinor: { name: 'Open D minor', group: 'Open', pitches: [38, 45, 50, 53, 57, 62] },
+  openGMinor: { name: 'Open G minor', group: 'Open', flats: true, pitches: [38, 43, 50, 55, 58, 62] },
+  dadgad: { name: 'DADGAD', group: 'Other', pitches: [38, 45, 50, 55, 57, 62] },
+  cgcgcd: { name: 'CGCGCD', group: 'Other', pitches: [36, 43, 48, 55, 60, 62] },
+  allFourths: { name: 'All fourths', group: 'Other', pitches: [40, 45, 50, 55, 60, 65] },
 }
 
 export const SCALES = {
@@ -72,6 +91,9 @@ export const noteToPc = (name) => {
 export const usesFlats = (key) => key.includes('b') || key === 'F'
 
 export const pcName = (pc, flats = false) => (flats ? FLAT_NAMES : SHARP_NAMES)[mod12(pc)]
+
+// String names low to high, e.g. "C# F# B E G# C#".
+export const tuningNotes = (tuning) => tuning.pitches.map((p) => pcName(p, tuning.flats)).join(' ')
 
 export const pitchName = (pitch, flats = false) => `${pcName(pitch, flats)}${Math.floor(pitch / 12) - 1}`
 
