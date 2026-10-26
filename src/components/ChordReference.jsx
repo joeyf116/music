@@ -5,6 +5,7 @@ import { TUNINGS } from '../lib/theory.js'
 import { chartChords, fretText, voicingsFor } from '../lib/voicings.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import ChordDiagram from './ChordDiagram.jsx'
+import { Field } from './controls.jsx'
 import TuningSelect from './TuningSelect.jsx'
 
 function ChordCard({ symbol, chord, tuning, playing }) {
@@ -82,7 +83,11 @@ export default function ChordReference({ chart, playingSymbols = [], tuning = TU
       <div className="chord-ref-body">
         <div className="chord-ref-head">
           <p className="hint">Tap a shape to hear it · ‹ › for more voicings</p>
-          {onTuningChange && <TuningSelect value={tuningId} onChange={onTuningChange} aria-label="Tuning for chord shapes" />}
+          {onTuningChange && (
+            <Field label="Tuning" className="chord-ref-tuning">
+              <TuningSelect value={tuningId} onChange={onTuningChange} />
+            </Field>
+          )}
         </div>
         <ul className="chord-strip" ref={strip}>
           {chords.map(({ symbol, chord }) => (

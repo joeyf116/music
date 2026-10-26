@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Charts from './components/Charts.jsx'
+import { Choice, Field, Stepper, Toggle } from './components/controls.jsx'
 import Exercises from './components/Exercises.jsx'
 import Fretboard from './components/Fretboard.jsx'
 import PracticeTools from './components/PracticeTools.jsx'
@@ -30,9 +31,13 @@ import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
 
 const MODES = [
-  { id: 'scale', label: 'Scales' },
-  { id: 'chord', label: 'Chords' },
-  { id: 'inversion', label: 'Inversions' },
+  { value: 'scale', label: 'Scales' },
+  { value: 'chord', label: 'Chords' },
+  { value: 'inversion', label: 'Inversions' },
+]
+const LABEL_OPTIONS = [
+  { value: 'notes', label: 'Notes' },
+  { value: 'intervals', label: 'Intervals' },
 ]
 const INVERSION_SHORT = ['R', '1st', '2nd', '3rd']
 const PAGES = [
@@ -259,16 +264,9 @@ export default function App() {
           <Quiz tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
         ) : (
           <section className="panel fretboard-panel">
-            <div className="controls">
-              <div className="segmented" role="tablist" aria-label="Mode">
-                {MODES.map((m) => (
-                  <button key={m.id} role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'on' : ''} onClick={() => setMode(m.id)}>
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-              <label>
-                {mode === 'scale' ? 'Scale' : 'Chord'}
+            <div className="field-grid fretboard-controls">
+              <Choice label="Show" options={MODES} value={mode} onChange={setMode} />
+              <Field label={mode === 'scale' ? 'Scale' : 'Chord'}>
                 <select value={typeValue} onChange={(e) => setType(e.target.value)}>
                   {Object.entries(typeOptions).map(([id, t]) => (
                     <option key={id} value={id}>
@@ -276,26 +274,20 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-              </label>
-              <label>
-                Tuning
+              </Field>
+              <Field label="Tuning">
                 <TuningSelect value={tuningId} onChange={setTuningId} />
-              </label>
-              <div className="segmented small" aria-label="Note labels">
-                <button className={labels === 'notes' ? 'on' : ''} onClick={() => setLabels('notes')}>
-                  Notes
-                </button>
-                <button className={labels === 'intervals' ? 'on' : ''} onClick={() => setLabels('intervals')}>
-                  Intervals
-                </button>
-              </div>
-              <label className="check">
-                <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-                Show all notes on neck
-              </label>
+              </Field>
+              <Choice label="Note labels" options={LABEL_OPTIONS} value={labels} onChange={setLabels} />
+              <Toggle checked={showAll} onChange={setShowAll}>
+                Show every note on the neck
+              </Toggle>
             </div>
 
-            <div className="keys" role="group" aria-label="Key">
+            <span className="field-label key-label" id="fretboard-key-label">
+              Key
+            </span>
+            <div className="keys" role="group" aria-labelledby="fretboard-key-label">
               {KEYS.map((k) => (
                 <button key={k} className={k === safeKey ? 'on' : ''} onClick={() => setKey(k)} aria-pressed={k === safeKey}>
                   {k}
@@ -346,10 +338,7 @@ export default function App() {
                 </small>
               </h3>
               <div className="playback">
-                <label>
-                  BPM
-                  <input type="number" min="30" max="300" value={bpm} onChange={(e) => setBpm(e.target.value)} />
-                </label>
+                <Stepper label="BPM" value={bpm} onChange={setBpm} min={30} max={300} step={5} fallback={100} className="bpm-field" />
                 <button className="primary" onClick={togglePlay} disabled={!view.columns.length}>
                   {playing ? '■ Stop' : '▶ Play'}
                 </button>

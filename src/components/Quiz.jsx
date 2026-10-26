@@ -3,6 +3,7 @@ import { playPitch } from '../lib/audio.js'
 import { DIRECTIONS, INTERVALS, PRESETS, answerLabel, gameReducer, initialGame, intervalInfo, pitchesOf, randomQuestion, roundState } from '../lib/intervalQuiz.js'
 import { pcName } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
+import { Choice, Field, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
 import TuningSelect from './TuningSelect.jsx'
 
@@ -11,6 +12,8 @@ const RANGES = [
   { maxFret: 12, label: 'Frets 0–12' },
   { maxFret: 22, label: 'Whole neck' },
 ]
+const DIRECTION_OPTIONS = DIRECTIONS.map((d) => ({ value: d.id, label: d.label }))
+const RANGE_OPTIONS = RANGES.map((r) => ({ value: r.maxFret, label: r.label.replace('Frets ', '') }))
 const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
 // Seconds between the two notes, how long each rings, and the pause before a loop repeats.
 const GAP = 0.9
@@ -199,33 +202,23 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
         <summary>
           Settings <span className="settings-summary">{settingsSummary}</span>
         </summary>
-        <div className="quiz-settings">
-          <div className="segmented small" role="group" aria-label="Direction">
-            {DIRECTIONS.map((d) => (
-              <button key={d.id} type="button" className={direction === d.id ? 'on' : ''} aria-pressed={direction === d.id} onClick={() => setDirection(d.id)}>
-                {d.label}
-              </button>
-            ))}
+        <div className="field-grid quiz-settings">
+          <Choice label="Direction" options={DIRECTION_OPTIONS} value={direction} onChange={setDirection} />
+          <Choice label="Frets" options={RANGE_OPTIONS} value={maxFret} onChange={setMaxFret} />
+          <Field label="Tuning">
+            <TuningSelect value={tuningId} onChange={onTuningChange} />
+          </Field>
+          <div className="toggles">
+            <Toggle checked={loop} onChange={setLoop}>
+              Loop until stopped
+            </Toggle>
+            <Toggle checked={autoPlay} onChange={setAutoPlay}>
+              Auto-play next
+            </Toggle>
           </div>
-          <TuningSelect value={tuningId} onChange={onTuningChange} aria-label="Tuning" />
-          <select value={maxFret} onChange={(e) => setMaxFret(Number(e.target.value))} aria-label="Fret range">
-            {RANGES.map((r) => (
-              <option key={r.maxFret} value={r.maxFret}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-          <label className="check">
-            <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} />
-            Loop until stopped
-          </label>
-          <label className="check">
-            <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} />
-            Auto-play next
-          </label>
         </div>
         <div className="interval-picker">
-          <span className="picker-label">Intervals</span>
+          <span className="field-label">Intervals</span>
           <div className="presets" role="group" aria-label="Interval presets">
             {PRESETS.map((p) => (
               <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} onClick={() => setEnabled(p.semitones)}>

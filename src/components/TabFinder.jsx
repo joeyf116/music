@@ -10,7 +10,7 @@ export default function TabFinder({ onAdd }) {
       <label htmlFor="tab-finder-input">
         <strong>Find tabs for a song</strong>
       </label>
-      <input id="tab-finder-input" type="search" placeholder="Song or artist, e.g. Wonderwall" value={song} onChange={(e) => setSong(e.target.value)} />
+      <input id="tab-finder-input" type="search" enterKeyHint="search" placeholder="Song or artist, e.g. Wonderwall" value={song} onChange={(e) => setSong(e.target.value)} />
       {links.length > 0 && (
         <ul className="finder-links">
           {links.map((l) => (

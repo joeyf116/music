@@ -15,6 +15,9 @@
   --wood: #4a2f1d;
   --wood-2: #5b3a24;
   --tabbar-height: 4rem;
+  --field-bg: #161a21;
+  --control-h: 2.5rem;
+  --radius: 8px;
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -52,7 +55,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -62,7 +66,7 @@ button {
   touch-action: manipulation;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0.4rem 0.75rem;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -73,7 +77,8 @@ button:hover {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -83,12 +88,354 @@ button:disabled {
   cursor: default;
 }
 
-input,
-select {
-  background: var(--panel-2);
+button:disabled:hover {
+  border-color: var(--border);
+}
+
+/* ---- Form controls ----
+   One look and one height for every text box and dropdown in the app. Text is always 1rem, whatever the
+   label around it uses, so a field never shrinks just because it sits in a smaller-text area. */
+input:not([type='checkbox'], [type='radio'], [type='range']),
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--control-h);
+  padding: 0.4rem 0.75rem;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.25;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+input:not([type='checkbox'], [type='radio'], [type='range']):hover,
+select:hover,
+textarea:hover {
+  border-color: var(--muted);
+}
+
+input:not([type='checkbox'], [type='radio'], [type='range']):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240, 160, 51, 0.22);
+  outline: none;
+}
+
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--root);
+  box-shadow: 0 0 0 1px var(--root);
+}
+
+/* Dropdowns draw their own chevron so they match on every browser, and long names end in "…" instead of
+   being clipped under the arrow. */
+select {
+  appearance: none;
+  padding-right: 2.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%239aa4b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+}
+
+select option,
+select optgroup {
+  background: var(--panel);
+  color: var(--text);
+}
+
+input[type='search']::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* Sliders: a clear track and a thumb big enough to grab. */
+input[type='range'] {
+  min-height: var(--control-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+input[type='checkbox'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Field: label above the control. Top-aligned labels are the quickest to scan and work at any width. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.field-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.field-hint {
+  font-weight: 400;
+}
+
+.field > select,
+.field > input,
+.field > .choice,
+.field > .stepper {
+  width: 100%;
+}
+
+/* A row of fields that reflows from one column on a narrow phone to as many as fit on a desktop. */
+.field-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1rem;
+  align-items: flex-end;
+}
+
+.field-grid > * {
+  flex: 1 1 13rem;
+  max-width: 24rem;
+}
+
+/* A segmented choice never squashes its options; its field grows to fit them and the row wraps instead. */
+.field:has(> .choice) {
+  min-width: fit-content;
+}
+
+.field-grid > .field:has(> .choice) {
+  flex-grow: 0;
+}
+
+@media (max-width: 640px) {
+  .field-grid > * {
+    max-width: none;
+  }
+
+  .field-grid > .field:has(> .choice) {
+    flex-grow: 1;
+  }
+}
+
+/* Segmented choice: every option on show, the picked one filled. */
+.choice {
+  display: flex;
+  gap: 2px;
+  min-height: var(--control-h);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.choice label {
+  position: relative;
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 0.7rem;
+  border-radius: calc(var(--radius) - 3px);
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.choice label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.choice label:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.choice label:has(input:checked) {
+  background: var(--accent);
+  color: #1b1307;
+}
+
+.choice label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.choice label:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.choice.small label {
+  padding: 0 0.55rem;
+  font-weight: 500;
+}
+
+/* Stepper: − [ 120 ] + */
+.stepper {
+  display: flex;
+  min-height: var(--control-h);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  overflow: hidden;
+}
+
+.stepper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240, 160, 51, 0.22);
+}
+
+.stepper button {
+  flex: 0 0 var(--control-h);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--panel-2);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stepper button:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.stepper input:not([type='checkbox']) {
+  flex: 1 1 3rem;
+  width: 3rem;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.stepper input:focus-visible {
+  outline: none;
+}
+
+/* Switch for settings that apply straight away (loop, count-in, click…). */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--control-h);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.toggle-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--panel-2);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.5rem - 6px);
+  height: calc(1.5rem - 6px);
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.toggle input:checked + .toggle-track {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.toggle input:checked + .toggle-track::after {
+  background: #1b1307;
+  transform: translateX(1rem);
+}
+
+.toggle input:focus-visible + .toggle-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.toggle:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1.25rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 code {
@@ -99,16 +446,19 @@ code {
 
 /* Touch screens: 44px targets (WCAG 2.5.8 asks for 24px; Apple and Google recommend 44-48px). */
 @media (pointer: coarse) {
-  button,
-  input,
-  select {
+  :root {
+    --control-h: 44px;
+  }
+
+  button {
     min-height: 44px;
   }
 
   /* 16px or larger stops iOS Safari zooming in when a field is focused. */
   input,
-  select {
-    font-size: max(16px, 1em);
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
   }
 }
 

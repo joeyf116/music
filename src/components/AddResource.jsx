@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LEVELS, normalizeTags, RESOURCE_TYPES } from '../lib/resources.js'
 import { LIMITS, validateSubmission } from '../lib/sharedResources.js'
+import { Choice, Field } from './controls.jsx'
 
 const EMPTY = { url: '', title: '', type: 'Tab', level: '', category: '', tags: '', description: '', website: '' }
 
@@ -38,46 +39,38 @@ export default function AddResource({ canShare, categories, popularTags, onSubmi
           ×
         </button>
       </div>
-      <label className="wide">
-        Link
-        <input type="url" inputMode="url" placeholder="https://…" value={draft.url} onChange={set('url')} maxLength={LIMITS.url} required />
-      </label>
-      <label className="wide">
-        Title
+      <Field label="Link" className="wide">
+        <input type="url" inputMode="url" placeholder="https://…" value={draft.url} onChange={set('url')} maxLength={LIMITS.url} required autoComplete="url" />
+      </Field>
+      <Field label="Title" className="wide">
         <input placeholder="e.g. Blackbird – full tab" value={draft.title} onChange={set('title')} maxLength={LIMITS.title} />
-      </label>
-      <label>
-        Type
+      </Field>
+      <Field label="Type">
         <select value={draft.type} onChange={set('type')}>
           {RESOURCE_TYPES.map((t) => (
             <option key={t}>{t}</option>
           ))}
         </select>
-      </label>
-      <label>
-        Level
+      </Field>
+      <Field label="Level">
         <select value={draft.level} onChange={set('level')}>
           <option value="">Any level</option>
           {LEVELS.map((l) => (
             <option key={l}>{l}</option>
           ))}
         </select>
-      </label>
-      <label>
-        Category
+      </Field>
+      <Field label="Category" className="category-field">
         <input list="resource-categories" placeholder="e.g. Songs" value={draft.category} onChange={set('category')} maxLength={LIMITS.category} />
         <datalist id="resource-categories">
           {categories.map((c) => (
             <option key={c} value={c} />
           ))}
         </datalist>
-      </label>
-      <label className="wide">
-        <span>
-          Tags <span className="hint">comma separated</span>
-        </span>
-        <input placeholder="e.g. fingerstyle, beatles, acoustic" value={draft.tags} onChange={set('tags')} />
-      </label>
+      </Field>
+      <Field label="Tags" hint="comma separated, or tap below" className="wide">
+        <input placeholder="e.g. fingerstyle, beatles, acoustic" value={draft.tags} onChange={set('tags')} autoCapitalize="off" />
+      </Field>
       {popularTags.length > 0 && (
         <div className="wide tag-suggestions" aria-label="Popular tags">
           {popularTags.slice(0, 12).map(([t]) => (
@@ -87,26 +80,24 @@ export default function AddResource({ canShare, categories, popularTags, onSubmi
           ))}
         </div>
       )}
-      <label className="wide">
-        <span>
-          Note <span className="hint">optional</span>
-        </span>
+      <Field label="Note" hint="optional" className="wide">
         <input placeholder="What's good about it?" value={draft.description} onChange={set('description')} maxLength={LIMITS.description} />
-      </label>
+      </Field>
       <label className="honeypot" aria-hidden="true">
         Website
         <input tabIndex={-1} autoComplete="off" value={draft.website} onChange={set('website')} />
       </label>
       <div className="wide add-actions">
         {canShare ? (
-          <div className="segmented small" role="group" aria-label="Who can see it">
-            <button type="button" className={shareIt ? 'on' : ''} aria-pressed={shareIt} onClick={() => setShareIt(true)}>
-              Everyone
-            </button>
-            <button type="button" className={shareIt ? '' : 'on'} aria-pressed={!shareIt} onClick={() => setShareIt(false)}>
-              Just me
-            </button>
-          </div>
+          <Choice
+            label="Who can see it"
+            options={[
+              { value: true, label: 'Everyone' },
+              { value: false, label: 'Just me' },
+            ]}
+            value={shareIt}
+            onChange={setShareIt}
+          />
         ) : (
           <small>Shared links aren't switched on yet, so this is saved in this browser only.</small>
         )}

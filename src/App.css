@@ -156,50 +156,28 @@ body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .pa
 }
 
 /* ---- Controls ---- */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 0.9rem;
+.fretboard-controls {
+  margin-bottom: 1rem;
 }
 
-.controls label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted);
+.key-label {
+  display: block;
+  margin-bottom: 0.35rem;
 }
 
-.controls label.check {
+.fretboard-controls > .toggle {
+  flex: 0 1 auto;
+}
+
+label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--control-h);
   cursor: pointer;
 }
 
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.segmented button {
-  border: 0;
-  border-radius: 0;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-}
-
-.segmented.small button {
-  padding: 0.35rem 0.7rem;
-  font-weight: 500;
-}
-
-.segmented button + button {
-  border-left: 1px solid var(--border);
-}
-
-.on,
-.segmented button.on {
+.on {
   background: var(--accent);
   color: #1b1307;
   border-color: var(--accent);
@@ -459,19 +437,13 @@ body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .pa
   gap: 0.6rem;
 }
 
-.playback label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--muted);
-}
-
-.playback input {
-  width: 4.5rem;
-}
-
 .playback {
   flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.bpm-field {
+  width: 9.5rem;
 }
 
 .practice-tools {
@@ -611,18 +583,11 @@ button.primary {
 }
 
 .quiz-settings {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
+  padding-bottom: 0.25rem;
 }
 
-.quiz-settings label.check {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--muted);
-  cursor: pointer;
+.quiz-settings .toggles {
+  flex-basis: 100%;
 }
 
 .interval-picker {
@@ -630,11 +595,11 @@ button.primary {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  margin: 0.75rem 0 0.25rem;
+  margin: 0.5rem 0 0.25rem;
 }
 
-.picker-label {
-  color: var(--muted);
+.interval-picker .field-label {
+  flex-basis: 100%;
 }
 
 .presets,
@@ -863,23 +828,78 @@ button.primary {
   margin-top: 1rem;
 }
 
-.catalog-search {
-  width: 100%;
-  padding: 0.55rem 0.8rem;
-}
-
-.filter-row {
+.search-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
+}
+
+.catalog-search {
+  flex: 1 1 16rem;
+  width: 100%;
+}
+
+.sort-select {
+  flex: 0 1 12rem;
+}
+
+.more-filters summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--control-h);
+  padding: 0 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.more-filters summary::-webkit-details-marker {
+  display: none;
+}
+
+.more-filters summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+}
+
+.more-filters[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.more-filters summary:hover,
+.more-filters[open] summary {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.filter-count {
+  min-width: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1b1307;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.more-filters-body {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.6rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
 }
 
 .type-chips,
 .tag-cloud,
-.tag-suggestions,
-.filter-selects {
+.tag-suggestions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -889,8 +909,12 @@ button.primary {
 .filter-chip,
 .tag {
   border-radius: 999px;
-  padding: 0.25rem 0.7rem;
+  padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
+}
+
+.filter-chip {
+  min-height: 2.25rem;
 }
 
 .filter-chip span,
@@ -1088,8 +1112,8 @@ button.primary {
 
 .add-resource {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: 0.9rem 1rem;
   margin-top: 1rem;
   padding: 0.9rem;
   border: 1px solid var(--accent);
@@ -1097,23 +1121,6 @@ button.primary {
   background: var(--panel-2);
 }
 
-.add-resource label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.add-resource .hint {
-  font-weight: 400;
-}
-
-.add-resource input,
-.add-resource select {
-  background: var(--panel);
-  font-weight: 400;
-}
 
 .add-resource .wide,
 .add-head {
@@ -1169,7 +1176,6 @@ button.primary {
 
 .tab-finder input {
   flex: 1 1 16rem;
-  min-width: 0;
 }
 
 .finder-links {
@@ -1212,28 +1218,6 @@ button.primary {
     border-radius: 12px;
   }
 
-  .controls {
-    gap: 0.6rem;
-  }
-
-  .controls .segmented {
-    display: flex;
-    width: 100%;
-  }
-
-  .controls .segmented button {
-    flex: 1;
-  }
-
-  .controls label:not(.check) {
-    width: 100%;
-  }
-
-  .controls select {
-    flex: 1;
-    min-width: 0;
-  }
-
   .title-row h2 {
     font-size: 1.25rem;
   }
@@ -1247,25 +1231,8 @@ button.primary {
     margin: 0.15rem 0 0;
   }
 
-  .quiz-settings {
-    width: 100%;
-  }
-
-  .filter-selects {
-    width: 100%;
-  }
-
-  .filter-selects select {
-    flex: 1 1 7.5rem;
-    min-width: 0;
-  }
-
-  .add-resource {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .add-resource label:has(input[list]) {
-    grid-column: 1 / -1;
+  .sort-select {
+    flex: 1 1 100%;
   }
 
   .quiz-actions button {
@@ -1288,23 +1255,6 @@ button.primary {
 
 .exercises .section-head {
   gap: 0.75rem 1rem;
-}
-
-.field {
-  display: grid;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-.field > span {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.field > select,
-.field > input {
-  width: 100%;
-  min-height: 44px;
 }
 
 .exercise-field > select {
@@ -1351,16 +1301,18 @@ button.primary {
   margin: 0;
 }
 
-.exercise-fields {
-  display: grid;
-  /* Two columns on a phone, wider ones as the screen allows. */
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0.75rem 1rem;
+.exercises .section-head .head-field {
+  flex: 0 1 17rem;
 }
 
-@media (min-width: 560px) {
-  .exercise-fields {
-    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+/* Two settings side by side even on a phone; they're short dropdowns. */
+.exercise-fields > * {
+  flex-basis: 9.5rem;
+}
+
+@media (max-width: 640px) {
+  .exercises .section-head .head-field {
+    flex-grow: 1;
   }
 }
 
@@ -1370,7 +1322,6 @@ button.primary {
 }
 
 .progression-editor input {
-  min-height: 44px;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
@@ -1382,13 +1333,11 @@ button.primary {
 
 .progression-actions select {
   flex: 1 1 100%;
-  min-width: 0;
-  min-height: 44px;
 }
 
 .progression-actions button {
   flex: 1 1 8rem;
-  min-height: 44px;
+  min-height: var(--control-h);
 }
 
 @media (min-width: 560px) {
@@ -1432,11 +1381,11 @@ button.primary {
 
 .transport .play-button {
   min-width: 7rem;
-  min-height: 44px;
+  min-height: var(--control-h);
 }
 
 .tempo-field {
-  width: 5.5rem;
+  width: 10rem;
 }
 
 .transport-status {
@@ -1451,10 +1400,10 @@ button.primary {
 .transport-options summary {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--control-h);
   padding: 0 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--panel-2);
   color: var(--muted);
   cursor: pointer;
@@ -1473,21 +1422,14 @@ button.primary {
 .transport-panel {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
+  align-items: flex-end;
+  gap: 0.6rem 1.5rem;
   margin-top: 0.6rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 10px;
 }
 
-.transport-panel .check {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--muted);
-  cursor: pointer;
-}
 
 .exercises .tab,
 .exercises .fretboard-scroll,

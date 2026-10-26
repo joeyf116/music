@@ -205,26 +205,23 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
       </div>
 
       <div className="catalog-controls">
-        <input className="catalog-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search charts by title, composer or key" aria-label="Search charts" />
-        <div className="filter-row">
-          <div className="type-chips" role="group" aria-label="Collection">
-            {collections.map((c) => (
-              <button key={c} type="button" className={`filter-chip${collection === c ? ' on' : ''}`} aria-pressed={collection === c} onClick={() => setCollection(c)}>
-                {c}
-              </button>
+        <div className="search-row">
+          <input className="catalog-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by title, composer or key" aria-label="Search charts" enterKeyHint="search" />
+          <select className="sort-select" value={style} onChange={(e) => setStyle(e.target.value)} aria-label="Style">
+            <option value="">All styles</option>
+            {STYLE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {STYLES[id].name}
+              </option>
             ))}
-          </div>
-          <label className="filter-selects">
-            <span className="visually-hidden">Style</span>
-            <select value={style} onChange={(e) => setStyle(e.target.value)} aria-label="Style">
-              <option value="">All styles</option>
-              {STYLE_IDS.map((id) => (
-                <option key={id} value={id}>
-                  {STYLES[id].name}
-                </option>
-              ))}
-            </select>
-          </label>
+          </select>
+        </div>
+        <div className="type-chips" role="group" aria-label="Collection">
+          {collections.map((c) => (
+            <button key={c} type="button" className={`filter-chip${collection === c ? ' on' : ''}`} aria-pressed={collection === c} onClick={() => setCollection(c)}>
+              {c}
+            </button>
+          ))}
         </div>
       </div>
 
