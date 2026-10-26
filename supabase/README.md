@@ -9,19 +9,11 @@ still works and links are saved in the visitor's own browser.
 1. Sign up at https://supabase.com and create a **New project** (the free plan is plenty).
 2. Open **SQL Editor → New query**, paste the whole of [`schema.sql`](./schema.sql) and press **Run**.
 3. Open **Project Settings → API** (or **Connect**) and copy the **Project URL** and the
-   **anon / public** key.
-4. In GitHub go to the repository's **Settings → Secrets and variables → Actions → Variables** and add
-   two repository variables:
-   - `SUPABASE_URL` = the Project URL
-   - `SUPABASE_ANON_KEY` = the anon key
-5. Re-run the **Deploy to GitHub Pages** workflow (Actions tab → Run workflow), or push anything to `main`.
+   legacy **anon / public** key into [`.env.production`](../.env.production) at the repo root.
+4. Push to `main`; the site rebuilds with shared links switched on.
 
-For local development put the same two values in a `.env.local` file (it's git-ignored):
-
-```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
-```
+The site's own project (`guitar-music`, ref `uionwltxpdcuwdbrrtrt`) is already set up this way.
+For local development the same values work in `.env.local` (git-ignored).
 
 The anon key is designed to be public. The rules in `schema.sql` only let visitors read approved
 links, add a link, remove a link they added themselves (from the same browser) and report a link.
