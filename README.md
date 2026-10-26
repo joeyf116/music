@@ -82,6 +82,7 @@ A lead-sheet player inspired by [iReal Pro](https://www.irealpro.com/):
 - **A catalog of more than 70 charts:** jazz standards (Autumn Leaves, All the Things You Are, Fly Me to the Moon, Body and Soul…), blues, latin (Blue Bossa, The Girl from Ipanema), pop & rock, folk & country, traditional tunes and practice progressions. You can search it and filter by genre or style.
 - **A synthesized backing band** (Web Audio, nothing to download) with drums, walking or patterned bass and voice-led piano in 9 styles: swing, ballad, bossa nova, rock, pop, funk, blues shuffle, jazz waltz and country/folk.
 - **Practice controls:** transpose to any key, change the tempo while it plays, loop, count-in, a mixer with volume and mute for each instrument, and tap any bar to start from there. Space plays and stops.
+- **Chord shapes:** open the fold-away strip above the chart to see a chord box for every chord, with up to four voicings each (cycle with ‹ ›). Tap a box to hear it. The chord the band is playing is lit, and shapes follow your tuning.
 - **A chart editor:** type `Dm7 G7` into a bar box, or paste a whole line like `| C | Am | F G | C |`. `/` holds a chord, `%` repeats a bar and `NC` is a break. It understands symbols like `F#m7b5`, `Bbmaj7`, `G7#9`, `Eb13`, `C/E`, `-7`, `^7`, `ø` and `o7`, and a live band preview plays while you write.
 - **Share or keep:** save a chart in your own browser, or share it with everyone. Whoever shared a chart can edit or delete it from the same browser, and anyone can report one.
 
