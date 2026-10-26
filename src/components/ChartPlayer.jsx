@@ -3,14 +3,16 @@ import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { CHANNELS, playBand } from '../lib/band.js'
 import { ALL_KEYS, compileChart, isMinorKey, keyDistance, transposeChart, transposeKey } from '../lib/chart.js'
 import usePersistentState from '../lib/usePersistentState.js'
+import { barSymbols } from '../lib/voicings.js'
 import ChartSheet from './ChartSheet.jsx'
+import ChordReference from './ChordReference.jsx'
 
 const CHANNEL_LABELS = { drums: 'Drums', bass: 'Bass', piano: 'Piano' }
 const DEFAULT_MIX = { drums: 0.8, bass: 0.9, piano: 0.7 }
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName) || el?.isContentEditable
 
 /** Transpose / tempo / style controls, the band mixer and the chart itself, lit up while the band plays. */
-export default function ChartPlayer({ chart, keyboard = true }) {
+export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, onTuningChange }) {
   const [key, setKey] = useState(chart.key)
   const [tempo, setTempo] = useState(chart.tempo)
   const [style, setStyle] = useState(chart.style)
@@ -39,6 +41,7 @@ export default function ChartPlayer({ chart, keyboard = true }) {
   const volumes = useMemo(() => Object.fromEntries(CHANNELS.map((c) => [c, muted.includes(c) ? 0 : (mix[c] ?? DEFAULT_MIX[c])])), [mix, muted])
   const bpm = Math.max(40, Math.min(300, Number(tempo) || chart.tempo))
   const totalBars = song.bars.length
+  const symbolsByBar = useMemo(() => barSymbols(song), [song])
 
   const stop = () => {
     band.current?.stop()
@@ -167,6 +170,7 @@ export default function ChartPlayer({ chart, keyboard = true }) {
         })}
       </div>
 
+      <ChordReference chart={shown} playingSymbols={activeBar === null ? [] : symbolsByBar[activeBar] ?? []} tuning={tuning} tuningId={tuningId} onTuningChange={onTuningChange} />
       {shift !== 0 && <p className="hint">Transposed {shift <= 6 ? `up ${shift}` : `down ${12 - shift}`} half step{shift === 1 || shift === 11 ? '' : 's'} from {chart.key}.</p>}
       <ChartSheet
         chart={shown}

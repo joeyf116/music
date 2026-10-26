@@ -92,9 +92,11 @@ body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .pa
 @media (min-width: 720px) {
   .site-header {
     display: flex;
+    /* Five page tabs plus the title don't fit a small laptop or tablet: let them drop to their own row. */
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem 1rem;
     padding: max(1rem, env(safe-area-inset-top)) 0 1rem;
   }
 
@@ -538,6 +540,11 @@ button.primary {
 
 .tab-col:hover .tab-hit {
   fill: rgba(240, 160, 51, 0.15);
+}
+
+/* While playback scrolls the tab along, the column under the pointer must not look like the playing one. */
+.tab.following .tab-col:hover .tab-hit {
+  fill: transparent;
 }
 
 .tab-col.active .tab-hit {
@@ -1271,71 +1278,99 @@ button.primary {
   }
 }
 
-/* ---- Exercises ---- */
-.exercise-picker {
+/* ---- Exercises ----
+   Every setting is the same "field" (label above control) so one grid reflows from phone to desktop
+   and the page reads as a short list of choices rather than a wall of mixed controls. */
+.exercises {
   display: grid;
-  gap: 0.6rem;
-  margin: 1rem 0 0.5rem;
+  gap: 1rem;
 }
 
-.exercise-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.75rem;
+.exercises .section-head {
+  gap: 0.75rem 1rem;
 }
 
-.exercise-group .picker-label {
-  min-width: 7.5rem;
-  font-size: 0.85rem;
-}
-
-.exercise-select {
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0 0;
-  color: var(--muted);
-}
-
-.exercise-select select {
-  flex: 1;
+.field {
+  display: grid;
+  gap: 0.3rem;
   min-width: 0;
 }
 
-.exercise-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+.field > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.field > select,
+.field > input {
+  width: 100%;
+  min-height: 44px;
+}
+
+.exercise-field > select {
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .exercise-about {
-  max-width: 70ch;
-  margin: 0.5rem 0 1rem;
+  margin: -0.4rem 0 0;
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
-.exercise-controls input[type='number'] {
-  width: 4.5rem;
+.exercise-about summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.exercise-about summary::-webkit-details-marker {
+  display: none;
+}
+
+.exercise-about summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+}
+
+.exercise-about[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.exercise-about p {
+  max-width: 70ch;
+  margin: 0.4rem 0 0;
+}
+
+.exercises .keys {
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
+  margin: 0;
+}
+
+.exercise-fields {
+  display: grid;
+  /* Two columns on a phone, wider ones as the screen allows. */
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+@media (min-width: 560px) {
+  .exercise-fields {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  }
 }
 
 .progression-editor {
   display: grid;
-  gap: 0.6rem;
-  margin-bottom: 0.75rem;
-}
-
-.progression-input {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
-  color: var(--muted);
 }
 
-.progression-input input {
-  flex: 1;
-  min-width: 0;
-  max-width: 34rem;
+.progression-editor input {
+  min-height: 44px;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
@@ -1345,8 +1380,25 @@ button.primary {
   gap: 0.4rem;
 }
 
-.progression-editor .controls {
-  margin-bottom: 0;
+.progression-actions select {
+  flex: 1 1 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.progression-actions button {
+  flex: 1 1 8rem;
+  min-height: 44px;
+}
+
+@media (min-width: 560px) {
+  .progression-actions select {
+    flex: 1 1 14rem;
+  }
+
+  .progression-actions button {
+    flex: 0 0 auto;
+  }
 }
 
 .progression-error {
@@ -1355,39 +1407,92 @@ button.primary {
   font-size: 0.85rem;
 }
 
+.exercises .options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.exercises .options button {
+  padding: 0.4rem 0.5rem;
+  font-weight: 600;
+}
+
+.exercises .tab-head {
+  margin: 0.25rem 0 0;
+}
+
 .transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem 1rem;
+}
+
+.transport .play-button {
+  min-width: 7rem;
+  min-height: 44px;
+}
+
+.tempo-field {
+  width: 5.5rem;
+}
+
+.transport-status {
+  flex: 1;
+  min-width: 6rem;
+  align-self: center;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.transport-options summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.transport-options summary::-webkit-details-marker {
+  display: none;
+}
+
+.transport-options[open] summary {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.transport-panel {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem 1rem;
-  margin-bottom: 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
-.transport label {
+.transport-panel .check {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   color: var(--muted);
-}
-
-.transport label.check {
   cursor: pointer;
 }
 
-.transport input[type='number'] {
-  width: 4.5rem;
-}
-
-.transport .play-button {
-  min-width: 6.5rem;
-  min-height: 44px;
-}
-
-.transport-status {
-  min-width: 8rem;
-  color: var(--accent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+.exercises .tab,
+.exercises .fretboard-scroll,
+.exercises .hint {
+  margin: 0;
 }
 
 .tab-heading {
@@ -1396,53 +1501,33 @@ button.primary {
   fill: #8a4b00;
 }
 
-.exercises .tab {
-  margin-bottom: 0.25rem;
-}
-
-.exercises .fretboard-scroll {
-  margin-top: 1rem;
-}
-
-/* While the tab scrolls along during playback, phones keep a Stop button in reach above the tab bar. */
-.floating-stop {
-  display: none;
-}
-
 @media (max-width: 640px) {
-  .floating-stop {
-    position: fixed;
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 0.75rem);
-    z-index: 11;
-    display: block;
-    min-height: 48px;
-    padding: 0 1.25rem;
-    border-radius: 999px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-  }
-
-  .exercise-select {
-    display: flex;
-  }
-
-  .exercise-picker {
-    display: none;
-  }
-
-  .progression-input {
-    flex-wrap: wrap;
-  }
-
-  .progression-input input {
-    flex-basis: 100%;
+  /* While playing, the tab scrolls under this bar, so Stop is always one tap away. */
+  .transport.playing {
+    position: sticky;
+    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 0.5rem);
+    z-index: 9;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel-2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   }
 
   .transport .play-button {
-    flex: 1 1 100%;
+    flex: 1 1 8rem;
   }
 
-  .transport-status {
-    min-width: 0;
+  .transport-options {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .transport-options summary {
+    justify-content: center;
+  }
+
+  .transport-panel {
+    background: var(--panel);
   }
 }

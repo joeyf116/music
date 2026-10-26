@@ -21,7 +21,7 @@ const keyLabel = (key) => (key.endsWith('m') ? `${key.slice(0, -1)} minor` : key
 const editable = ({ title, composer, style, key, time, tempo, sections }) => ({ title, composer, style, key, time, tempo, sections })
 
 /** iReal Pro-style charts: a catalog to browse, a player with a backing band, and an editor to write new ones. */
-export default function Charts() {
+export default function Charts({ tuning, tuningId, onTuningChange }) {
   // Charts saved only in this browser, and tokens for the shared charts this browser created ({ [id]: token }).
   const [local, setLocal] = usePersistentState('music.myCharts', [])
   const [mine, setMine] = usePersistentState('music.mySharedCharts', {})
@@ -183,7 +183,7 @@ export default function Charts() {
             {notice}
           </p>
         )}
-        <ChartPlayer key={open.id} chart={open} />
+        <ChartPlayer key={open.id} chart={open} tuning={tuning} tuningId={tuningId} onTuningChange={onTuningChange} />
       </section>
     )
   }
