@@ -46,7 +46,7 @@ export const SCALES = {
   blues: { name: 'Blues', intervals: [0, 3, 5, 6, 7, 10] },
   majorBlues: { name: 'Major Blues', intervals: [0, 2, 3, 4, 7, 9] },
   harmonicMinor: { name: 'Harmonic Minor', intervals: [0, 2, 3, 5, 7, 8, 11] },
-  melodicMinor: { name: 'Melodic Minor', intervals: [0, 2, 3, 5, 7, 9, 11] },
+  melodicMinor: { name: 'Melodic Minor (jazz / ascending)', intervals: [0, 2, 3, 5, 7, 9, 11] },
   dorian: { name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
   phrygian: { name: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
   lydian: { name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
@@ -68,6 +68,7 @@ export const CHORDS = {
   m7b5: { name: 'Half-diminished (m7♭5)', symbol: 'm7♭5', intervals: [0, 3, 6, 10] },
   dim7: { name: 'Diminished 7th', symbol: 'dim7', intervals: [0, 3, 6, 9] },
   minMaj7: { name: 'Minor-Major 7th', symbol: 'm(maj7)', intervals: [0, 3, 7, 11] },
+  augMaj7: { name: 'Augmented Major 7th', symbol: 'maj7♯5', intervals: [0, 4, 8, 11] },
   six: { name: 'Major 6th', symbol: '6', intervals: [0, 4, 7, 9] },
   min6: { name: 'Minor 6th', symbol: 'm6', intervals: [0, 3, 7, 9] },
   add9: { name: 'Add 9', symbol: 'add9', intervals: [0, 4, 7, 14] },
@@ -83,9 +84,15 @@ const INTERVAL_NAMES = ['R', '♭2', '2', '♭3', '3', '4', '♭5', '5', '♭6',
 
 export const mod12 = (n) => ((n % 12) + 12) % 12
 
+const LETTERS = 'CDEFGAB'
+const LETTER_PCS = [0, 2, 4, 5, 7, 9, 11]
+
+// Any spelling a note can have (C, F#, Bb, Cb, E#, Fx-style doubles as ## / bb). Returns -1 if it isn't a note name.
 export const noteToPc = (name) => {
-  const pc = SHARP_NAMES.indexOf(name)
-  return pc >= 0 ? pc : FLAT_NAMES.indexOf(name)
+  const m = /^([A-G])([#b♯♭]*)$/.exec(String(name ?? ''))
+  if (!m) return -1
+  const shift = [...m[2]].reduce((n, a) => n + (a === '#' || a === '♯' ? 1 : -1), 0)
+  return mod12(LETTER_PCS[LETTERS.indexOf(m[1])] + shift)
 }
 
 export const usesFlats = (key) => key.includes('b') || key === 'F'
@@ -108,14 +115,55 @@ export const intervalName = (semitones, intervals = []) => {
   return INTERVAL_NAMES[s]
 }
 
-// Role used for colouring notes: root, third, fifth, seventh or other.
-export const noteRole = (semitones) => {
-  const s = mod12(semitones)
-  if (s === 0) return 'root'
-  if (s === 3 || s === 4) return 'third'
-  if (s === 6 || s === 7 || s === 8) return 'fifth'
-  if (s === 10 || s === 11) return 'seventh'
-  return 'other'
+// Scale degree (1-7) of an interval name such as 'R', '♭3', '♯4', '♭♭7' or '9' (a 9th is degree 2).
+const degreeNumber = (name) => (name === 'R' ? 1 : ((Number(String(name).replace(/[^0-9]/g, '')) - 1) % 7) + 1)
+
+// Role used for colouring notes, from the interval's name: root, third, fifth, seventh or other.
+// A Lydian ♯4 or a minor ♭6 is "other", a diminished ♭♭7 is a 7th.
+export const degreeRole = (name) => ['root', 'other', 'third', 'other', 'fifth', 'other', 'seventh'][degreeNumber(name) - 1] ?? 'other'
+
+// Role of a note `semitones` above the root, read in the context of its scale/chord formula when given.
+export const noteRole = (semitones, intervals = []) => degreeRole(intervalName(semitones, intervals))
+
+/** `pc` spelled on the letter at index `letter` (0 = C), e.g. (11, 0) → 'Cb'. Null if it would need a triple accidental. */
+export const spellOnLetter = (pc, letter) => {
+  const diff = ((mod12(pc - LETTER_PCS[letter]) + 6) % 12) - 6
+  if (Math.abs(diff) > 2) return null
+  return LETTERS[letter] + (diff > 0 ? '#'.repeat(diff) : 'b'.repeat(-diff))
+}
+
+const letterIndex = (name) => LETTERS.indexOf(String(name)[0])
+
+/**
+ * The note `semitones` above `rootName` in a scale or chord formula, on the letter its degree calls for:
+ * D natural minor has Bb (not A#), F# major has E#, C dim7 has Bbb.
+ */
+export const spellInterval = (rootName, semitones, intervals = []) => {
+  const pc = noteToPc(rootName) + semitones
+  const letter = (letterIndex(rootName) + degreeNumber(intervalName(semitones, intervals)) - 1) % 7
+  return spellOnLetter(mod12(pc), letter) ?? pcName(pc, usesFlats(rootName))
+}
+
+/** `toPc` named relative to a note already spelled as `fromName`, `letters` letter names higher (transposing Bb up a 3rd gives D). */
+export const spellFrom = (fromName, toPc, letters, flats = false) => spellOnLetter(mod12(toPc), (((letterIndex(fromName) + letters) % 7) + 7) % 7) ?? pcName(toPc, flats)
+
+const ENHARMONIC = { 'C#': 'Db', Db: 'C#', 'D#': 'Eb', Eb: 'D#', 'F#': 'Gb', Gb: 'F#', 'G#': 'Ab', Ab: 'G#', 'A#': 'Bb', Bb: 'A#' }
+const doubleCount = (names) => names.filter((n) => /##|bb/.test(n)).length
+
+/**
+ * Note names of a scale or chord on `key`, one per interval, each on its own letter.
+ * With `rename`, a black-key root switches to its other name when that avoids double sharps or flats
+ * (Ab Locrian is written as G# Locrian). Returns { root, names }.
+ */
+export const spellNotes = (key, intervals, rename = false) => {
+  const spell = (root) => intervals.map((i) => spellInterval(root, i, intervals))
+  const names = spell(key)
+  const other = ENHARMONIC[key]
+  if (rename && other && doubleCount(names)) {
+    const alt = spell(other)
+    if (doubleCount(alt) < doubleCount(names)) return { root: other, names: alt }
+  }
+  return { root: key, names }
 }
 
 // All fretboard positions whose pitch class is in `pcs`.

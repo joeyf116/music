@@ -3,6 +3,7 @@ import Charts from './components/Charts.jsx'
 import { Choice, Field, Stepper, Toggle } from './components/controls.jsx'
 import Exercises from './components/Exercises.jsx'
 import Fretboard from './components/Fretboard.jsx'
+import Logo from './components/Logo.jsx'
 import PracticeTools from './components/PracticeTools.jsx'
 import Quiz from './components/Quiz.jsx'
 import Resources from './components/Resources.jsx'
@@ -26,6 +27,7 @@ import {
   pcName,
   scaleAcrossNeck,
   scalePosition,
+  spellNotes,
   usesFlats,
 } from './lib/theory.js'
 import useHashPage from './lib/useHashPage.js'
@@ -109,7 +111,6 @@ export default function App() {
 
   const safeKey = KEYS.includes(key) ? key : 'C'
   const rootPc = noteToPc(safeKey)
-  const flats = usesFlats(safeKey)
   const tuningSpec = TUNINGS[tuningId] ?? TUNINGS.standard
   const tuning = tuningSpec.pitches
   const scale = SCALES[scaleType] ?? SCALES.major
@@ -117,7 +118,11 @@ export default function App() {
   const inversionChord = CHORDS[INVERSION_CHORDS.includes(inversionType) ? inversionType : 'maj']
   const formula = mode === 'scale' ? scale : mode === 'chord' ? chord : inversionChord
   const intervals = formula.intervals
-  const chordName = `${safeKey}${formula.symbol ?? ''}`
+  // Every note is named on its own letter (D minor has Bb, F# major has E#); scales may respell a black-key root.
+  const spelling = spellNotes(safeKey, intervals, mode === 'scale')
+  const flats = usesFlats(spelling.root)
+  const nameOfPc = new Map(intervals.map((i, k) => [mod12(rootPc + i), spelling.names[k]]))
+  const chordName = `${spelling.root}${formula.symbol ?? ''}`
 
   const view = useMemo(() => {
     if (mode === 'scale') {
@@ -237,7 +242,7 @@ export default function App() {
   }, [])
 
   const intervalOfPc = (pc) => intervals.find((i) => mod12(rootPc + i) === mod12(pc))
-  const noteLabel = (n) => (labels === 'intervals' ? intervalName(n.interval, intervals) : pcName(tuning[n.string] + n.fret, flats))
+  const noteLabel = (n) => (labels === 'intervals' ? intervalName(n.interval, intervals) : (nameOfPc.get(mod12(tuning[n.string] + n.fret)) ?? pcName(tuning[n.string] + n.fret, flats)))
 
   const fretboardNotes = (() => {
     const map = new Map()
@@ -259,7 +264,7 @@ export default function App() {
   // Open strings follow the tuning's own spelling (Eb standard reads Eb, not D#), otherwise the key's.
   const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? flats)
   const tuningNames = tuning.map((_, s) => (s === tuning.length - 1 ? stringName(s).toLowerCase() : stringName(s)))
-  const title = mode === 'scale' ? `${safeKey} ${scale.name}` : mode === 'chord' ? `${chordName} – ${chord.name}` : `${chordName} inversions`
+  const title = mode === 'scale' ? `${spelling.root} ${scale.name}` : mode === 'chord' ? `${chordName} – ${chord.name}` : `${chordName} inversions`
   const typeOptions = mode === 'scale' ? SCALES : mode === 'chord' ? CHORDS : Object.fromEntries(INVERSION_CHORDS.map((id) => [id, CHORDS[id]]))
   const typeValue = mode === 'scale' ? scaleType : mode === 'chord' ? chordType : inversionType
   const setType = mode === 'scale' ? setScaleType : mode === 'chord' ? setChordType : setInversionType
@@ -268,7 +273,10 @@ export default function App() {
     <div className="app">
       <header className="site-header">
         <a className="brand" href="#fretboard">
-          <span aria-hidden="true">🎸</span> Fretboard Practice
+          <Logo />
+          <span className="brand-name">
+            Fretboard <span className="brand-accent">Practice</span>
+          </span>
         </a>
         {/* Phones get this as a bottom tab bar (in thumb reach, never over the top of the page); wider screens show it inline. */}
         <nav className="page-nav" aria-label="Pages">
@@ -331,16 +339,16 @@ export default function App() {
             <div className="title-row">
               <h2>{title}</h2>
               <ul className="chips" aria-label="Notes">
-                {intervals.map((i) => (
+                {intervals.map((i, k) => (
                   <li key={i} className={`chip ${i === 0 ? 'root' : ''}`}>
-                    <strong>{pcName(rootPc + i, flats)}</strong>
+                    <strong>{spelling.names[k]}</strong>
                     <span>{intervalName(i, intervals)}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <Fretboard tuning={tuning} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
+            <Fretboard tuning={tuning} intervals={intervals} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
 
             <ul className="legend">
               {LEGEND.map(([role, text]) => (

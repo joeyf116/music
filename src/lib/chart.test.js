@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { STYLES } from './arranger.js'
-import { badTokens, compileChart, keyUsesFlats, parseBar, parseChord, qualityIntervals, slotBeats, transposeChart, transposeKey, transposeSymbol, validateChart } from './chart.js'
+import { ALL_KEYS, badTokens, compileChart, keyUsesFlats, parseBar, parseChord, qualityIntervals, slotBeats, transposeChart, transposeKey, transposeSymbol, validateChart } from './chart.js'
 import { LIBRARY } from './chartLibrary.js'
 
 describe('qualityIntervals', () => {
@@ -105,6 +105,27 @@ describe('transposing', () => {
     expect(transposeSymbol('G7b9', 3, true)).toBe('Bb7b9')
     expect(keyUsesFlats('Dm')).toBe(true)
     expect(keyUsesFlats('Em')).toBe(false)
+  })
+
+  it('names keys the usual way and keeps both names of enharmonic keys', () => {
+    expect(transposeKey('C', 1)).toBe('Db')
+    expect(transposeKey('Am', 11)).toBe('G#m')
+    expect(keyUsesFlats('Bbm')).toBe(true)
+    expect(keyUsesFlats('Ebm')).toBe(true)
+    expect(keyUsesFlats('C#')).toBe(false)
+    expect(ALL_KEYS).toEqual(expect.arrayContaining(['Db', 'C#', 'Gb', 'F#', 'G#m', 'Abm', 'D#m', 'Ebm']))
+  })
+
+  it('keeps passing chords on their letter when transposing', () => {
+    const moved = transposeChart({ key: 'Bb', sections: [{ label: 'A', bars: ['Bbmaj7 C#dim7', 'Cm7 F7'] }] }, 'F')
+    expect(moved.sections[0].bars).toEqual(['Fmaj7 G#dim7', 'Gm7 C7'])
+    // E#/B#/Fb/Cb read badly on a chart, so they fall back to the key's accidentals.
+    expect(transposeChart({ key: 'C', sections: [{ label: 'A', bars: ['C Ab'] }] }, 'Eb').sections[0].bars).toEqual(['Eb B'])
+  })
+
+  it('reads lowercase maj as a major triad', () => {
+    expect(qualityIntervals('maj')).toEqual([0, 4, 7])
+    expect(qualityIntervals('mM7')).toEqual([0, 3, 7, 11])
   })
 
   it('transposes a whole chart', () => {

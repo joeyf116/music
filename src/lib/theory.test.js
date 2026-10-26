@@ -8,6 +8,7 @@ import {
   chordVoicings,
   findPositions,
   intervalName,
+  noteRole,
   inversionOrder,
   NUM_FRETS,
   mod12,
@@ -16,6 +17,7 @@ import {
   pitchName,
   scaleAcrossNeck,
   scalePosition,
+  spellNotes,
   stringSets,
   tuningNotes,
   usesFlats,
@@ -51,6 +53,40 @@ describe('note helpers', () => {
     expect(intervalName(9, CHORDS.dim7.intervals)).toBe('♭♭7')
     expect(intervalName(9, CHORDS.six.intervals)).toBe('6')
     expect(intervalName(14, CHORDS.add9.intervals)).toBe('9')
+  })
+})
+
+describe('spelling', () => {
+  const spell = (key, formula, rename = true) => spellNotes(key, formula.intervals, rename)
+  it('puts every scale note on its own letter', () => {
+    expect(spell('D', SCALES.minor).names.join(' ')).toBe('D E F G A Bb C')
+    expect(spell('C', SCALES.minor).names.join(' ')).toBe('C D Eb F G Ab Bb')
+    expect(spell('F#', SCALES.major).names.join(' ')).toBe('F# G# A# B C# D# E#')
+    expect(spell('Eb', SCALES.minor).names.join(' ')).toBe('Eb F Gb Ab Bb Cb Db')
+    expect(spell('A', SCALES.blues).names.join(' ')).toBe('A C D Eb E G')
+    expect(spell('G', SCALES.harmonicMinor).names.join(' ')).toBe('G A Bb C D Eb F#')
+  })
+
+  it('renames a black-key scale root rather than use double flats, but keeps chord roots', () => {
+    expect(spell('Ab', SCALES.locrian)).toEqual({ root: 'G#', names: 'G# A B C# D E F#'.split(' ') })
+    expect(spell('Ab', SCALES.major).root).toBe('Ab')
+    expect(spell('C', CHORDS.dim7, false).names.join(' ')).toBe('C Eb Gb Bbb')
+    expect(spell('C', CHORDS.augMaj7, false).names.join(' ')).toBe('C E G# B')
+  })
+
+  it('reads any note spelling', () => {
+    expect(noteToPc('Cb')).toBe(11)
+    expect(noteToPc('E#')).toBe(5)
+    expect(noteToPc('Bbb')).toBe(9)
+    expect(noteToPc('H')).toBe(-1)
+  })
+
+  it('colours notes by their degree in context', () => {
+    expect(noteRole(8, SCALES.minor.intervals)).toBe('other') // ♭6, not a 5th
+    expect(noteRole(8, CHORDS.aug.intervals)).toBe('fifth') // ♯5
+    expect(noteRole(6, SCALES.lydian.intervals)).toBe('other') // ♯4
+    expect(noteRole(9, CHORDS.dim7.intervals)).toBe('seventh') // ♭♭7
+    expect(noteRole(3)).toBe('third')
   })
 })
 

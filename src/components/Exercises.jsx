@@ -17,7 +17,7 @@ import {
   rateFits,
 } from '../lib/exercises.js'
 import { playEvent, startPlayback } from '../lib/player.js'
-import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, stringSets, usesFlats } from '../lib/theory.js'
+import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
@@ -132,7 +132,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
   const activeIndex = active !== null && active < events.length ? active : null
   const current = activeIndex === null ? null : events[activeIndex]
 
-  const noteName = (n) => pcName(n.pitch, flats)
+  const noteName = (n) => n.name ?? pcName(n.pitch, flats)
   const melodic = !has('progression')
   const columns = events.map((e) => ({
     notes: e.notes,
@@ -170,7 +170,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
     if (exercise.id === 'progression' || exercise.id === 'fingerstyle') return `${exercise.name} in ${key}`
     if (exercise.id === 'chromatic') return `${exercise.name}: ${s.fingers}`
     if (exercise.id === 'chordArpeggio') return `${key}${(CHORDS[s.chord] ?? CHORDS.maj7).symbol} arpeggio`
-    return `${key} ${scale.name}: ${exercise.name.toLowerCase()}`
+    return `${spellNotes(key, scale.intervals, true).root} ${scale.name}: ${exercise.name.toLowerCase()}`
   })()
 
   return (

@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🎸 Fretboard Practice
+<img src="public/favicon.svg" alt="" width="96">
+
+# Fretboard Practice
 
 **Scales, chords, ear training, exercises and play-along chord charts, all in one guitar practice site.**
 
@@ -48,7 +50,7 @@ Each page has its own link, your settings are remembered in the browser, and not
 
 - **Every key, three modes.** Choose one of the 12 keys, then:
   - **Scales:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode. Scales are split into playable positions (3 notes per string for 7-note scales, boxes for pentatonic and blues).
-  - **Chords:** 16 chord types with voicings found all the way up the neck.
+  - **Chords:** 17 chord types with voicings found all the way up the neck.
   - **Inversions:** close triads and drop‑2 seventh chords on every adjacent string set, walking root → 1st → 2nd (→ 3rd) up the neck.
 - **Notes are coloured and shaped by role** (root, 3rd, 5th, 7th, other), so the neck reads even without colour. Labels can show note names or intervals.
 - **Tab under the neck** for whatever is selected. Click a column to hear it, step through with ← / →, or press **Play** at any BPM.

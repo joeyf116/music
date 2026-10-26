@@ -50,6 +50,16 @@ describe('progressions', () => {
     expect(errors).toEqual(['X'])
   })
 
+  it('names every chord in harmonic minor, including the augmented major 7th', () => {
+    const score = buildExercise({ exercise: 'diatonicArpeggios', key: 'A', scale7: 'harmonicMinor' }, TUNINGS.standard.pitches)
+    expect(score.events.filter((e) => e.heading).map((e) => e.heading)).toEqual(['Am(maj7)', 'Bm7♭5', 'Cmaj7♯5', 'Dm7', 'E7', 'Fmaj7', 'G#dim7', 'Am(maj7)'])
+  })
+
+  it('spells numeral roots on their scale degree', () => {
+    expect(parseProgression('I iii vi bVI', 'C#').chords.map((c) => c.name)).toEqual(['C#', 'E#m', 'A#m', 'A'])
+    expect(parseProgression('i bVI bVII', 'Eb').chords.map((c) => c.name)).toEqual(['Ebm', 'Cb', 'Db'])
+  })
+
   it('turns triads into diatonic 7th chords', () => {
     const { chords } = parseProgression('I IV V vi vii°', 'G', { sevenths: true })
     expect(chords.map((c) => c.name)).toEqual(['Gmaj7', 'Cmaj7', 'D7', 'Em7', 'F#m7♭5'])
