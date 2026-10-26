@@ -59,7 +59,7 @@ export default function Tab({ columns, tuningNames, columnWidth = 30, active, on
   if (!columns.length) return <p className="empty">No shapes found for this selection.</p>
 
   return (
-    <div className="tab" ref={container}>
+    <div className={`tab${follow ? ' following' : ''}`} ref={container}>
       {rows.map((row, r) => (
         <svg key={r} viewBox={`0 0 ${rowWidth} ${height}`} className="tab-row" role="img" aria-label={`Tablature line ${r + 1}`}>
           {tuningNames.map((name, s) => (
