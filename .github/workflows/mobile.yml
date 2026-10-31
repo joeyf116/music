@@ -5,10 +5,10 @@ name: Mobile apps
 # Store builds are made with EAS instead (see mobile/README.md).
 on:
   pull_request:
-    paths: ['mobile/**', 'src/lib/**', '.github/workflows/mobile.yml']
+    paths: ['mobile/**', 'src/lib/**', 'resources/links.json', '.github/workflows/mobile.yml']
   push:
     branches: [main]
-    paths: ['mobile/**', 'src/lib/**', '.github/workflows/mobile.yml']
+    paths: ['mobile/**', 'src/lib/**', 'resources/links.json', '.github/workflows/mobile.yml']
   workflow_dispatch:
 
 permissions:

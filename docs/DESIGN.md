@@ -173,7 +173,7 @@ Rules:
 ## 6. Components and when to use them
 
 All shared controls live in `src/components/controls.jsx` (form controls) and `src/components/layout.jsx`
-(`PageHeader`, `Disclosure`, `Section`).
+(`PageHeader`, `Disclosure`, `Section`). The app's equivalents are listed in [section 11](#11-the-native-app).
 
 | Need | Use | Notes |
 | --- | --- | --- |
@@ -234,6 +234,38 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 - [ ] Focus is always visible and follows the visual order.
 - [ ] Contrast AA, information never shown by colour alone.
 - [ ] Works with keyboard only; shortcuts are extras, never the only way.
+
+---
+
+## 11. The native app
+
+The iPhone, iPad and Android app in [`mobile/`](../mobile) follows every rule above (one job per screen, play
+first, settings folded with a summary, the same words and the same page map), but each control is the
+platform's own, so it feels like an iOS or Android app rather than a web page in a frame.
+
+| Web | App | Notes |
+| --- | --- | --- |
+| Header tabs / bottom tab bar | `NativeTabs` (UITabBar, Material navigation bar) | the same five pages, same names |
+| `PageHeader` | stack screen with a large title, plus `Page`'s one-line summary | the main action goes in the navigation bar (**+**, **⋯**) |
+| Search input | the navigation bar's search field (`headerSearchBarOptions`) | Charts, Resources |
+| `Choice` (2-5 options) | `Segmented` (UISegmentedControl / Material segmented buttons) | labels ≤ 10 characters |
+| `<select>` (6+ options) | `ChoiceRow`, which opens the stack's `choose` sheet | sections stand in for `<optgroup>` |
+| `Toggle` | `SwitchRow` (the platform switch) | inside a `Group` |
+| `<input type="range">` | `SliderRow` / `TempoSlider` (native slider) | |
+| `Stepper` | `Stepper` (VoiceOver / TalkBack can swipe it) | |
+| `Disclosure` | `Disclosure` | value summary when closed, as on the web |
+| `window.confirm`, row menus | `showActions` / `confirm` (action sheet on iOS, alert on Android) | destructive actions are red and ask first |
+| A form (new chart, add a link) | a modal or sheet with **Cancel** and **Save** / **Add** in its bar | |
+| A link | the in-app browser (`expo-web-browser`: Safari view / Custom Tabs) | |
+
+Custom drawing is kept to the things that have no system control: the neck, tab, the chart sheet, chord boxes
+and the answer grids. Taps that change something give a light haptic.
+
+**One source of truth.** What a page shows and decides (exercise fields, quiz feedback text, chart filtering,
+metronome settings, tap verdicts) lives in shared modules in `src/lib` (`exerciseView.js`, `rhythmView.js`,
+`chartView.js`, `chordQuiz.js`, `intervalQuiz.js`, `theoryDrill.js`, `resources.js`). The web components and
+the app screens only lay it out, so a wording or rule change made there shows up on both. Both save settings
+under the same keys (`music.*`).
 
 ---
 

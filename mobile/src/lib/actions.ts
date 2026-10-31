@@ -16,11 +16,12 @@ export function showActions(title: string, actions: Action[]): void {
     )
     return
   }
-  // Android alerts hold three buttons; tapping outside cancels.
+  // Android alerts hold three buttons (tapping outside cancels), so longer lists go on behind "More…".
+  const shown = actions.length > 3 ? [...actions.slice(0, 2), { label: 'More…', onPress: () => showActions(title, actions.slice(2)) }] : actions
   Alert.alert(
     title,
     undefined,
-    actions.slice(0, 3).map((a) => ({ text: a.label, onPress: a.onPress, style: a.destructive ? 'destructive' : 'default' })),
+    shown.map((a) => ({ text: a.label, onPress: a.onPress, style: 'destructive' in a && a.destructive ? 'destructive' : 'default' })),
     { cancelable: true },
   )
 }
