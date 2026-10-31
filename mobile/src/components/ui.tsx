@@ -1,8 +1,11 @@
 // Small building blocks shared by every screen, styled like the system's own controls.
 import SegmentedControlBase, { type SegmentedControlProps } from '@react-native-segmented-control/segmented-control'
+import Slider from '@react-native-community/slider'
+import type { Href } from 'expo-router'
 import { SymbolView, type SymbolViewProps } from 'expo-symbols'
-import { useEffect, useRef, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Platform, Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Switch, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native'
+import { choose, type ChoiceValue, type ChooseSection } from '@/lib/choose'
 import { impact, selection } from '@/lib/haptics'
 import { colors, space, text, touch } from '@/theme'
 
@@ -288,6 +291,159 @@ export function Hint({ children }: { children: ReactNode }) {
   return <Text style={styles.hint}>{children}</Text>
 }
 
+interface ChoiceRowProps<V extends ChoiceValue> extends RowProps {
+  value: V
+  /** The list, as sections (or one section of options). */
+  sections: ChooseSection<V>[]
+  onChange: (value: V) => void
+  /** The tab stack's choose sheet, e.g. '/rhythm/choose'. */
+  sheet: Href
+  /** Title of the sheet; the row label by default. */
+  title?: string
+  disabled?: boolean
+}
+
+/** A setting picked from a list: shows the current choice and opens the list as a sheet. */
+export function ChoiceRow<V extends ChoiceValue>({ label, value, sections, onChange, sheet, title, disabled, first, last }: ChoiceRowProps<V>) {
+  const current = sections.flatMap((s) => s.options).find((o) => o.value === value)
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={() => choose(sheet, { title: title ?? label, sections, value, onChoose: onChange })}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${current?.label ?? ''}`}
+      style={({ pressed }) => [styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, pressed && styles.rowPressed, disabled && styles.disabled]}
+    >
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue} numberOfLines={1}>
+        {current?.label ?? ''}
+      </Text>
+      <Icon ios="chevron.up.chevron.down" android="unfold_more" size={14} color={colors.muted} />
+    </Pressable>
+  )
+}
+
+interface SliderRowProps extends RowProps {
+  value: number
+  onChange: (value: number) => void
+  min: number
+  max: number
+  step?: number
+  disabled?: boolean
+  /** How the value reads next to the label (e.g. a percentage). */
+  format?: (value: number) => string
+}
+
+/** A value on a native slider, with its reading beside the label. */
+export function SliderRow({ label, value, onChange, min, max, step = 1, disabled, format = String, first, last }: SliderRowProps) {
+  return (
+    <View style={[styles.row, styles.sliderRow, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, disabled && styles.disabled]}>
+      <View style={styles.sliderHead}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        <Text style={styles.rowValue}>{format(value)}</Text>
+      </View>
+      <Slider
+        value={value}
+        minimumValue={min}
+        maximumValue={max}
+        step={step}
+        disabled={disabled}
+        onValueChange={onChange}
+        minimumTrackTintColor={colors.accent}
+        maximumTrackTintColor={colors.surface2}
+        thumbTintColor={Platform.OS === 'android' ? colors.accent : undefined}
+        accessibilityLabel={label}
+        style={styles.slider}
+      />
+    </View>
+  )
+}
+
+/** A tempo slider on its own (under a big tempo readout). */
+export function TempoSlider({ value, onChange, min = 30, max = 300, label = 'Tempo' }: { value: number; onChange: (value: number) => void; min?: number; max?: number; label?: string }) {
+  return (
+    <Slider
+      value={value}
+      minimumValue={min}
+      maximumValue={max}
+      step={1}
+      onValueChange={onChange}
+      minimumTrackTintColor={colors.accent}
+      maximumTrackTintColor={colors.surface2}
+      thumbTintColor={Platform.OS === 'android' ? colors.accent : undefined}
+      accessibilityLabel={label}
+      style={styles.tempoSlider}
+    />
+  )
+}
+
+/** Rows grouped on one rounded card, like a section of iOS Settings. */
+export function Group({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return <View style={[styles.group, style]}>{children}</View>
+}
+
+interface DisclosureProps {
+  title: string
+  /** What's inside, in a few words, shown while closed. */
+  summary?: string
+  initiallyOpen?: boolean
+  open?: boolean
+  onToggle?: (open: boolean) => void
+  children: ReactNode
+}
+
+/** A section that folds away (advanced options, help), with its summary showing while closed. */
+export function Disclosure({ title, summary, initiallyOpen = false, open: controlled, onToggle, children }: DisclosureProps) {
+  const [own, setOwn] = useState(initiallyOpen)
+  const open = controlled ?? own
+  const toggle = () => {
+    selection()
+    setOwn(!open)
+    onToggle?.(!open)
+  }
+  return (
+    <View style={styles.disclosure}>
+      <Pressable onPress={toggle} accessibilityRole="button" accessibilityState={{ expanded: open }} style={({ pressed }) => [styles.disclosureHead, pressed && styles.rowPressed]}>
+        <Icon ios={open ? 'chevron.down' : 'chevron.right'} android={open ? 'expand_more' : 'chevron_right'} size={14} color={colors.muted} />
+        <Text style={styles.disclosureTitle}>{title}</Text>
+        {summary && !open ? (
+          <Text style={styles.disclosureSummary} numberOfLines={1}>
+            {summary}
+          </Text>
+        ) : null}
+      </Pressable>
+      {open ? <View style={styles.disclosureBody}>{children}</View> : null}
+    </View>
+  )
+}
+
+/** A plain text button in the accent colour (secondary actions like "Clear taps"). */
+export function TextButton({ title, onPress, disabled, danger }: { title: string; onPress: () => void; disabled?: boolean; danger?: boolean }) {
+  return (
+    <Pressable onPress={onPress} disabled={disabled} hitSlop={8} accessibilityRole="button" style={({ pressed }) => [styles.textButton, (pressed || disabled) && styles.pressed]}>
+      <Text style={[styles.textButtonText, danger && styles.danger]}>{title}</Text>
+    </Pressable>
+  )
+}
+
+/** A small rounded label (a resource's type, "yours", "new"). */
+export function Badge({ label, tone = 'plain' }: { label: string; tone?: 'plain' | 'accent' | 'good' }) {
+  return (
+    <View style={[styles.badge, tone === 'accent' && styles.badgeAccent, tone === 'good' && styles.badgeGood]}>
+      <Text style={[styles.badgeText, tone === 'accent' && styles.badgeTextAccent]}>{label}</Text>
+    </View>
+  )
+}
+
+/** A short status or result line under a control. */
+export function Notice({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'good' | 'bad' }) {
+  return (
+    <Text style={[styles.notice, tone === 'good' && styles.good, tone === 'bad' && styles.danger]} accessibilityLiveRegion="polite">
+      {children}
+    </Text>
+  )
+}
+
 const styles = StyleSheet.create({
   section: { gap: space[2] },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space[4], gap: space[3] },
@@ -325,4 +481,24 @@ const styles = StyleSheet.create({
   input: { minHeight: touch, marginHorizontal: space[4], paddingHorizontal: space[3], borderRadius: 12, backgroundColor: colors.field, borderWidth: 1, borderColor: colors.borderStrong, color: colors.text, fontSize: text.base },
   headerButton: { padding: 4 },
   hint: { color: colors.muted, fontSize: text.sm, paddingHorizontal: space[4], lineHeight: 20 },
+  sliderRow: { flexDirection: 'column', alignItems: 'stretch', gap: 0, paddingVertical: space[2] },
+  sliderHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  slider: { height: 36 },
+  tempoSlider: { marginHorizontal: space[4], height: 40 },
+  group: { gap: 0 },
+  disclosure: { marginHorizontal: space[4], backgroundColor: colors.surface, borderRadius: 12, overflow: 'hidden' },
+  disclosureHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: touch, paddingHorizontal: space[4] },
+  disclosureTitle: { color: colors.text, fontSize: text.base, fontWeight: '600' },
+  disclosureSummary: { color: colors.muted, fontSize: text.sm, flex: 1 },
+  disclosureBody: { paddingBottom: space[4], gap: space[3] },
+  textButton: { paddingVertical: space[1] },
+  textButtonText: { color: colors.accent, fontSize: text.base, fontWeight: '600' },
+  danger: { color: colors.danger },
+  good: { color: colors.good },
+  badge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: colors.surface2 },
+  badgeAccent: { backgroundColor: colors.accentSoft },
+  badgeGood: { backgroundColor: 'rgba(48, 164, 108, 0.2)' },
+  badgeText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
+  badgeTextAccent: { color: colors.accent },
+  notice: { color: colors.muted, fontSize: text.base, lineHeight: 22, paddingHorizontal: space[4] },
 })
