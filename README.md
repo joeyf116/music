@@ -25,7 +25,7 @@
 - [What's inside](#whats-inside)
 - [Fretboard](#-fretboard)
 - [Rhythm](#-rhythm)
-- [Ear training](#-ear-training)
+- [Training](#-training-ear-and-theory)
 - [Charts: play along with a band](#-charts-play-along-with-a-band)
 - [Resources](#-resources)
 - [Works everywhere](#-works-everywhere)
@@ -41,7 +41,7 @@
 | --- | --- |
 | 🎯 **[Fretboard](https://joeyf116.github.io/music/#fretboard)** | See any scale, chord or inversion on a 22-fret neck, with tab you can play back |
 | 🥁 **[Rhythm](https://joeyf116.github.io/music/#exercises)** | A metronome with 12 sounds and 7 subdivisions, strumming rhythms, a timing test, and scale and chord drills in tab |
-| 👂 **[Ear training](https://joeyf116.github.io/music/#quiz)** | Name chord qualities (major, minor, dim, aug, sus, 7ths) and intervals by ear |
+| 👂 **[Training](https://joeyf116.github.io/music/#quiz)** | Name chord qualities and intervals by ear, and drill building the chords of any key |
 | 🎼 **[Charts](https://joeyf116.github.io/music/#charts)** | iReal Pro-style chord charts with a drums, bass and piano backing band, plus a chart editor |
 | 📚 **[Resources](https://joeyf116.github.io/music/#resources)** | A shared catalog of lessons, tabs, videos, PDFs and tools anyone can add to |
 
@@ -73,14 +73,15 @@ A rhythm trainer in four tabs:
 - **Timing:** tap along with the click and see how early or late each tap is, and whether you rush or drag.
 - **Drills:** scale sequences, arpeggios, triads on string sets, strummed progressions, technique and fingerstyle patterns, with tab and a fretboard that follow the audio.
 
-## 👂 Ear training
+## 👂 Training: ear and theory
 
 <img src="docs/screenshots/quiz.png" alt="The Ear training page asking you to name a chord" width="900">
 
-Two tabs, each one question at a time: press **Play**, listen, pick the answer. Wrong picks stay silent so they're never mistaken for the next question, and once you've answered you can tap every option to compare.
+Three tabs, each one question at a time. On the ear tabs press **Play**, listen, pick the answer. Wrong picks stay silent so they're never mistaken for the next question, and once you've answered you can tap every option to compare.
 
 - **Chords:** name the quality. Start with *Major vs minor*, then add triads, sus chords and 7th chords (11 qualities in all). Hear them as an arpeggio, a strum or both, on one root or any root, in close voicing or a real guitar shape, with optional inversions. The answer shows the shape on the neck.
 - **Intervals:** the root is shown on the neck and you name the gap. Start with the presets (Starter, + 3rds & 4th, All), play the notes up, down, together or mixed, and set the fret range.
+- **Theory:** learn to build chords in a key. *Build* shows a key's scale and you tap the chord's notes (stack every other note), then say whether it's major, minor or diminished. *Name* asks for the 4th chord in E major, or which number Am is in G major. *Spell* asks for the notes of any chord (Spell Bm7♭5) or names a chord from its notes. Triads or 7ths, major, minor or all seven modes, any key or just yours. A wrong tap gets a hint about the method, and every answer shows the working: the formula, the 3rds stacked, and the key's chord pattern (I ii iii IV V vi vii°).
 - Score, streak and accuracy per chord or interval, so you know what to practise next.
 
 ## 🎼 Charts: play along with a band
