@@ -1,4 +1,6 @@
 // Tiny Web Audio "plucked string" synth so shapes can be heard while practising.
+import { playClickSound, storedSound } from './clickSounds.js'
+
 let ctx = null
 
 export const audioContext = () => {
@@ -49,19 +51,9 @@ export function playPitch(pitch, delay = 0, duration = 1.4, volume = 0.18) {
 export const playChord = (pitches, delay = 0) =>
   [...pitches].sort((a, b) => a - b).forEach((p, i) => playPitch(p, delay + i * 0.035, 2))
 
-// Short metronome tick; accented beats are higher and louder.
+// Metronome tick in the sound picked on the Rhythm page; accented beats are higher and louder.
 export function playClick(time, accent = false) {
-  const ac = audioContext()
-  if (!ac) return
-  const osc = ac.createOscillator()
-  const gain = ac.createGain()
-  osc.type = 'square'
-  osc.frequency.value = accent ? 1760 : 1100
-  gain.gain.setValueAtTime(accent ? 0.25 : 0.15, time)
-  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05)
-  osc.connect(gain).connect(ac.destination)
-  osc.start(time)
-  osc.stop(time + 0.06)
+  playClickSound(storedSound(), time, accent ? 'accent' : 'beat')
 }
 
 // Calls `onBeat(beatIndex)` and clicks in time, scheduling slightly ahead so the beat stays steady. Returns a stop function.

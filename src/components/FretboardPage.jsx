@@ -89,6 +89,8 @@ const openExercise = (settings) => {
   try {
     const stored = JSON.parse(window.localStorage.getItem('music.exercises') ?? 'null') ?? DEFAULT_SETTINGS
     window.localStorage.setItem('music.exercises', JSON.stringify({ ...stored, ...settings }))
+    // The drills live on the Rhythm page's "Fretboard" tab.
+    window.localStorage.setItem('music.rhythmTab', JSON.stringify('drills'))
   } catch {
     // No storage: Exercises opens on whatever it showed last.
   }

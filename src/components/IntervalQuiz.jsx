@@ -44,7 +44,7 @@ const save = (key, value) => {
 }
 
 /** "Guess the interval": the root is shown on the neck, the two notes are played, name the gap by ear. */
-export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
+export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringName }) {
   const [maxFret, setMaxFret] = usePersistentState('music.intervalFrets', 12)
   const [enabled, setEnabled] = usePersistentState('music.intervals', PRESETS[0].semitones)
   const [direction, setDirection] = usePersistentState('music.intervalDirection', 'up')
@@ -190,9 +190,9 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
   const tried = statRows.filter((r) => r.tries)
 
   return (
-    <section className="panel quiz">
+    <div className="quiz">
       <div className="section-head">
-        <h2>Guess the interval</h2>
+        <h3>Guess the interval</h3>
         <span className="quiz-score" aria-live="polite">
           Score {score.right}/{score.tries} · Streak {streak} · Best {best}
         </span>
@@ -326,6 +326,6 @@ export default function Quiz({ tuning, tuningId, onTuningChange, stringName }) {
       ) : (
         <p className="empty">None of these intervals fit in this fret range. Try a wider range.</p>
       )}
-    </section>
+    </div>
   )
 }

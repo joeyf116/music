@@ -1,9 +1,9 @@
 import Charts from './components/Charts.jsx'
-import Exercises from './components/Exercises.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
-import Quiz from './components/Quiz.jsx'
+import EarTraining from './components/EarTraining.jsx'
 import Resources from './components/Resources.jsx'
+import RhythmPage from './components/RhythmPage.jsx'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import useHashPage from './lib/useHashPage.js'
 import usePersistentState from './lib/usePersistentState.js'
@@ -17,13 +17,14 @@ const PAGES = [
   },
   {
     id: 'exercises',
-    label: 'Exercises',
+    label: 'Rhythm',
     icon: <path d="M9 3h6l3.5 18h-13ZM12 15l5-9M7.5 15h9" />,
   },
   {
     id: 'quiz',
-    label: 'Quiz',
-    icon: <path d="M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V14M12 17.5v.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />,
+    label: 'Ear training',
+    short: 'Ear',
+    icon: <path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8.5 20 8 18M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5" />,
   },
   {
     id: 'charts',
@@ -68,7 +69,8 @@ export default function App() {
               <svg className="page-icon" viewBox="0 0 24 24" aria-hidden="true">
                 {p.icon}
               </svg>
-              <span>{p.label}</span>
+              <span className={p.short ? 'nav-long' : undefined}>{p.label}</span>
+              {p.short && <span className="nav-short">{p.short}</span>}
             </a>
           ))}
         </nav>
@@ -78,7 +80,7 @@ export default function App() {
         {page === 'resources' ? (
           <Resources />
         ) : page === 'exercises' ? (
-          <Exercises
+          <RhythmPage
             tuning={tuning}
             tuningId={tuningId}
             onTuningChange={setTuningId}
@@ -91,7 +93,7 @@ export default function App() {
         ) : page === 'charts' ? (
           <Charts tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} />
         ) : page === 'quiz' ? (
-          <Quiz tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
+          <EarTraining tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} keyName={safeKey} />
         ) : (
           <FretboardPage
             keyName={safeKey}

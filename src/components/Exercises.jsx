@@ -184,9 +184,9 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
   })()
 
   return (
-    <section className="panel exercises">
+    <div className="exercises">
       <div className="section-head">
-        <h2>Exercises</h2>
+        <h3>Scale &amp; chord drills</h3>
         <Field label="Tuning" className="head-field">
           <TuningSelect value={tuningId} onChange={onTuningChange} />
         </Field>
@@ -545,6 +545,6 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
 
       <Fretboard tuning={tuning} notes={fretboardNotes} label={fretLabel} stringName={stringName} onNoteClick={(n) => playEvent({ notes: [n] })} />
       {has('key') && !has('progression') && <DiatonicChords keyName={key} scaleId={has('scale7') ? s.scale7 : s.scale} onScaleChange={has('scale') || has('scale7') ? undefined : (id) => set({ scale: id })} />}
-    </section>
+    </div>
   )
 }

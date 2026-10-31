@@ -161,7 +161,13 @@ describe('player', () => {
   it('merges beat clicks with the events', () => {
     const score = buildExercise({ exercise: 'chromatic', rate: 'eighth', meter: '2/4' }, STANDARD)
     const items = timeline(score).slice(0, 4)
-    expect(items).toEqual([{ tick: 0, click: true }, { tick: 0, index: 0 }, { tick: 6, index: 1 }, { tick: 12, click: false }])
+    expect(items).toEqual([{ tick: 0, click: true, level: 'accent' }, { tick: 0, index: 0 }, { tick: 6, index: 1 }, { tick: 12, click: false, level: 'beat' }])
+  })
+
+  it('adds quieter subdivision clicks between beats', () => {
+    const score = buildExercise({ exercise: 'chromatic', rate: 'eighth', meter: '2/4' }, STANDARD)
+    const clicks = timeline(score, [0, 1 / 2]).filter((i) => 'click' in i).slice(0, 4)
+    expect(clicks.map((c) => [c.tick, c.level])).toEqual([[0, 'accent'], [6, 'sub'], [12, 'beat'], [18, 'sub']])
   })
 
   it('rolls down-strums low to high and up-strums high to low', () => {

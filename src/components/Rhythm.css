@@ -1,0 +1,893 @@
+/* ---- Rhythm trainer and Ear training pages ---- */
+
+/* Page tabs: one row of equal tabs under the page title, big enough for a thumb. */
+.page-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0.9rem 0 0;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.page-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.page-tabs [role='tab'] {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 2.9rem;
+  padding: 0.3rem 0.4rem;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.page-tabs [role='tab'] small {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.page-tabs [role='tab'][aria-selected='true'] {
+  background: var(--panel-2);
+  color: var(--text);
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.page-tabs [role='tab']:hover {
+  color: var(--text);
+}
+
+@media (max-width: 420px) {
+  .page-tabs [role='tab'] {
+    padding: 0.3rem 0.15rem;
+    font-size: 0.86rem;
+  }
+}
+
+.page-tab-panel {
+  margin-top: 0.75rem;
+}
+
+.tab-about {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.rhythm-page .exercises .section-head h3,
+.quiz .section-head h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.lead {
+  margin: 0 0 1rem;
+  max-width: 62ch;
+}
+
+/* Disclosure panels for the less-used options. */
+.option-panel {
+  margin: 1rem 0 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.25rem 0.75rem;
+}
+
+.option-panel > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.5rem;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.option-panel[open] > summary {
+  margin-bottom: 0.4rem;
+}
+
+.option-panel > :last-child:not(summary) {
+  margin-bottom: 0.75rem;
+}
+
+.option-panel .settings-summary {
+  margin: 0;
+}
+
+/* ---- Metronome ---- */
+.metronome {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.tempo-display {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 3.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tempo-nudge {
+  height: 3.5rem;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.tempo-readout {
+  display: grid;
+  justify-items: center;
+  line-height: 1.05;
+}
+
+.tempo-number {
+  font-size: clamp(3.4rem, 16vw, 5rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.tempo-unit {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.tempo-name {
+  margin-top: 0.2rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.tempo-slider {
+  width: 100%;
+}
+
+.tempo-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.tempo-quick button {
+  min-height: var(--control-h);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tap-tempo {
+  border-color: var(--border-strong);
+}
+
+/* Beat lights: one per beat, sized by its accent; tap to cycle accent / normal / silent. */
+.beat-lights {
+  display: grid;
+  grid-template-columns: repeat(var(--beats), minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.beat-light {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.2rem 0.5rem;
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.beat-dot {
+  display: grid;
+  place-items: center;
+  width: clamp(1.9rem, 9vw, 2.8rem);
+  aspect-ratio: 1;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  font-weight: 700;
+  transition: background 0.06s, transform 0.06s;
+}
+
+.beat-light.level-accent .beat-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+  border-width: 3px;
+}
+
+.beat-light.level-mute .beat-dot {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.beat-light.lit .beat-dot {
+  background: var(--text);
+  color: var(--bg);
+  transform: scale(1.08);
+}
+
+.beat-light.level-accent.lit .beat-dot {
+  background: var(--accent);
+}
+
+.beat-light.level-mute.lit .beat-dot,
+.beat-light.silent.lit .beat-dot {
+  background: none;
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.beat-subs {
+  display: flex;
+  gap: 3px;
+  min-height: 0.45rem;
+}
+
+.beat-subs span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.beat-subs span.lit {
+  background: var(--text);
+}
+
+.beat-hint {
+  margin: -0.4rem 0 0;
+}
+
+.metronome-transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+}
+
+.big-play {
+  flex: 1 1 12rem;
+  min-height: 3.4rem;
+  font-size: 1.25rem;
+}
+
+.metronome-transport .transport-status {
+  flex: 1 1 12rem;
+}
+
+.metronome-fields {
+  align-items: center;
+}
+
+.metronome-fields > .field {
+  flex: 0 1 10rem;
+}
+
+/* Subdivision picker: the dot pattern is the label, the name underneath. */
+.sub-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr));
+  gap: 0.4rem;
+}
+
+.sub-picker button {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.55rem 0.3rem 0.45rem;
+}
+
+.sub-picker .sub-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sub-picker small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.sub-picker button.on small {
+  color: inherit;
+}
+
+.sub-icon {
+  position: relative;
+  width: 4rem;
+  height: 0.8rem;
+}
+
+.sub-icon span {
+  position: absolute;
+  top: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+  transform: translateY(-50%);
+}
+
+.sub-icon span.on-beat {
+  width: 0.7rem;
+  height: 0.7rem;
+  opacity: 1;
+}
+
+.sound-chips {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.sound-family {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chips-row button {
+  min-height: var(--control-h);
+}
+
+.volume-fields {
+  margin-top: 0.75rem;
+}
+
+.volume-fields > .field {
+  flex: 1 1 12rem;
+}
+
+.sound-picker {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.sound-picker select {
+  flex: 1;
+}
+
+.trainers {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.trainer {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.trainer .toggle-text {
+  display: grid;
+}
+
+.trainer .toggle-text small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.trainer .field-grid > * {
+  flex: 0 1 10rem;
+}
+
+/* ---- Rhythm drills ---- */
+.rhythm-drills {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.drill-picker {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.level-field {
+  max-width: 22rem;
+}
+
+.rhythm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rhythm-chips button {
+  min-height: var(--control-h);
+}
+
+.level-about {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.rhythm-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rhythm-head h3 {
+  flex: 1;
+  display: grid;
+  margin: 0;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.rhythm-head h3 small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rhythm-head button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  font-size: 1.2rem;
+}
+
+/* Counting grid ("box notation"): one box per beat, split into its 8ths, triplets or 16ths. */
+.rhythm-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--beats), minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.rhythm-beat {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+
+.rhythm-cells {
+  display: grid;
+  grid-template-columns: repeat(var(--cells), minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.rhythm-cell {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.1rem;
+  min-width: 0;
+  min-height: 3.6rem;
+  padding: 0.2rem 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+
+.rhythm-cell .cell-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.rhythm-cell.downbeat .cell-count {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.rhythm-cell .cell-strum {
+  min-height: 1.3rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.rhythm-cell.hit {
+  background: var(--accent);
+  color: #1a1206;
+}
+
+.rhythm-cell.hit .cell-count {
+  color: inherit;
+}
+
+.rhythm-cell.now {
+  outline: 3px solid var(--text);
+  outline-offset: -3px;
+}
+
+.rhythm-grid.editing .rhythm-cell {
+  border-style: dashed;
+  border-color: var(--border-strong);
+}
+
+.beat-grid-choice .choice {
+  min-height: 2rem;
+}
+
+.beat-grid-choice .choice label {
+  padding: 0 0.2rem;
+  font-size: 0.72rem;
+}
+
+/* A 4-beat bar of 16ths is 16 boxes: on a phone the bar wraps to two rows of two beats. */
+@media (max-width: 520px) {
+  .rhythm-grid {
+    grid-template-columns: repeat(min(var(--beats), 2), minmax(0, 1fr));
+  }
+}
+
+.rhythm-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: -0.4rem;
+}
+
+.rhythm-drills .transport .mode-choice {
+  flex: 0 1 auto;
+}
+
+.drill-options > .field {
+  flex: 0 1 auto;
+}
+
+.rhythm-drills .tab {
+  margin: 0;
+}
+
+.tap-along {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tap-along h4,
+.chord-shape h4 {
+  margin: 0;
+}
+
+.tap-along .hint {
+  margin: 0;
+}
+
+.how-to ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+/* ---- Tap pad and timing results ---- */
+.tap-pad {
+  display: grid;
+  place-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 9rem;
+  padding: 1rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: 16px;
+  background: var(--bg);
+  font-size: 1.15rem;
+  font-weight: 700;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.tap-pad:not(:disabled):active {
+  background: var(--panel-2);
+}
+
+.tap-pad.perfect {
+  border-style: solid;
+  border-color: var(--fifth);
+  color: #6fe0a3;
+}
+
+.tap-pad.good {
+  border-style: solid;
+  border-color: var(--third);
+  color: #8cc4ff;
+}
+
+.tap-pad.off {
+  border-style: solid;
+  border-color: var(--root);
+  color: #ff8b8e;
+}
+
+.tap-meter {
+  position: relative;
+  width: min(18rem, 90%);
+  height: 1.6rem;
+}
+
+.tap-meter::before {
+  content: '';
+  position: absolute;
+  top: 0.4rem;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--border-strong);
+}
+
+.tap-meter-zone {
+  position: absolute;
+  top: 0;
+  left: 37.5%;
+  width: 25%;
+  height: 0.8rem;
+  border-radius: 4px;
+  background: rgba(48, 164, 108, 0.25);
+}
+
+.tap-meter-dot {
+  position: absolute;
+  top: 0.05rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+
+.tap-meter-labels {
+  position: absolute;
+  bottom: -0.2rem;
+  inset-inline: 0;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.tap-results {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.tap-scatter {
+  position: relative;
+  height: 3.2rem;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.tap-scatter-center {
+  position: absolute;
+  top: 0.4rem;
+  bottom: 1.3rem;
+  left: 50%;
+  width: 2px;
+  background: var(--text);
+}
+
+.tap-scatter-zone {
+  position: absolute;
+  top: 0.4rem;
+  bottom: 1.3rem;
+  left: 37.5%;
+  width: 25%;
+  background: rgba(48, 164, 108, 0.18);
+}
+
+.tap-scatter-dot {
+  position: absolute;
+  top: 0.75rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--root);
+  transform: translateX(-50%);
+}
+
+.tap-scatter-dot.perfect {
+  background: var(--fifth);
+}
+
+.tap-scatter-dot.good {
+  background: var(--third);
+}
+
+.tap-scatter-label {
+  position: absolute;
+  bottom: 0.15rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.tap-scatter-label.left {
+  left: 0.5rem;
+}
+
+.tap-scatter-label.right {
+  right: 0.5rem;
+}
+
+.tap-verdict {
+  margin: 0;
+  font-weight: 600;
+}
+
+.tap-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.tap-stats div {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.tap-stats dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.tap-stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tap-results .link-button {
+  justify-self: start;
+}
+
+.timing-test {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.timing-test .lead {
+  margin: 0;
+}
+
+.timing-test .field-grid > .tempo-field {
+  flex: 0 1 10rem;
+}
+
+.mini-lights {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.mini-lights span {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.mini-lights span.level-accent {
+  border-color: var(--accent);
+}
+
+.mini-lights span.level-mute {
+  border-style: dashed;
+}
+
+.mini-lights span.lit {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mini-lights span.ghost {
+  border-color: var(--text);
+  border-style: dashed;
+}
+
+/* ---- Ear training ---- */
+.ear-training .quiz {
+  display: block;
+}
+
+.chord-answers {
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+}
+
+.chord-answers .answer {
+  min-height: 4rem;
+}
+
+.chord-shape {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quality-guide {
+  display: grid;
+  gap: 0.5rem !important;
+}
+
+.listening-guide li {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.listening-guide li button {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.listening-guide li small {
+  display: block;
+  color: var(--muted);
+}
+
+.ear-tip {
+  margin: 1.25rem 0 0;
+}
+
+/* The bottom tab bar on small phones has no room for "Ear training". */
+.nav-short {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .page-nav .nav-long {
+    display: none;
+  }
+
+  .page-nav .nav-short {
+    display: inline;
+  }
+}
+
+.page-nav a {
+  white-space: nowrap;
+}
+
+/* On wide screens the metronome and timing test stay a comfortable width instead of stretching. */
+.metronome,
+.timing-test {
+  max-width: 46rem;
+}
+
+.metronome,
+.timing-test,
+.rhythm-drills {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.click-mode,
+.click-mode .choice {
+  min-width: 0;
+  width: 100%;
+}
+
+.click-mode .choice label {
+  flex: 1 1 auto;
+  padding: 0 0.4rem;
+}
