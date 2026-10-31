@@ -818,7 +818,7 @@
   margin: 1.25rem 0 0;
 }
 
-/* The bottom tab bar on small phones has no room for "Ear training". */
+/* The bottom tab bar on small phones has no room for long labels. */
 .nav-short {
   display: none;
 }
@@ -858,4 +858,147 @@
 .click-mode .choice label {
   flex: 1 1 auto;
   padding: 0 0.4rem;
+}
+
+/* ---- Training: theory drill ---- */
+.drill-prompt strong {
+  color: var(--text);
+  font-size: var(--text-xl);
+}
+
+.drill-build {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.drill-notes {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drill-note {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.45rem 0.1rem;
+}
+
+.drill-note:disabled:not(.wrong) {
+  opacity: 1;
+  cursor: default;
+}
+
+.drill-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.drill-slots span {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.25rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.drill-slots span small {
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.drill-slots span.filled {
+  border-style: solid;
+  border-color: var(--fifth);
+  color: var(--text);
+}
+
+.drill-explain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.drill-explain > * {
+  margin: 0;
+}
+
+.drill-explain h3 {
+  font-size: var(--text-base);
+}
+
+.drill-working {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.drill-working p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.drill-formula {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.drill-formula li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2.75rem;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.drill-formula small {
+  color: var(--muted);
+}
+
+.drill-pattern {
+  color: var(--muted);
+}
+
+.drill-recipe ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quiz-prompt.drill-prompt {
+  flex: none;
+}
+
+.drill-notes,
+.drill-answers {
+  max-width: 44rem;
+}
+
+.drill-answers .answer:disabled:not(.wrong) {
+  opacity: 1;
+  cursor: default;
+}
+
+.drill-answers .answer:disabled:not(.wrong, .correct) {
+  color: var(--muted);
 }

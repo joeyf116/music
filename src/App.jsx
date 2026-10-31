@@ -24,8 +24,8 @@ const PAGES = [
   },
   {
     id: 'quiz',
-    label: 'Ear training',
-    short: 'Ear',
+    label: 'Training',
+    short: 'Train',
     icon: <path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8.5 20 8 18M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5" />,
   },
   {

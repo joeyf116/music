@@ -75,11 +75,11 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | --- | --- | --- | --- | --- | --- |
 | **Fretboard** `#fretboard` | See a scale, chord or inversion on the neck | Key, scale/mode, Explore (Scale · Chords · Inversions · Progressions), position or chord | Neck + note chips, then tab with Play | Neck settings: tuning, note labels, show every note | Chords in the key (picker in chord views, reference at the end for scales) |
 | **Rhythm** `#exercises` | Play in time | Tab: Metronome · Rhythms · Timing · Drills | Tempo + Start / the rhythm grid / the tap pad / the drill tab | Sound & volume, Trainers, Playback | How to practise a rhythm |
-| **Ear training** `#quiz` | Name chords and intervals by ear | Tab: Chords · Intervals, then a preset row | Play, prompt, answers, Show answer / Skip | Settings: individual chords/intervals, play style, root, voicing, tuning | What each chord sounds like, accuracy |
+| **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right) | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
 | **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style | Band mix | Chord shapes |
 | **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list | More filters: level, category, tags | Tab finder |
 
-The page title in the header names the page; the tab bar uses the same word (Rhythm, Ear training…), so people
+The page title in the header names the page; the tab bar uses the same word (Rhythm, Training…), so people
 always know where they are.
 
 ### Navigation
