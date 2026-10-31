@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Fretboard Practice",
+    "slug": "fretboard-practice",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
+    "scheme": "fretboard",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#12151b",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "io.github.joeyf116.fretboard",
+      "supportsTablet": true,
+      "config": { "usesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "io.github.joeyf116.fretboard",
+      "adaptiveIcon": {
+        "backgroundColor": "#12151b",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#12151b",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "androidForegroundService": false,
+          "androidPermissions": [],
+          "disableFFmpeg": true
+        }
+      ]
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
