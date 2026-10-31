@@ -10,7 +10,8 @@
     "allowJs": false,
     "paths": {
       "@/*": ["./src/*"],
-      "@music/*": ["../src/lib/*"]
+      "@music/*": ["../src/lib/*"],
+      "@resources/*": ["../resources/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"]
