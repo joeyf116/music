@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Fretboard Practice</string>
-    <string name="title_activity_main">Fretboard Practice</string>
-    <string name="package_name">io.github.joeyf116.fretboard</string>
-    <string name="custom_url_scheme">io.github.joeyf116.fretboard</string>
-</resources>

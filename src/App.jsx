@@ -9,7 +9,6 @@ import useHashPage from './lib/useHashPage.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
 
-// Absolute so the iOS / Android apps open it in the browser instead of inside the app.
 const PRIVACY_URL = 'https://joeyf116.github.io/music/privacy.html'
 
 const PAGES = [

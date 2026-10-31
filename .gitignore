@@ -22,10 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Mobile app signing secrets (see docs/MOBILE.md) - never commit these
-*.jks
-*.keystore
-*.p12
-*.mobileprovision
-android/keystore.properties

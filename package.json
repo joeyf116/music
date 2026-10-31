@@ -9,24 +9,13 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "seed:charts": "node scripts/build-chart-seed.mjs",
-    "build:mobile": "vite build && cap sync",
-    "ios": "npm run build:mobile && cap open ios",
-    "android": "npm run build:mobile && cap open android",
-    "mobile:assets": "capacitor-assets generate --ios --android --iconBackgroundColor \"#12151b\" --iconBackgroundColorDark \"#12151b\" --splashBackgroundColor \"#12151b\" --splashBackgroundColorDark \"#12151b\""
+    "seed:charts": "node scripts/build-chart-seed.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "^8.6.0",
-    "@capacitor/core": "^8.6.0",
-    "@capacitor/ios": "^8.6.0",
-    "@capacitor/splash-screen": "^8.0.2",
-    "@capacitor/status-bar": "^8.0.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@capacitor/assets": "^4.0.0",
-    "@capacitor/cli": "^8.6.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

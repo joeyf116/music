@@ -16,7 +16,6 @@ export const audioContext = () => {
 }
 
 // iOS Safari mutes Web Audio when the ring/silent switch is on unless the page asks for "playback".
-// The native iOS app sets the same thing in AppDelegate.swift.
 if (typeof navigator !== 'undefined' && navigator.audioSession) {
   try {
     navigator.audioSession.type = 'playback'
