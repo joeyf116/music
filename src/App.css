@@ -1879,3 +1879,19 @@ button.primary {
 .drill-button:hover {
   background: rgba(240, 160, 51, 0.12);
 }
+
+/* ---- Footer ---- */
+.site-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-6);
+  font-size: var(--text-xs);
+}
+
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  color: var(--muted);
+}

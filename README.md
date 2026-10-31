@@ -34,6 +34,7 @@
 - [Development](#-development)
 - [Project layout](#-project-layout)
 - [Deployment](#-deployment)
+- [iOS and Android apps](#-ios-and-android-apps)
 
 ## What's inside
 
@@ -205,6 +206,12 @@ The music logic is plain JavaScript with tests next to it (`*.test.js`), separat
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) lints, tests and builds every push and pull request, then deploys `dist/` to GitHub Pages on pushes to `main`.
 
 One-time setup: **Settings → Pages → Source → GitHub Actions**.
+
+## 📲 iOS and Android apps
+
+The same app is wrapped with [Capacitor](https://capacitorjs.com) for iPhone, iPad and Android (`ios/`, `android/`).
+`npm run build:mobile` copies the web build into both; `npm run android` / `npm run ios` open Android Studio / Xcode.
+Store setup, signing and the submission checklist live in [docs/MOBILE.md](docs/MOBILE.md).
 
 <div align="center">
 <sub>Built with React, Vite and the Web Audio API · Happy practising! 🎶</sub>

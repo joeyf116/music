@@ -1,22 +1,12 @@
 // Web Audio backing band for the Charts page: synthesized drums, bass and piano that play a compiled
 // chart (see chart.js compileChart) in a chosen style (see arranger.js). Notes are scheduled a bar
 // ahead on the audio clock so timing stays steady even when the page is busy.
-import { midiToFrequency } from './audio.js'
+import { audioContext, midiToFrequency } from './audio.js'
 import { bassNotes, compHits, drumHits, STYLES, swingTime, voiceChord } from './arranger.js'
 
 export const CHANNELS = ['drums', 'bass', 'piano']
 
-let ctx = null
 let noise = null
-const audioContext = () => {
-  if (!ctx) {
-    const Ctx = window.AudioContext || window.webkitAudioContext
-    if (!Ctx) return null
-    ctx = new Ctx()
-  }
-  if (ctx.state === 'suspended') ctx.resume()
-  return ctx
-}
 
 const noiseBuffer = (ac) => {
   if (!noise) {

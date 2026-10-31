@@ -19,7 +19,7 @@
   --accent-hover: #f5b457;
   --accent-soft: rgb(240 160 51 / 0.16);
   --accent-ring: rgb(240 160 51 / 0.22);
-  --on-accent: var(--on-accent);
+  --on-accent: #1b1307;
 
   /* Feedback */
   --success: #30a46c;
