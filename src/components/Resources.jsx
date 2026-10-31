@@ -7,6 +7,7 @@ import AddResource from './AddResource.jsx'
 import { Field } from './controls.jsx'
 import ResourceCard from './ResourceCard.jsx'
 import TabFinder from './TabFinder.jsx'
+import { Disclosure, PageHeader } from './layout.jsx'
 
 // Any file dropped into /resources (sub-folders become categories) is bundled and listed here.
 const files = import.meta.glob(
@@ -101,20 +102,16 @@ export default function Resources() {
   const star = (r) => setStarred(toggle(starred, r.url))
 
   return (
-    <section className="panel resources" id="resources">
-      <div className="section-head">
-        <div>
-          <h2>Practice resources</h2>
-          <p className="resource-count">
-            {visible.length === all.length ? `${all.length} resources` : `${visible.length} of ${all.length} resources`}
-            {sharedStatus === 'loading' && ' · loading shared links…'}
-            {sharedStatus === 'error' && " · couldn't load shared links right now"}
-          </p>
-        </div>
-        <button type="button" className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>
-          + Add a resource
-        </button>
-      </div>
+    <section className="page resources" id="resources">
+      <PageHeader
+        title="Resources"
+        summary="Lessons, tabs, videos and tools to practise with. Anyone can add one for everybody to see."
+        actions={
+          <button type="button" className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>
+            + Add a resource
+          </button>
+        }
+      />
 
       {adding && <AddResource canShare={CAN_SHARE} categories={categories} popularTags={tags} onSubmit={addLink} onClose={() => setAdding(false)} />}
 
@@ -148,10 +145,7 @@ export default function Resources() {
           </button>
         </div>
         {/* Level, category and tags fold away so the list stays the main thing on screen. */}
-        <details className="more-filters" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
-          <summary>
-            More filters{extraCount > 0 && <span className="filter-count">{extraCount}</span>}
-          </summary>
+        <Disclosure label="More filters" summary={extraCount > 0 ? `${extraCount} on` : 'Level, category, tags'} open={moreOpen} onToggle={setMoreOpen} className="more-filters">
           <div className="more-filters-body">
             <div className="field-grid">
               <Field label="Level">
@@ -191,13 +185,22 @@ export default function Resources() {
               </div>
             )}
           </div>
-        </details>
-        {filtering && (
-          <button type="button" className="link-button clear-filters" onClick={() => setFilters(NO_FILTERS)}>
-            Clear filters
-          </button>
-        )}
+        </Disclosure>
       </div>
+
+      <p className="results-count" aria-live="polite">
+        {visible.length === all.length ? `${all.length} resources` : `${visible.length} of ${all.length} resources`}
+        {sharedStatus === 'loading' && ' · loading shared links…'}
+        {sharedStatus === 'error' && " · shared links couldn't be loaded right now"}
+        {filtering && (
+          <>
+            {' · '}
+            <button type="button" className="link-button" onClick={() => setFilters(NO_FILTERS)}>
+              Clear filters
+            </button>
+          </>
+        )}
+      </p>
 
       {notice && (
         <p className="notice" role="status">
@@ -225,9 +228,9 @@ export default function Resources() {
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} className="resource-group">
           {cat && (
-            <h3>
+            <h2>
               {cat} <span>{items.length}</span>
-            </h3>
+            </h2>
           )}
           <ul className="resource-list">
             {items.map((r) => (

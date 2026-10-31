@@ -7,6 +7,7 @@ import usePersistentState from '../lib/usePersistentState.js'
 import ChordDiagram from './ChordDiagram.jsx'
 import { Field } from './controls.jsx'
 import TuningSelect from './TuningSelect.jsx'
+import { Disclosure } from './layout.jsx'
 
 function ChordCard({ symbol, chord, tuning, playing }) {
   const voicings = useMemo(() => voicingsFor(chord, tuning), [chord, tuning])
@@ -76,10 +77,7 @@ export default function ChordReference({ chart, playingSymbols = [], tuning = TU
 
   if (!chords.length) return null
   return (
-    <details className="chord-ref" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary>
-        Chord shapes <span className="chord-ref-count">{chords.length} chords</span>
-      </summary>
+    <Disclosure label="Chord shapes" summary={<>{chords.length} chords</>} open={open} onToggle={setOpen} className="chord-ref">
       <div className="chord-ref-body">
         <div className="chord-ref-head">
           <p className="hint">Tap a shape to hear it · ‹ › for more voicings</p>
@@ -95,6 +93,6 @@ export default function ChordReference({ chart, playingSymbols = [], tuning = TU
           ))}
         </ul>
       </div>
-    </details>
+    </Disclosure>
   )
 }

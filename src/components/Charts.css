@@ -26,7 +26,7 @@
 
 .chart-card-meta {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   min-height: 1.2em;
 }
 
@@ -37,7 +37,7 @@
   gap: 0.3rem 0.6rem;
   margin-top: 0.25rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 
 .chart-key {
@@ -48,17 +48,24 @@
 .chart-view-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+/* Back link on its own line above the title, like a breadcrumb. */
+.chart-view-head > .back-link {
+  flex-basis: 100%;
 }
 
 .chart-title {
-  flex: 1 1 14rem;
+  flex: 1 1 16rem;
+  min-width: 0;
 }
 
-.chart-title h2 {
-  margin: 0;
-  font-size: 1.5rem;
+.chart-title h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .chart-actions {
@@ -69,7 +76,9 @@
 
 /* Player controls */
 .chart-player {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 /* Row 1: play, where we are, loop / count-in. Row 2: key, tempo and style as labelled fields. */
@@ -115,7 +124,7 @@
   flex: 0 0 var(--control-h);
   min-height: var(--control-h);
   padding: 0;
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
@@ -132,8 +141,14 @@
 .band-mixer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  margin: 0.9rem 0 0.25rem;
+  gap: var(--space-3) var(--space-5);
+}
+
+/* Mute buttons are on/off states, not actions: soft fill so the Play button stays the one bright thing. */
+.mixer-channel button.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
 .mixer-channel {
@@ -177,7 +192,7 @@
   padding: 0.05rem 0.3rem;
   border: 2px solid #1d1a14;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 800;
   text-align: center;
   overflow: hidden;
@@ -209,12 +224,12 @@
   background: transparent;
   color: inherit;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   line-height: 1;
 }
 
 .chart-bar:hover {
-  background: rgba(240, 160, 51, 0.15);
+  background: var(--accent-soft);
 }
 
 .chart-bar.start {
@@ -275,7 +290,7 @@
   .chart-label {
     min-width: 1.3rem;
     max-width: 1.5rem;
-    font-size: 0.7rem;
+    font-size: var(--text-xs);
     padding: 0 0.15rem;
   }
 
@@ -283,7 +298,7 @@
     flex-wrap: wrap;
     min-height: 2.7rem;
     padding: 0.15rem;
-    font-size: 0.95rem;
+    font-size: var(--text-base);
   }
 
   .band-transport .toggles {
@@ -349,17 +364,6 @@
   }
 }
 
-.chart-help {
-  width: 100%;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.chart-help summary {
-  cursor: pointer;
-  color: var(--text);
-}
-
 .chart-help ul {
   margin: 0.5rem 0 0;
   padding-left: 1.2rem;
@@ -375,7 +379,7 @@
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--panel-2);
+  background: var(--surface-2);
 }
 
 .editor-section-head {
@@ -442,47 +446,7 @@ input.bar-input.invalid {
 }
 
 /* ---- Chord shapes reference (fold-away strip above the chart) ---- */
-.chord-ref {
-  margin-top: 0.9rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--panel-2);
-}
 
-.chord-ref summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-}
-
-.chord-ref summary::-webkit-details-marker {
-  display: none;
-}
-
-.chord-ref summary::before {
-  content: '▸';
-  color: var(--muted);
-  transition: transform 0.15s;
-}
-
-.chord-ref[open] summary::before {
-  transform: rotate(90deg);
-}
-
-.chord-ref-count {
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 400;
-}
-
-.chord-ref-body {
-  padding: 0 0.9rem 0.75rem;
-}
 
 .chord-ref-head {
   display: flex;
@@ -522,9 +486,9 @@ input.bar-input.invalid {
   padding: 0.5rem 0.4rem;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--panel);
+  background: var(--surface);
   scroll-snap-align: start;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--duration), background var(--duration);
 }
 
 .chord-card.playing {
@@ -533,7 +497,7 @@ input.bar-input.invalid {
 }
 
 .chord-name {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
@@ -608,13 +572,13 @@ input.bar-input.invalid {
 .chord-frets {
   color: var(--muted);
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
 .chord-note {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .chord-cycle {
@@ -622,7 +586,7 @@ input.bar-input.invalid {
   align-items: center;
   gap: 0.15rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 

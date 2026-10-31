@@ -8,6 +8,7 @@ import usePersistentState from '../lib/usePersistentState.js'
 import ChartEditor from './ChartEditor.jsx'
 import ChartPlayer from './ChartPlayer.jsx'
 import './Charts.css'
+import { PageHeader } from './layout.jsx'
 
 const CAN_SHARE = sharingEnabled()
 const COOLDOWN_MS = 30_000
@@ -130,10 +131,8 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
 
   if (editing) {
     return (
-      <section className="panel charts-panel">
-        <div className="section-head">
-          <h2>{editing.target ? `Edit “${editing.target.title}”` : 'New chart'}</h2>
-        </div>
+      <section className="page charts-page">
+        <PageHeader title={editing.target ? `Edit “${editing.target.title}”` : 'New chart'} summary="Type the chords bar by bar and hear the band play them as you go." />
         <ChartEditor
           key={editing.target?.id ?? 'new'}
           initial={editing.draft}
@@ -148,14 +147,14 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
 
   if (open) {
     return (
-      <section className="panel charts-panel">
+      <section className="page charts-page">
         <div className="chart-view-head">
-          <button type="button" onClick={() => setOpenId(null)}>
-            ← Charts
+          <button type="button" className="link-button back-link" onClick={() => setOpenId(null)}>
+            ← All charts
           </button>
           <div className="chart-title">
-            <h2>{open.title}</h2>
-            <p className="resource-count">
+            <h1>{open.title}</h1>
+            <p className="page-summary">
               {[open.composer, STYLES[open.style]?.name, keyLabel(open.key), open.time, `${open.tempo} bpm`].filter(Boolean).join(' · ')}
             </p>
           </div>
@@ -191,18 +190,16 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
   }
 
   return (
-    <section className="panel charts-panel">
-      <div className="section-head">
-        <div>
-          <h2>Charts</h2>
-          <p className="resource-count">
-            {visible.length} of {all.length} charts · pick one and play along with drums, bass and piano
-          </p>
-        </div>
-        <button type="button" className="primary" onClick={() => setEditing({ target: null, draft: blankChart() })}>
-          + New chart
-        </button>
-      </div>
+    <section className="page charts-page">
+      <PageHeader
+        title="Charts"
+        summary="Pick a song and play along with a drums, bass and piano band in any key and tempo."
+        actions={
+          <button type="button" className="primary" onClick={() => setEditing({ target: null, draft: blankChart() })}>
+            + New chart
+          </button>
+        }
+      />
 
       <div className="catalog-controls">
         <div className="search-row">
@@ -224,6 +221,10 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
           ))}
         </div>
       </div>
+
+      <p className="results-count" aria-live="polite">
+        {visible.length === all.length ? `${all.length} charts` : `${visible.length} of ${all.length} charts`}
+      </p>
 
       {sharedStatus === 'error' && <p className="notice">Shared charts couldn’t be loaded right now, so only built-in charts and your own are shown.</p>}
       {notice && (

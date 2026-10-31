@@ -4,6 +4,7 @@ import { startClickTrack } from '../lib/rhythmEngine.js'
 import useTapJudge from '../lib/useTapJudge.js'
 import { Choice, Stepper } from './controls.jsx'
 import TapPad, { TapResults } from './TapPad.jsx'
+import { Disclosure } from './layout.jsx'
 
 // How much of the click you get. Less click = more of the time is yours to keep.
 const CLICK_MODES = [
@@ -98,14 +99,13 @@ export default function TimingTest({ settings, update, sound }) {
       <TapPad judge={judge} disabled={!playing} idle={playing ? 'Tap here on every beat' : 'Press Start, then tap here on every beat'} />
       <p className="hint keys-hint">On a keyboard: Space starts and stops, any letter key taps.</p>
       <TapResults judge={judge} onReset={judge.reset} />
-      <details className="option-panel">
-        <summary>Taps always read late?</summary>
+      <Disclosure label="Taps always read late?" quiet className="option-panel">
         <p className="hint">Bluetooth headphones and some speakers add a delay the browser can’t see. Tap a run at a slow tempo, then set the average you get here so it’s taken off every tap.</p>
         <Stepper label="Delay correction (ms)" value={correction} onChange={(v) => {
             setCorrection(v)
             update({ tapCorrection: Number(v) || 0 })
           }} min={0} max={300} step={5} fallback={0} />
-      </details>
+      </Disclosure>
     </div>
   )
 }

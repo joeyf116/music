@@ -1,12 +1,34 @@
 :root {
+  /* ---- Design tokens ----
+     Every colour, size and gap in the app comes from here. The rules for using them are in docs/DESIGN.md. */
+
+  /* Surfaces */
   --bg: #12151b;
-  --panel: #1b2029;
-  --panel-2: #232a35;
+  --surface: #1b2029;
+  --surface-2: #232a35;
+  --field-bg: #161a21;
   --border: #2e3644;
   --border-strong: #6b778b;
+
+  /* Text */
   --text: #e8ebf1;
   --muted: #9aa4b5;
+
+  /* Accent: the primary action, the current selection and focus. Nothing else. */
   --accent: #f0a033;
+  --accent-hover: #f5b457;
+  --accent-soft: rgb(240 160 51 / 0.16);
+  --accent-ring: rgb(240 160 51 / 0.22);
+  --on-accent: var(--on-accent);
+
+  /* Feedback */
+  --success: #30a46c;
+  --success-soft: rgb(48 164 108 / 0.14);
+  --danger: #e5484d;
+  --danger-text: #ff8b8e;
+  --danger-soft: rgb(229 72 77 / 0.14);
+
+  /* Note roles: only for notes on the neck, chips and legends. */
   --root: #e5484d;
   --third: #3e9bff;
   --fifth: #30a46c;
@@ -14,10 +36,33 @@
   --other: #c9a227;
   --wood: #4a2f1d;
   --wood-2: #5b3a24;
+
+  /* Type scale: six sizes, nothing in between. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.5rem;
+
+  /* Spacing scale (4px base). */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Layout */
+  --page-max: 1280px;
+  --page-gutter: var(--space-4);
   --tabbar-height: 4rem;
-  --field-bg: #161a21;
   --control-h: 2.5rem;
   --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.18);
+  --duration: 150ms;
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -47,6 +92,27 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  background: var(--bg);
+}
+
+@media (min-width: 720px) {
+  :root {
+    --page-gutter: var(--space-5);
+    --text-2xl: 1.75rem;
+  }
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
 }
 
 a {
@@ -64,11 +130,11 @@ textarea {
 button {
   cursor: pointer;
   touch-action: manipulation;
-  background: var(--panel-2);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.4rem 0.75rem;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--duration), border-color var(--duration);
 }
 
 button:hover {
@@ -105,10 +171,10 @@ textarea {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--field-bg);
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-weight: 400;
   line-height: 1.25;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration), box-shadow var(--duration);
 }
 
 input::placeholder,
@@ -127,7 +193,7 @@ input:not([type='checkbox'], [type='radio'], [type='range']):focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(240, 160, 51, 0.22);
+  box-shadow: 0 0 0 3px var(--accent-ring);
   outline: none;
 }
 
@@ -159,7 +225,7 @@ select {
 
 select option,
 select optgroup {
-  background: var(--panel);
+  background: var(--surface);
   color: var(--text);
 }
 
@@ -196,7 +262,7 @@ input[type='checkbox'] {
 
 .field-label {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -270,7 +336,7 @@ input[type='checkbox'] {
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration), color var(--duration);
 }
 
 .choice label span {
@@ -290,12 +356,12 @@ input[type='checkbox'] {
 
 .choice label:hover {
   color: var(--text);
-  background: var(--panel-2);
+  background: var(--surface-2);
 }
 
 .choice label:has(input:checked) {
   background: var(--accent);
-  color: #1b1307;
+  color: var(--on-accent);
 }
 
 .choice label:has(input:focus-visible) {
@@ -325,7 +391,7 @@ input[type='checkbox'] {
 
 .stepper:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(240, 160, 51, 0.22);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .stepper button {
@@ -334,8 +400,8 @@ input[type='checkbox'] {
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: var(--panel-2);
-  font-size: 1.2rem;
+  background: var(--surface-2);
+  font-size: var(--text-lg);
   font-weight: 700;
   line-height: 1;
 }
@@ -386,8 +452,8 @@ input[type='checkbox'] {
   height: 1.5rem;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: var(--panel-2);
-  transition: background 0.15s, border-color 0.15s;
+  background: var(--surface-2);
+  transition: background var(--duration), border-color var(--duration);
 }
 
 .toggle-track::after {
@@ -399,7 +465,7 @@ input[type='checkbox'] {
   height: calc(1.5rem - 6px);
   border-radius: 50%;
   background: var(--muted);
-  transition: transform 0.15s, background 0.15s;
+  transition: transform var(--duration), background var(--duration);
 }
 
 .toggle input:checked + .toggle-track {
@@ -408,7 +474,7 @@ input[type='checkbox'] {
 }
 
 .toggle input:checked + .toggle-track::after {
-  background: #1b1307;
+  background: var(--on-accent);
   transform: translateX(1rem);
 }
 
@@ -439,7 +505,7 @@ input[type='checkbox'] {
 }
 
 code {
-  background: var(--panel-2);
+  background: var(--surface-2);
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
 }

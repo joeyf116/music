@@ -25,6 +25,7 @@ import Fretboard from './Fretboard.jsx'
 import KeyPicker from './KeyPicker.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
+import { Disclosure } from './layout.jsx'
 
 const GROUPS = [...new Set(EXERCISES.map((e) => e.group))]
 const SEVEN_NOTE_SCALES = Object.entries(SCALES).filter(([, s]) => s.intervals.length === 7)
@@ -186,7 +187,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
   return (
     <div className="exercises">
       <div className="section-head">
-        <h3>Scale &amp; chord drills</h3>
+        <h2>Scale &amp; chord drills</h2>
         <Field label="Tuning" className="head-field">
           <TuningSelect value={tuningId} onChange={onTuningChange} />
         </Field>
@@ -207,11 +208,10 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
           ))}
         </select>
       </label>
-      <details className="exercise-about">
-        <summary>Why practise this?</summary>
+      <Disclosure label="Why practise this?" quiet className="exercise-about">
         <p>{exercise.about}</p>
         <p>Start slow enough to play it perfectly, then let “Speed up” push the tempo a little each time round.</p>
-      </details>
+      </Disclosure>
 
       {has('key') && <KeyPicker value={key} onChange={(k) => set({ key: k })} />}
 
@@ -512,8 +512,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         <span className="transport-status" aria-live="polite">
           {countBeat ? `Count-in ${countBeat}…` : liveBpm ? `Now ${liveBpm} BPM` : ''}
         </span>
-        <details className="transport-options" open={showOptions} onToggle={(e) => setShowOptions(e.currentTarget.open)}>
-          <summary>Playback</summary>
+        <Disclosure label="Playback" summary={[click && 'Click', countIn && 'Count-in', loop && 'Loop'].filter(Boolean).join(' · ') || 'No click'} open={showOptions} onToggle={setShowOptions} className="transport-options">
           <div className="transport-panel">
             <div className="toggles">
               <Toggle checked={click} onChange={setClick}>
@@ -534,7 +533,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
               onChange={setSpeedUp}
             />
           </div>
-        </details>
+        </Disclosure>
       </div>
 
       <Tab columns={columns} tuningNames={tuning.map((_, i) => (i === tuning.length - 1 ? stringName(i).toLowerCase() : stringName(i)))} columnWidth={columnWidth} active={activeIndex} onSelect={selectColumn} follow={playing} />

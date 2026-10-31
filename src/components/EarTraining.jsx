@@ -3,6 +3,7 @@ import ChordQuiz from './ChordQuiz.jsx'
 import IntervalQuiz from './IntervalQuiz.jsx'
 import PageTabs from './PageTabs.jsx'
 import './Rhythm.css'
+import { PageHeader } from './layout.jsx'
 
 const TABS = [
   { id: 'chords', label: 'Chords', hint: 'Major, minor, dim…' },
@@ -14,10 +15,8 @@ export default function EarTraining({ tuning, tuningId, onTuningChange, stringNa
   const [tab, setTab] = usePersistentState('music.earTab', 'chords')
   const current = TABS.some((t) => t.id === tab) ? tab : 'chords'
   return (
-    <section className="panel ear-training">
-      <div className="section-head">
-        <h2>Ear training</h2>
-      </div>
+    <section className="page ear-training">
+      <PageHeader title="Ear training" summary="Hear it, name it: train your ear to recognise chord qualities and intervals." />
       <PageTabs label="Ear training" tabs={TABS} value={current} onChange={setTab}>
         {current === 'chords' ? (
           <ChordQuiz tuning={tuning} stringName={stringName} keyName={keyName} />

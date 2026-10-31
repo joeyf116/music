@@ -7,6 +7,7 @@ import { barSymbols } from '../lib/voicings.js'
 import ChartSheet from './ChartSheet.jsx'
 import ChordReference from './ChordReference.jsx'
 import { Field, Stepper, Toggle } from './controls.jsx'
+import { Disclosure } from './layout.jsx'
 
 const CHANNEL_LABELS = { drums: 'Drums', bass: 'Bass', piano: 'Piano' }
 const DEFAULT_MIX = { drums: 0.8, bass: 0.9, piano: 0.7 }
@@ -161,19 +162,21 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
         </Field>
       </div>
 
-      <div className="band-mixer" role="group" aria-label="Band mixer">
-        {CHANNELS.map((c) => {
-          const off = muted.includes(c)
-          return (
-            <div key={c} className={`mixer-channel${off ? ' muted' : ''}`}>
-              <button type="button" className={off ? '' : 'on'} aria-pressed={!off} onClick={() => setMuted(off ? muted.filter((m) => m !== c) : [...muted, c])}>
-                {CHANNEL_LABELS[c]}
-              </button>
-              <input type="range" min="0" max="1" step="0.05" value={mix[c] ?? DEFAULT_MIX[c]} onChange={(e) => setMix({ ...mix, [c]: Number(e.target.value) })} aria-label={`${CHANNEL_LABELS[c]} volume`} />
-            </div>
-          )
-        })}
-      </div>
+      <Disclosure label="Band mix" summary={muted.length ? `${muted.map((m) => CHANNEL_LABELS[m]).join(', ')} off` : 'Drums, bass and piano on'} storageKey="music.bandMixOpen" className="band-mix">
+        <div className="band-mixer" role="group" aria-label="Band mixer">
+          {CHANNELS.map((c) => {
+            const off = muted.includes(c)
+            return (
+              <div key={c} className={`mixer-channel${off ? ' muted' : ''}`}>
+                <button type="button" className={off ? '' : 'on'} aria-pressed={!off} onClick={() => setMuted(off ? muted.filter((m) => m !== c) : [...muted, c])}>
+                  {CHANNEL_LABELS[c]}
+                </button>
+                <input type="range" min="0" max="1" step="0.05" value={mix[c] ?? DEFAULT_MIX[c]} onChange={(e) => setMix({ ...mix, [c]: Number(e.target.value) })} aria-label={`${CHANNEL_LABELS[c]} volume`} />
+              </div>
+            )
+          })}
+        </div>
+      </Disclosure>
 
       <ChordReference chart={shown} playingSymbols={activeBar === null ? [] : symbolsByBar[activeBar] ?? []} tuning={tuning} tuningId={tuningId} onTuningChange={onTuningChange} />
       {shift !== 0 && <p className="hint">Transposed {shift <= 6 ? `up ${shift}` : `down ${12 - shift}`} half step{shift === 1 || shift === 11 ? '' : 's'} from {chart.key}.</p>}

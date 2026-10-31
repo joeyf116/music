@@ -8,6 +8,7 @@ import PageTabs from './PageTabs.jsx'
 import RhythmDrills from './RhythmDrills.jsx'
 import TimingTest from './TimingTest.jsx'
 import './Rhythm.css'
+import { PageHeader } from './layout.jsx'
 
 export const RHYTHM_TAB_KEY = 'music.rhythmTab'
 const TABS = [
@@ -19,7 +20,7 @@ const TABS = [
 const ABOUT = {
   metronome: 'Set a tempo, choose how the beat is split and what it sounds like. Gap click and the speed trainer build your inner clock.',
   rhythms: 'Strumming rhythms from simple to tricky, shown as counts, strum arrows and tab. Listen, count, then play along.',
-  timing: 'Tap with the click and see exactly how early or late you are.',
+  // The Timing tab explains itself in its own first line.
   drills: 'Scale, arpeggio and chord drills in tab that play in time with the click.',
 }
 
@@ -51,12 +52,10 @@ export default function RhythmPage(props) {
   const soundId = soundById(sound).id
 
   return (
-    <section className="panel rhythm-page">
-      <div className="section-head">
-        <h2>Rhythm trainer</h2>
-      </div>
+    <section className="page rhythm-page">
+      <PageHeader title="Rhythm" summary="Lock in your timing: a metronome, strumming rhythms, a timing test and drills in tab." />
       <PageTabs label="Rhythm trainer" tabs={TABS} value={current} onChange={setTab}>
-        <p className="tab-about">{ABOUT[current]}</p>
+        {ABOUT[current] && <p className="tab-about">{ABOUT[current]}</p>}
         {current === 'metronome' && <Metronome settings={settings} update={update} sound={soundId} onSoundChange={setSound} />}
         {current === 'rhythms' && <RhythmDrills tuning={tuning} stringName={stringName} keyName={keyName} minor={minor} settings={settings} update={update} />}
         {current === 'timing' && <TimingTest settings={settings} update={update} sound={soundId} />}

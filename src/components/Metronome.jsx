@@ -5,6 +5,7 @@ import { METRONOME_METERS, SUBDIVISIONS, clampBpm, fitAccents, gapStatus, nextAc
 import { startClickTrack } from '../lib/rhythmEngine.js'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { SoundChips } from './SoundPicker.jsx'
+import { Disclosure } from './layout.jsx'
 
 const soundLabel = (id) => soundById(id).name
 const ACCENT_NAMES = { accent: 'accented', beat: 'normal', mute: 'silent' }
@@ -226,10 +227,7 @@ export default function Metronome({ settings, update, sound, onSoundChange }) {
 
       <SubdivisionPicker value={sub.id} onChange={(subdivision) => update({ subdivision })} />
 
-      <details className="option-panel" open={showSounds} onToggle={(e) => setShowSounds(e.currentTarget.open)}>
-        <summary>
-          Sound &amp; volume <span className="settings-summary">{sound ? soundLabel(sound) : ''}</span>
-        </summary>
+      <Disclosure label="Sound & volume" summary={sound ? soundLabel(sound) : ''} open={showSounds} onToggle={setShowSounds} className="option-panel">
         <SoundChips value={sound} onChange={onSoundChange} volume={settings.volume} />
         <div className="field-grid volume-fields">
           <Field label={`Click volume ${Math.round(settings.volume * 100)}%`}>
@@ -239,14 +237,11 @@ export default function Metronome({ settings, update, sound, onSoundChange }) {
             <input type="range" min={0} max={1} step={0.05} value={settings.subVolume} onChange={(e) => update({ subVolume: Number(e.target.value) })} disabled={sub.offsets.length === 1} />
           </Field>
         </div>
-      </details>
+      </Disclosure>
 
-      <details className="option-panel">
-        <summary>
-          Trainers <span className="settings-summary">{[settings.gap.on && 'Gap click', settings.speed.on && 'Speed trainer'].filter(Boolean).join(' · ') || 'Off'}</span>
-        </summary>
+      <Disclosure label="Trainers" summary={[settings.gap.on && 'Gap click', settings.speed.on && 'Speed trainer'].filter(Boolean).join(' · ') || 'Off'} className="option-panel">
         <Trainers settings={settings} update={update} />
-      </details>
+      </Disclosure>
 
       <p className="hint keys-hint">Keys: Space start/stop · ← → tempo (Shift ×5) · T tap tempo.</p>
     </div>
