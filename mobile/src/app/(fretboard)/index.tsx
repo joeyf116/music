@@ -12,6 +12,8 @@ import { colors, space, text } from '@/theme'
 import { playChord, playPitch } from '@music/audio.js'
 import { NECK_AREAS, randomProgression } from '@music/exercises.js'
 import {
+  type Active,
+  type Column,
   ALL_POSITIONS,
   AREA_OPTIONS,
   DROP_OPTIONS,
@@ -28,7 +30,7 @@ import {
   progressionToken,
   tabStringNames,
 } from '@music/fretboardView.js'
-import { CHORDS, KEYS, SCALES } from '@music/theory.js'
+import { CHORDS, KEYS, SCALES, type DiatonicChord } from '@music/theory.js'
 
 const KEY_OPTIONS = KEYS.map((k) => ({ value: k, label: k }))
 
@@ -38,21 +40,21 @@ const KEY_OPTIONS = KEYS.map((k) => ({ value: k, label: k }))
  */
 export default function FretboardScreen() {
   const { keyName, setKey, scaleType, tuning, tuningId, tuningSpec, stringName, bpm, setBpm } = useMusic()
-  const [storedView, setView] = usePref('music.mode', 'scale')
-  const [chordDegree, setChordDegree] = usePref('music.chordDegree', 0)
-  const [chordOverride, setChordOverride] = usePref('music.chordType', '')
-  const [sevenths, setSevenths] = usePref('music.diatonicSevenths', false)
-  const [drop, setDrop] = usePref('music.dropVoicing', 'drop2')
-  const [labels] = usePref('music.labels', 'notes')
-  const [showAll] = usePref('music.showAll', true)
-  const [layout, setLayout] = usePref('music.scaleLayout', 'position')
-  const [position, setPosition] = usePref('music.fretPosition', 0)
-  const [stringSet, setStringSet] = usePref('music.stringSet', 0)
-  const [progression, setProgression] = usePref('music.fretProgression', 'I V vi IV')
-  const [area, setArea] = usePref('music.progressionNeck', 'open')
-  const [active, setActive] = useState(null)
+  const [storedView, setView] = usePref('music.mode')
+  const [chordDegree, setChordDegree] = usePref('music.chordDegree')
+  const [chordOverride, setChordOverride] = usePref('music.chordType')
+  const [sevenths, setSevenths] = usePref('music.diatonicSevenths')
+  const [drop, setDrop] = usePref('music.dropVoicing')
+  const [labels] = usePref('music.labels')
+  const [showAll] = usePref('music.showAll')
+  const [layout, setLayout] = usePref('music.scaleLayout')
+  const [position, setPosition] = usePref('music.fretPosition')
+  const [stringSet, setStringSet] = usePref('music.stringSet')
+  const [progression, setProgression] = usePref('music.fretProgression')
+  const [area, setArea] = usePref('music.progressionNeck')
+  const [active, setActive] = useState<Active | null>(null)
   const [playing, setPlaying] = useState(false)
-  const timers = useRef([])
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, tuning, tuningId })
   const { view, picked, overrideOk, chordType, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote } = model
@@ -65,17 +67,20 @@ export default function FretboardScreen() {
   }, [])
   useEffect(() => stop, [selection, stop])
 
-  const playColumn = (col) => {
+  const playColumn = (col: Column) => {
     const pitches = columnPitches(col, tuning)
     if (pitches.length === 1) playPitch(pitches[0])
     else if (pitches.length) playChord(pitches)
   }
-  const selectColumn = (index, play = true) => {
+  const selectColumn = (index: number, play = true) => {
     setActive({ selection, index })
     if (play && shapes.columns[index]) playColumn(shapes.columns[index])
   }
   const togglePlay = () => {
-    if (playing) return stop()
+    if (playing) {
+      stop()
+      return
+    }
     const beat = columnDuration(view, bpm)
     setPlaying(true)
     timers.current = shapes.columns.map((col, i) =>
@@ -94,9 +99,15 @@ export default function FretboardScreen() {
     pendingPlay.current = false
     if (shapes.columns[0]) playColumn(shapes.columns[0])
   })
-  const pickChord = (chord) => {
-    if (view === 'progression') return setProgression(`${progression.trim()} ${progressionToken(chord)}`.trim())
-    if (chord.degree === picked.degree && !overrideOk) return shapes.columns[0] && selectColumn(0)
+  const pickChord = (chord: DiatonicChord) => {
+    if (view === 'progression') {
+      setProgression(`${progression.trim()} ${progressionToken(chord)}`.trim())
+      return
+    }
+    if (chord.degree === picked.degree && !overrideOk) {
+      if (shapes.columns[0]) selectColumn(0)
+      return
+    }
     pendingPlay.current = true
     setChordDegree(chord.degree)
     setChordOverride('')
@@ -186,9 +197,10 @@ export default function FretboardScreen() {
         <Section title={heading.title} sub={heading.sub}>
           <ChipRow
             label={view === 'progression' ? 'Chords' : 'Notes'}
-            options={chips.map((c) => ({ value: c.key, label: c.name, sub: c.sub, on: c.on, tonic: c.root, index: c.index }))}
-            value={null}
-            onChange={(_, o) => (o.index !== undefined ? selectColumn(o.index) : null)}
+            options={chips.map((c) => ({ value: c.key, label: c.name, sub: c.sub, on: c.on, tonic: c.root, column: c.index }))}
+            onChange={(_, chip) => {
+              if (chip.column !== undefined) selectColumn(chip.column)
+            }}
           />
           <Fretboard
             tuning={tuning}

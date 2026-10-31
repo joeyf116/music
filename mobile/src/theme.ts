@@ -21,19 +21,13 @@ export const colors = {
   seventh: '#a86ee8',
   other: '#c9a227',
   wood: '#4a2f1d',
-}
+} as const
 
-export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32 }
+export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32 } as const
 
-export const text = {
-  xs: 12,
-  sm: 14,
-  base: 16,
-  lg: 18,
-  xl: 22,
-}
+export const text = { xs: 12, sm: 14, base: 16, lg: 18, xl: 22 } as const
 
-export const mono = Platform.select({ ios: 'Menlo', default: 'monospace' })
+export const mono: string = Platform.select({ ios: 'Menlo', default: 'monospace' })
 
 // Thumb-sized: Apple asks for 44pt, Material for 48dp.
-export const touch = Platform.select({ ios: 44, default: 48 })
+export const touch: number = Platform.select({ ios: 44, default: 48 })

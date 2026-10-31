@@ -5,8 +5,15 @@ import { Button } from './ui'
 
 const SITE = 'https://joeyf116.github.io/music/'
 
+interface ComingSoonProps {
+  title: string
+  summary: string
+  /** The web page's hash, e.g. 'exercises'. */
+  hash: string
+}
+
 /** Placeholder for a page that hasn't been rebuilt natively yet: it opens the web version instead. */
-export default function ComingSoon({ title, summary, hash }) {
+export default function ComingSoon({ title, summary, hash }: ComingSoonProps) {
   const insets = useSafeAreaInsets()
   return (
     <View style={[styles.page, { paddingTop: insets.top + space[6] }]}>
@@ -15,7 +22,7 @@ export default function ComingSoon({ title, summary, hash }) {
       </Text>
       <Text style={styles.summary}>{summary}</Text>
       <Text style={styles.note}>This page is coming to the app soon. Until then it works on the web.</Text>
-      <Button title="Open on the web" onPress={() => Linking.openURL(`${SITE}#${hash}`)} style={styles.button} />
+      <Button title="Open on the web" onPress={() => void Linking.openURL(`${SITE}#${hash}`)} style={styles.button} />
     </View>
   )
 }

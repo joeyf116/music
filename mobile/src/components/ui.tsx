@@ -1,13 +1,32 @@
 // Small building blocks shared by every screen, styled like the system's own controls.
-import { useEffect, useRef } from 'react'
-import SegmentedControl from '@react-native-segmented-control/segmented-control'
-import { SymbolView } from 'expo-symbols'
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import SegmentedControlBase, { type SegmentedControlProps } from '@react-native-segmented-control/segmented-control'
+import { SymbolView, type SymbolViewProps } from 'expo-symbols'
+import { useEffect, useRef, type ComponentType, type ReactNode } from 'react'
+import { Platform, Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Switch, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native'
 import { impact, selection } from '@/lib/haptics'
 import { colors, space, text, touch } from '@/theme'
 
+// The package's class typings predate React 19's JSX types; its props are what matter here.
+const SegmentedControl = SegmentedControlBase as unknown as ComponentType<SegmentedControlProps>
+
+type IosSymbol = Extract<SymbolViewProps['name'], { ios?: unknown }>['ios']
+type AndroidSymbol = Extract<SymbolViewProps['name'], { android?: unknown }>['android']
+
+export interface Choice<V> {
+  value: V
+  label: string
+}
+
+interface SectionProps {
+  title?: string
+  sub?: string
+  right?: ReactNode
+  children: ReactNode
+  style?: StyleProp<ViewStyle>
+}
+
 /** A titled group on a screen (like a section in iOS Settings). `right` sits beside the title. */
-export function Section({ title, sub, right, children, style }) {
+export function Section({ title, sub, right, children, style }: SectionProps) {
   return (
     <View style={[styles.section, style]}>
       {(title || right) && (
@@ -24,8 +43,15 @@ export function Section({ title, sub, right, children, style }) {
   )
 }
 
+interface SegmentedProps<V extends string> {
+  options: readonly Choice<V>[]
+  value: V
+  onChange: (value: V) => void
+  style?: StyleProp<ViewStyle>
+}
+
 /** One of a few options, as the platform's segmented control (UISegmentedControl on iOS). */
-export function Segmented({ options, value, onChange, style }) {
+export function Segmented<V extends string>({ options, value, onChange, style }: SegmentedProps<V>) {
   const index = Math.max(
     0,
     options.findIndex((o) => o.value === value),
@@ -47,42 +73,65 @@ export function Segmented({ options, value, onChange, style }) {
   )
 }
 
-/**
- * Pill buttons in a row that scrolls sideways (positions, chords), keeping the selected one in view.
- * `wrap` lays them out in rows instead (the twelve keys fit two rows on a phone).
- */
-export function ChipRow({ options, value, onChange, renderSub, style, label, wrap }) {
-  const scroller = useRef(null)
-  const offsets = useRef({})
+export interface Chip<V> {
+  value: V
+  label: string
+  /** Small text above the label (a chord's numeral). */
+  top?: string
+  /** Small text under the label (a fret range, an interval). */
+  sub?: string
+  /** Marks the chip as selected when the row has no single value (chips that light up during playback). */
+  on?: boolean
+  /** A quieter highlight (the key's tonic chord, the root note). */
+  tonic?: boolean
+  a11y?: string
+}
+
+interface ChipRowProps<V, C extends Chip<V>> {
+  options: readonly C[]
+  value?: V | null
+  onChange: (value: V, chip: C) => void
+  label: string
+  /** Lay the chips out in rows instead of one sideways-scrolling line (the twelve keys fit two rows on a phone). */
+  wrap?: boolean
+  style?: StyleProp<ViewStyle>
+}
+
+/** Pill buttons in a row that scrolls sideways (positions, chords), keeping the selected one in view. */
+export function ChipRow<V, C extends Chip<V>>({ options, value, onChange, label, wrap = false, style }: ChipRowProps<V, C>) {
+  const scroller = useRef<ScrollViewInstance>(null)
+  const offsets = useRef<number[]>([])
   const selectedIndex = options.findIndex((o) => o.value === value || o.on)
-  useEffect(() => {
-    const x = offsets.current[selectedIndex]
-    if (!wrap && x !== undefined) scroller.current?.scrollTo({ x: Math.max(0, x - space[6]), animated: true })
-  }, [selectedIndex, wrap])
+  const reveal = (x: number | undefined, animated: boolean) => {
+    if (!wrap && x !== undefined) scroller.current?.scrollTo({ x: Math.max(0, x - space[6]), animated })
+  }
+  useEffect(() => reveal(offsets.current[selectedIndex], true))
+
   const chips = options.map((o, i) => {
-        const on = o.value === value || o.on
-        return (
-          <Pressable
-            key={String(o.value)}
-            onLayout={(e) => {
-              offsets.current[i] = e.nativeEvent.layout.x
-              if (i === selectedIndex && !wrap) scroller.current?.scrollTo({ x: Math.max(0, e.nativeEvent.layout.x - space[6]), animated: false })
-            }}
-            onPress={() => {
-              selection()
-              onChange(o.value, o)
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={o.a11y ?? o.label}
-            style={({ pressed }) => [styles.chip, on && styles.chipOn, o.tonic && !on && styles.chipTonic, pressed && styles.pressed]}
-          >
-            {o.top ? <Text style={[styles.chipTop, on && styles.chipTextOn]}>{o.top}</Text> : null}
-            <Text style={[styles.chipText, on && styles.chipTextOn]}>{o.label}</Text>
-            {o.sub || renderSub ? <Text style={[styles.chipSub, on && styles.chipTextOn]}>{o.sub ?? renderSub?.(o)}</Text> : null}
-          </Pressable>
-        )
-      })
+    const on = o.value === value || Boolean(o.on)
+    return (
+      <Pressable
+        key={String(o.value)}
+        onLayout={(e) => {
+          offsets.current[i] = e.nativeEvent.layout.x
+          if (i === selectedIndex) reveal(e.nativeEvent.layout.x, false)
+        }}
+        onPress={() => {
+          selection()
+          onChange(o.value, o)
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={o.a11y ?? o.label}
+        style={({ pressed }) => [styles.chip, on && styles.chipOn, o.tonic && !on && styles.chipTonic, pressed && styles.pressed]}
+      >
+        {o.top ? <Text style={[styles.chipTop, on && styles.chipTextOn]}>{o.top}</Text> : null}
+        <Text style={[styles.chipText, on && styles.chipTextOn]}>{o.label}</Text>
+        {o.sub ? <Text style={[styles.chipSub, on && styles.chipTextOn]}>{o.sub}</Text> : null}
+      </Pressable>
+    )
+  })
+
   if (wrap)
     return (
       <View style={[styles.chipWrap, style]} accessibilityLabel={label}>
@@ -96,8 +145,14 @@ export function ChipRow({ options, value, onChange, renderSub, style, label, wra
   )
 }
 
+interface RowProps {
+  label: string
+  first?: boolean
+  last?: boolean
+}
+
 /** A row that opens something (a picker sheet), showing the current value and a chevron. */
-export function PickerRow({ label, value, onPress, first, last }) {
+export function PickerRow({ label, value, onPress, first, last }: RowProps & { value: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} style={({ pressed }) => [styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, pressed && styles.rowPressed]}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -110,27 +165,43 @@ export function PickerRow({ label, value, onPress, first, last }) {
 }
 
 /** An on/off setting as the platform switch. */
-export function SwitchRow({ label, value, onChange, disabled, first, last }) {
+export function SwitchRow({ label, value, onChange, disabled, first, last }: RowProps & { value: boolean; onChange: (value: boolean) => void; disabled?: boolean }) {
   return (
     <View style={[styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider]}>
       <Text style={[styles.rowLabel, disabled && styles.disabled]}>{label}</Text>
-      <Switch
-        value={value}
-        disabled={disabled}
-        onValueChange={(v) => {
-          selection()
-          onChange(v)
-        }}
-        trackColor={{ true: colors.accent, false: colors.surface2 }}
-        thumbColor={Platform.OS === 'android' ? (value ? colors.onAccent : colors.muted) : undefined}
-        ios_backgroundColor={colors.surface2}
-      />
+      <PlatformSwitch value={value} onChange={onChange} disabled={disabled} label={label} />
     </View>
   )
 }
 
-/** Buttons. `primary` is the one filled accent button on a screen. */
-export function Button({ title, onPress, primary, disabled, icon, style }) {
+/** The platform switch in the app's colours, with a selection tap. */
+export function PlatformSwitch({ value, onChange, disabled, label }: { value: boolean; onChange: (value: boolean) => void; disabled?: boolean; label: string }) {
+  return (
+    <Switch
+      value={value}
+      disabled={disabled}
+      accessibilityLabel={label}
+      onValueChange={(v) => {
+        selection()
+        onChange(v)
+      }}
+      trackColor={{ true: colors.accent, false: colors.surface2 }}
+      thumbColor={Platform.OS === 'android' ? (value ? colors.onAccent : colors.muted) : undefined}
+      ios_backgroundColor={colors.surface2}
+    />
+  )
+}
+
+interface ButtonProps {
+  title: string
+  onPress: () => void
+  /** The one filled accent button on a screen. */
+  primary?: boolean
+  disabled?: boolean
+  style?: StyleProp<ViewStyle>
+}
+
+export function Button({ title, onPress, primary = false, disabled = false, style }: ButtonProps) {
   return (
     <Pressable
       onPress={() => {
@@ -142,29 +213,45 @@ export function Button({ title, onPress, primary, disabled, icon, style }) {
       accessibilityState={{ disabled }}
       style={({ pressed }) => [styles.button, primary && styles.buttonPrimary, disabled && styles.disabled, pressed && styles.pressed, style]}
     >
-      {icon}
       <Text style={[styles.buttonText, primary && styles.buttonTextPrimary]}>{title}</Text>
     </Pressable>
   )
 }
 
-/** A number with − / + either side (tempo). */
-export function Stepper({ label, value, onChange, min, max, step = 1 }) {
+interface StepperProps {
+  label: string
+  value: number
+  onChange: (value: number) => void
+  min: number
+  max: number
+  step?: number
+}
+
+/** A number with − / + either side (tempo). VoiceOver and TalkBack can swipe it up and down. */
+export function Stepper({ label, value, onChange, min, max, step = 1 }: StepperProps) {
   const n = Number(value) || min
-  const bump = (d) => {
+  const bump = (d: number) => {
     selection()
     onChange(Math.max(min, Math.min(max, n + d)))
   }
   return (
-    <View style={styles.stepper} accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ now: n, min, max }} accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={(e) => bump(e.nativeEvent.actionName === 'increment' ? step : -step)}>
-      <Pressable onPress={() => bump(-step)} disabled={n <= min} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]} accessibilityLabel={`${label} down`}>
+    <View
+      style={styles.stepper}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={label}
+      accessibilityValue={{ now: n, min, max }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(e) => bump(e.nativeEvent.actionName === 'increment' ? step : -step)}
+    >
+      <Pressable onPress={() => bump(-step)} disabled={n <= min} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]}>
         <Text style={styles.stepSign}>−</Text>
       </Pressable>
       <View style={styles.stepValue}>
         <Text style={styles.stepNumber}>{n}</Text>
         <Text style={styles.stepLabel}>{label}</Text>
       </View>
-      <Pressable onPress={() => bump(step)} disabled={n >= max} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]} accessibilityLabel={`${label} up`}>
+      <Pressable onPress={() => bump(step)} disabled={n >= max} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]}>
         <Text style={styles.stepSign}>+</Text>
       </Pressable>
     </View>
@@ -172,17 +259,24 @@ export function Stepper({ label, value, onChange, min, max, step = 1 }) {
 }
 
 /** A text field styled for the dark theme. */
-export function Field(props) {
+export function Field(props: TextInputProps) {
   return <TextInput placeholderTextColor={colors.muted} keyboardAppearance="dark" style={styles.input} {...props} />
 }
 
+interface IconProps {
+  ios: IosSymbol
+  android: AndroidSymbol
+  size?: number
+  color?: string
+}
+
 /** SF Symbol on iOS, Material Symbol on Android. */
-export function Icon({ ios, android, size = 20, color = colors.text }) {
+export function Icon({ ios, android, size = 20, color = colors.text }: IconProps) {
   return <SymbolView name={{ ios, android }} size={size} tintColor={color} />
 }
 
 /** An icon button for the navigation bar. */
-export function HeaderButton({ ios, android, label, onPress }) {
+export function HeaderButton({ ios, android, label, onPress }: Pick<IconProps, 'ios' | 'android'> & { label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
       <Icon ios={ios} android={android} size={22} color={colors.accent} />
@@ -190,7 +284,9 @@ export function HeaderButton({ ios, android, label, onPress }) {
   )
 }
 
-export const Hint = ({ children }) => <Text style={styles.hint}>{children}</Text>
+export function Hint({ children }: { children: ReactNode }) {
+  return <Text style={styles.hint}>{children}</Text>
+}
 
 const styles = StyleSheet.create({
   section: { gap: space[2] },

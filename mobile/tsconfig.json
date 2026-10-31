@@ -1,13 +1,17 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowJs": false,
     "paths": {
       "@/*": ["./src/*"],
       "@music/*": ["../src/lib/*"]
     }
   },
-  "include": ["**/*.js", "**/*.jsx", "expo-env.d.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"]
 }

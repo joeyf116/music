@@ -9,10 +9,10 @@ import { colors, space, text } from '@/theme'
 /** Neck settings: set once and mostly left alone, so they live in a sheet instead of on the page. */
 export default function NeckSettings() {
   const { tuningSpec } = useMusic()
-  const [labels, setLabels] = usePref('music.labels', 'notes')
-  const [showAll, setShowAll] = usePref('music.showAll', true)
-  const [position] = usePref('music.fretPosition', 0)
-  const [view] = usePref('music.mode', 'scale')
+  const [labels, setLabels] = usePref('music.labels')
+  const [showAll, setShowAll] = usePref('music.showAll')
+  const [position] = usePref('music.fretPosition')
+  const [view] = usePref('music.mode')
   const allPositions = view === 'scale' && position === 'all'
   return (
     <ScrollView contentContainerStyle={styles.page}>

@@ -20,6 +20,15 @@ or files app when asked).
 build (below). With those, `eas build --profile preview --platform ios` makes an install link for registered
 devices, and TestFlight works once the app is in App Store Connect.
 
+## Code
+
+TypeScript in strict mode, checked by `npm run typecheck` and `npm run lint` (Expo's ESLint rules, no `any`, type-only
+imports, exhaustive hook dependencies); `npm run check` runs both. The shared music code in `../src/lib` stays
+JavaScript for the web site; the app sees it through typed declarations in
+[`src/types/shared-music.d.ts`](src/types/shared-music.d.ts), and a web test (`src/lib/sharedTypes.test.js`) fails if
+a declared export disappears. Saved settings are typed too: every key, its type and default live in
+[`src/lib/prefs.ts`](src/lib/prefs.ts), and a stored value of the wrong type falls back to the default.
+
 ## Develop
 
 ```bash

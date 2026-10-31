@@ -2,18 +2,18 @@ import { Stack, router, useLocalSearchParams } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Icon } from '@/components/ui'
 import { selection } from '@/lib/haptics'
-import { PICKERS } from '@/lib/pickers'
+import { PICKERS, isPickerId } from '@/lib/pickers'
 import { usePref } from '@/lib/prefs'
 import { colors, space, text, touch } from '@/theme'
 
-/** A list sheet for one setting (see lib/pickers.js): tap a row to choose it, and the sheet closes. */
+/** A list sheet for one setting (see lib/pickers.ts): tap a row to choose it, and the sheet closes. */
 export default function PickSheet() {
-  const { id } = useLocalSearchParams()
-  const picker = PICKERS[id] ?? PICKERS.scale
-  const [value, setValue] = usePref(picker.pref, picker.initial)
-  const choose = (v) => {
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const picker = PICKERS[isPickerId(id) ? id : 'scale']
+  const [value, setValue] = usePref(picker.pref)
+  const choose = (next: string) => {
     selection()
-    setValue(v)
+    setValue(next)
     router.back()
   }
   return (
@@ -30,10 +30,10 @@ export default function PickSheet() {
               {section.options.map((o, i) => {
                 const on = o.value === value
                 return (
-                  <Pressable key={String(o.value)} onPress={() => choose(o.value)} accessibilityRole="button" accessibilityState={{ selected: on }} style={({ pressed }) => [styles.row, i > 0 && styles.divider, pressed && styles.pressed]}>
+                  <Pressable key={o.value} onPress={() => choose(o.value)} accessibilityRole="button" accessibilityState={{ selected: on }} style={({ pressed }) => [styles.row, i > 0 && styles.divider, pressed && styles.pressed]}>
                     <View style={styles.rowText}>
                       <Text style={[styles.label, on && styles.on]}>{o.label}</Text>
-                      {o.sub ? <Text style={styles.sub}>{o.sub}</Text> : null}
+                      {'sub' in o && o.sub ? <Text style={styles.sub}>{o.sub}</Text> : null}
                     </View>
                     {on ? <Icon ios="checkmark" android="check" size={17} color={colors.accent} /> : null}
                   </Pressable>
