@@ -2,7 +2,6 @@ import Charts from './components/Charts.jsx'
 import Exercises from './components/Exercises.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
-import PracticeWeek from './components/PracticeWeek.jsx'
 import Quiz from './components/Quiz.jsx'
 import Resources from './components/Resources.jsx'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
@@ -62,7 +61,6 @@ export default function App() {
             Fretboard <span className="brand-accent">Practice</span>
           </span>
         </a>
-        <PracticeWeek />
         {/* Phones get this as a bottom tab bar (in thumb reach, never over the top of the page); wider screens show it inline. */}
         <nav className="page-nav" aria-label="Pages">
           {PAGES.map((p) => (
