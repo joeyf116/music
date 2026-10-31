@@ -1,3 +1,5 @@
+import { markPracticed } from './practiceLog.js'
+
 // Tiny Web Audio "plucked string" synth so shapes can be heard while practising.
 let ctx = null
 
@@ -8,6 +10,8 @@ export const audioContext = () => {
     ctx = new Ctx()
   }
   if (ctx.state === 'suspended') ctx.resume()
+  // Every sound goes through here, so playing anything marks today as a practice day.
+  markPracticed()
   return ctx
 }
 

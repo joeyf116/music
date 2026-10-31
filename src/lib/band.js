@@ -2,6 +2,7 @@
 // chart (see chart.js compileChart) in a chosen style (see arranger.js). Notes are scheduled a bar
 // ahead on the audio clock so timing stays steady even when the page is busy.
 import { midiToFrequency } from './audio.js'
+import { markPracticed } from './practiceLog.js'
 import { bassNotes, compHits, drumHits, STYLES, swingTime, voiceChord } from './arranger.js'
 
 export const CHANNELS = ['drums', 'bass', 'piano']
@@ -15,6 +16,8 @@ const audioContext = () => {
     ctx = new Ctx()
   }
   if (ctx.state === 'suspended') ctx.resume()
+  // Playing along with a chart counts as practice too.
+  markPracticed()
   return ctx
 }
 

@@ -17,11 +17,12 @@ import {
   rateFits,
 } from '../lib/exercises.js'
 import { playEvent, startPlayback } from '../lib/player.js'
-import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, sevenNoteScale, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
+import { CHORDS, SCALES, noteToPc, pcName, scalePosition, sevenNoteScale, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard from './Fretboard.jsx'
+import KeyPicker from './KeyPicker.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
 
@@ -212,20 +213,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
         <p>Start slow enough to play it perfectly, then let “Speed up” push the tempo a little each time round.</p>
       </details>
 
-      {has('key') && (
-        <div className="field">
-          <span className="field-label" id="exercise-key-label">
-            Key
-          </span>
-          <div className="keys" role="group" aria-labelledby="exercise-key-label">
-            {KEYS.map((k) => (
-              <button key={k} className={k === key ? 'on' : ''} onClick={() => set({ key: k })} aria-pressed={k === key}>
-                {k}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {has('key') && <KeyPicker value={key} onChange={(k) => set({ key: k })} />}
 
       {has('progression') && (
         <div className="field">

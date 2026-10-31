@@ -156,6 +156,23 @@ describe('inversions', () => {
     expect(notes.map((n) => n.interval)).toEqual([0, 7, 11, 4])
   })
 
+  it('stacks drop-3 seventh chords with the bass a string apart', () => {
+    expect(inversionOrder(4, 0, 'drop3')).toEqual([0, 3, 1, 2])
+    expect(inversionOrder(4, 1, 'drop3')).toEqual([1, 0, 2, 3])
+    expect(stringSets(4, 6, 'drop3')).toEqual([[1, 3, 4, 5], [0, 2, 3, 4]])
+    // Triads ignore the drop setting.
+    expect(stringSets(3, 6, 'drop3')).toEqual(stringSets(3))
+    const notes = voiceInversion(0, CHORDS.maj7.intervals, STANDARD, [0, 2, 3, 4], 0, 0, 'drop3')
+    expect(shape(notes)).toBe('0:8 2:9 3:9 4:8')
+    expect(notes.map((n) => n.interval)).toEqual([0, 11, 4, 7])
+  })
+
+  it('finds every drop-3 inversion on both string sets', () => {
+    const sets = chordInversions(0, CHORDS.dom7.intervals, STANDARD, 'drop3')
+    expect(sets).toHaveLength(2)
+    for (const { shapes } of sets) expect(new Set(shapes.map((s) => s.inversion)).size).toBe(4)
+  })
+
   it('walks every inversion up the neck on each string set', () => {
     const sets = chordInversions(0, CHORDS.maj.intervals, STANDARD)
     expect(sets).toHaveLength(4)

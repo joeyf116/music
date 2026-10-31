@@ -264,19 +264,27 @@ export const scaleAcrossNeck = (rootPc, intervals, tuning, degree) => {
   return notes.filter((n) => n.fret >= 0 && n.fret <= NUM_FRETS)
 }
 
+// How a chord's notes are stacked on the strings. Triads are always close (three adjacent strings);
+// 7th chords are drop-2 (four adjacent strings) or drop-3 (the bass note skips a string), the two standard guitar systems.
+export const DROP_VOICINGS = {
+  drop2: { name: 'Drop 2', title: 'Four adjacent strings: the 2nd voice from the top of a close chord dropped an octave' },
+  drop3: { name: 'Drop 3', title: 'Bass note a string apart from the other three: the 3rd voice from the top dropped an octave' },
+}
+
 // Order of chord tones (low to high) for a given inversion.
-// Triads use close voicings; 4-note chords use drop-2 voicings (the standard guitar inversions).
-export const inversionOrder = (toneCount, inversion) => {
+// Triads use close voicings; 4-note chords use drop-2 voicings unless `drop` is 'drop3'.
+export const inversionOrder = (toneCount, inversion, drop = 'drop2') => {
   if (toneCount === 3) return [0, 1, 2].map((k) => (inversion + k) % 3)
-  return [0, 2, 3, 1].map((k) => (inversion + k) % 4)
+  return (drop === 'drop3' ? [0, 3, 1, 2] : [0, 2, 3, 1]).map((k) => (inversion + k) % 4)
 }
 
 // Groups of adjacent strings (each listed low to high), ordered from the highest strings down.
-export const stringSets = (toneCount, stringCount = 6) => {
+// Drop-3 sets leave one string out between the bass and the other three (6 4 3 2, 5 3 2 1).
+export const stringSets = (toneCount, stringCount = 6, drop = 'drop2') => {
+  const offsets = toneCount === 4 && drop === 'drop3' ? [0, 2, 3, 4] : Array.from({ length: toneCount }, (_, k) => k)
+  const span = offsets[offsets.length - 1]
   const sets = []
-  for (let top = stringCount - 1; top - toneCount + 1 >= 0; top--) {
-    sets.push(Array.from({ length: toneCount }, (_, k) => top - toneCount + 1 + k))
-  }
+  for (let low = stringCount - 1 - span; low >= 0; low--) sets.push(offsets.map((o) => low + o))
   return sets
 }
 
@@ -286,8 +294,8 @@ const minFretOf = (notes) => Math.min(...notes.map((n) => n.fret))
  * Voice a chord inversion on a set of adjacent strings (low to high).
  * Returns the lowest playable shape at or above `minFret` as [{ string, fret, pitch, interval }], or null.
  */
-export const voiceInversion = (rootPc, intervals, tuning, strings, inversion, minFret = 0) => {
-  const order = inversionOrder(intervals.length, inversion)
+export const voiceInversion = (rootPc, intervals, tuning, strings, inversion, minFret = 0, drop = 'drop2') => {
+  const order = inversionOrder(intervals.length, inversion, drop)
   const bassPc = mod12(rootPc + intervals[order[0]])
   for (let base = mod12(bassPc - tuning[strings[0]]); base <= NUM_FRETS; base += 12) {
     let pitch = tuning[strings[0]] + base
@@ -307,16 +315,16 @@ export const voiceInversion = (rootPc, intervals, tuning, strings, inversion, mi
  * Every inversion of a chord on every adjacent string set. Within a string set the shapes
  * are ordered up the neck, finishing with the first shape an octave higher.
  */
-export const chordInversions = (rootPc, intervals, tuning) =>
-  stringSets(intervals.length, tuning.length).map((strings) => {
+export const chordInversions = (rootPc, intervals, tuning, drop = 'drop2') =>
+  stringSets(intervals.length, tuning.length, drop).map((strings) => {
     const shapes = []
     for (let inversion = 0; inversion < intervals.length; inversion++) {
-      const notes = voiceInversion(rootPc, intervals, tuning, strings, inversion)
+      const notes = voiceInversion(rootPc, intervals, tuning, strings, inversion, 0, drop)
       if (notes) shapes.push({ inversion, notes })
     }
     shapes.sort((a, b) => minFretOf(a.notes) - minFretOf(b.notes))
     const first = shapes[0]
-    const octave = first && voiceInversion(rootPc, intervals, tuning, strings, first.inversion, minFretOf(first.notes) + 1)
+    const octave = first && voiceInversion(rootPc, intervals, tuning, strings, first.inversion, minFretOf(first.notes) + 1, drop)
     if (octave) shapes.push({ inversion: first.inversion, notes: octave })
     return { strings, shapes }
   })
