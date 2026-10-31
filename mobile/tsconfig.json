@@ -1,0 +1,13 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@music/*": ["../src/lib/*"]
+    }
+  },
+  "include": ["**/*.js", "**/*.jsx", "expo-env.d.ts"]
+}
