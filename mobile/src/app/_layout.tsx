@@ -20,8 +20,8 @@ export default function RootLayout() {
           <NativeTabs.Trigger.Label>Rhythm</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf="metronome" md="timer" />
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="ear">
-          <NativeTabs.Trigger.Label>Ear</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger name="training">
+          <NativeTabs.Trigger.Label>Training</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf="ear" md="hearing" />
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="charts">

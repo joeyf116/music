@@ -8,7 +8,7 @@ platform's own segmented controls and switches, and haptic taps.
 | Tab | Status |
 |---|---|
 | Fretboard | Native |
-| Rhythm, Ear training, Charts, Resources | Coming next (they open the web version for now) |
+| Rhythm, Training, Charts, Resources | Coming next (they open the web version for now) |
 
 ## Try it on a phone
 
