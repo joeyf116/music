@@ -1497,3 +1497,120 @@ button.primary {
     background: var(--panel);
   }
 }
+
+/* ---- Chords in the key (always-visible strip by the fretboard) ---- */
+.diatonic {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.7rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.diatonic-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.diatonic-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.diatonic-head h3 small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.diatonic-head .toggle {
+  margin-left: auto;
+}
+
+.diatonic-mode {
+  width: auto;
+  min-height: 2rem;
+  padding-block: 0.15rem;
+}
+
+.diatonic-chords {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diatonic-chord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.3rem 0.15rem;
+  line-height: 1.15;
+}
+
+.diatonic-chord .numeral {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.diatonic-chord .chord-label {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.diatonic-chord.tonic {
+  border-color: var(--root);
+}
+
+.diatonic-chord.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1b1307;
+}
+
+.diatonic-chord.on .numeral {
+  color: #1b1307;
+}
+
+.diatonic-hint {
+  margin: 0.4rem 0 0;
+}
+
+@media (max-width: 640px) {
+  .diatonic {
+    padding: 0.5rem;
+  }
+
+  .diatonic-chords {
+    gap: 0.2rem;
+  }
+
+  .diatonic-chord {
+    min-height: 2.7rem;
+    padding: 0.25rem 0;
+  }
+
+  .diatonic-chord .chord-label {
+    font-size: 0.78rem;
+  }
+
+  .diatonic-chord .numeral {
+    font-size: 0.7rem;
+  }
+
+  /* 7th chord names are too long for seven columns on a phone: two rows instead. */
+  .diatonic-chords.sevenths {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .diatonic-chords.sevenths .chord-label {
+    font-size: 0.85rem;
+  }
+}

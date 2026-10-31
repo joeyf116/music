@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Charts from './components/Charts.jsx'
+import DiatonicChords from './components/DiatonicChords.jsx'
 import { Choice, Field, Stepper, Toggle } from './components/controls.jsx'
 import Exercises from './components/Exercises.jsx'
 import Fretboard from './components/Fretboard.jsx'
@@ -93,6 +94,8 @@ const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 export default function App() {
   const page = useHashPage(PAGES.map((p) => p.id), 'fretboard')
+  // One key and one scale/mode for the whole app: changing the key never changes the mode, and the
+  // Exercises page picks up where the Fretboard left off (and back).
   const [key, setKey] = usePersistentState('music.key', 'A')
   const [mode, setMode] = usePersistentState('music.mode', 'scale')
   const [scaleType, setScaleType] = usePersistentState('music.scale', 'minorPentatonic')
@@ -295,7 +298,16 @@ export default function App() {
         {page === 'resources' ? (
           <Resources />
         ) : page === 'exercises' ? (
-          <Exercises tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} />
+          <Exercises
+            tuning={tuning}
+            tuningId={tuningId}
+            onTuningChange={setTuningId}
+            stringName={stringName}
+            keyName={safeKey}
+            onKeyChange={setKey}
+            scaleType={scaleType}
+            onScaleChange={setScaleType}
+          />
         ) : page === 'charts' ? (
           <Charts tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} />
         ) : page === 'quiz' ? (
@@ -357,6 +369,9 @@ export default function App() {
                 </li>
               ))}
             </ul>
+
+            {/* The key's chords stay in view whatever the neck shows; in chord modes the strip also picks the mode. */}
+            <DiatonicChords keyName={safeKey} scaleId={scaleType} onScaleChange={mode === 'scale' ? undefined : setScaleType} />
 
             {view.options.length > 0 && (
               <div className="options" role="group" aria-label={mode === 'scale' ? 'Scale position' : 'String set'}>

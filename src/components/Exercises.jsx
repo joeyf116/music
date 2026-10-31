@@ -17,9 +17,10 @@ import {
   rateFits,
 } from '../lib/exercises.js'
 import { playEvent, startPlayback } from '../lib/player.js'
-import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
+import { CHORDS, KEYS, SCALES, noteToPc, pcName, scalePosition, sevenNoteScale, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
+import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard from './Fretboard.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
@@ -38,13 +39,15 @@ const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']
 const COLUMN_WIDTHS = { 2: 20, 3: 22, 4: 24, 6: 26, 12: 34 }
 const clampBpm = (bpm) => Math.max(30, Math.min(300, Number(bpm) || 80))
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
+// A chord from the key's strip as the progression box writes it (♭VII → bVII; the parser has no +maj7, so III+ stands in).
+const progressionToken = (chord) => chord.numeral.replace('♭', 'b').replace('♯', '#').replace('+maj7', '+')
 const fretHint = (notes) => {
   const frets = notes.map((n) => n.fret)
   return `fr ${Math.min(...frets)}–${Math.max(...frets)}`
 }
 
 /** Generated practice exercises (scales, arpeggios, progressions, fingerstyle) with tab that plays along in time. */
-export default function Exercises({ tuning, tuningId, onTuningChange, stringName }) {
+export default function Exercises({ tuning, tuningId, onTuningChange, stringName, keyName, onKeyChange, scaleType, onScaleChange }) {
   const [stored, setStored] = usePersistentState('music.exercises', DEFAULT_SETTINGS)
   const [bpm, setBpm] = usePersistentState('music.exerciseBpm', 80)
   const [loop, setLoop] = usePersistentState('music.exerciseLoop', true)
@@ -58,9 +61,15 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
   const [liveBpm, setLiveBpm] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
 
-  const score = useMemo(() => buildExercise(stored, tuning), [stored, tuning])
+  // Key and scale are shared with the Fretboard page, so the mode (minor, Dorian…) carries over between pages,
+  // exercises and keys. Exercises that need a seven-note scale use the parent of a pentatonic or blues scale.
+  const score = useMemo(() => buildExercise({ ...stored, key: keyName, scale: scaleType, scale7: sevenNoteScale(scaleType) }, tuning), [stored, keyName, scaleType, tuning])
   const s = score.settings
-  const set = (patch) => setStored({ ...s, ...patch })
+  const set = ({ key: newKey, scale, scale7, ...rest }) => {
+    if (newKey) onKeyChange(newKey)
+    if (scale ?? scale7) onScaleChange(scale ?? scale7)
+    if (Object.keys(rest).length) setStored({ ...stored, ...rest })
+  }
   const key = s.key
   const flats = usesFlats(key)
   const { exercise, meter, events } = score
@@ -242,13 +251,14 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
                   </option>
                 ))}
               </select>
-              <button type="button" onClick={() => set({ progression: randomProgression('major', 4) })}>
+              <button type="button" onClick={() => set({ progression: randomProgression('major', 4), scale: 'major' })}>
                 🎲 Major
               </button>
-              <button type="button" onClick={() => set({ progression: randomProgression('minor', 4) })}>
+              <button type="button" onClick={() => set({ progression: randomProgression('minor', 4), scale: 'minor' })}>
                 🎲 Minor
               </button>
             </div>
+            <DiatonicChords keyName={key} scaleId={s.scale} onScaleChange={(id) => set({ scale: id })} onPick={(c) => set({ progression: `${s.progression.trim()} ${progressionToken(c)}`.trim() })} pickHint="add it to the progression" />
             {score.errors.length > 0 && (
               <p className="progression-error" role="alert">
                 Didn’t understand: {score.errors.join(', ')}. Use Roman numerals (I, ii7, bVII) or chord names (Am, F#m7).
@@ -546,6 +556,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
       </p>
 
       <Fretboard tuning={tuning} notes={fretboardNotes} label={fretLabel} stringName={stringName} onNoteClick={(n) => playEvent({ notes: [n] })} />
+      {has('key') && !has('progression') && <DiatonicChords keyName={key} scaleId={has('scale7') ? s.scale7 : s.scale} onScaleChange={has('scale') || has('scale7') ? undefined : (id) => set({ scale: id })} />}
     </section>
   )
 }

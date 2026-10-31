@@ -11,7 +11,7 @@ export const NUM_FRETS = 22
 
 // Tunings are listed from the lowest (6th) string to the highest (1st) string.
 // `flats` spells the string names with flats (Eb, Bb) instead of sharps; `group` sorts the picker.
-export const TUNING_GROUPS = ['Standard', 'Drop', 'Open', 'Other']
+export const TUNING_GROUPS = ['Standard', 'Drop', 'Open', 'Math rock', 'Other']
 
 export const TUNINGS = {
   standard: { name: 'Standard', group: 'Standard', pitches: [40, 45, 50, 55, 59, 64] },
@@ -33,6 +33,10 @@ export const TUNINGS = {
   openC: { name: 'Open C', group: 'Open', pitches: [36, 43, 48, 55, 60, 64] },
   openDMinor: { name: 'Open D minor', group: 'Open', pitches: [38, 45, 50, 53, 57, 62] },
   openGMinor: { name: 'Open G minor', group: 'Open', flats: true, pitches: [38, 43, 50, 55, 58, 62] },
+  // Open, ringing tunings from math rock and Midwest emo: tap and play wide intervals with open strings droning.
+  facgce: { name: 'FACGCE', group: 'Math rock', pitches: [41, 45, 48, 55, 60, 64] },
+  openC6: { name: 'Open C6', group: 'Math rock', pitches: [36, 45, 48, 55, 60, 64] },
+  openF: { name: 'Open F', group: 'Math rock', pitches: [41, 45, 48, 53, 60, 65] },
   dadgad: { name: 'DADGAD', group: 'Other', pitches: [38, 45, 50, 55, 57, 62] },
   cgcgcd: { name: 'CGCGCD', group: 'Other', pitches: [36, 43, 48, 55, 60, 62] },
   allFourths: { name: 'All fourths', group: 'Other', pitches: [40, 45, 50, 55, 60, 65] },
@@ -54,6 +58,12 @@ export const SCALES = {
   locrian: { name: 'Locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
   phrygianDominant: { name: 'Phrygian Dominant', intervals: [0, 1, 4, 5, 7, 8, 10] },
 }
+
+// Scales with fewer than seven notes take their chords from the seven-note scale they come from.
+export const PARENT_SCALES = { majorPentatonic: 'major', minorPentatonic: 'minor', blues: 'minor', majorBlues: 'major' }
+
+// The seven-note scale (mode) a scale belongs to: Minor Pentatonic → Natural Minor, Dorian stays Dorian.
+export const sevenNoteScale = (id) => (SCALES[id]?.intervals.length === 7 ? id : (PARENT_SCALES[id] ?? 'major'))
 
 export const CHORDS = {
   maj: { name: 'Major', symbol: '', intervals: [0, 4, 7] },
@@ -395,4 +405,39 @@ export const chordVoicings = (rootPc, intervals, tuning, limit = 6) => {
       })
       .filter(Boolean),
   }))
+}
+
+const MAJOR_DEGREES = [0, 2, 4, 5, 7, 9, 11]
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+// Chord type from the 3rd, 5th (and 7th) above the root, plus how the Roman numeral is written.
+const TRIAD_TYPES = { '4,7': ['maj', true, ''], '3,7': ['min', false, ''], '3,6': ['dim', false, '°'], '4,8': ['aug', true, '+'] }
+const SEVENTH_TYPES = {
+  '4,7,11': ['maj7', true, 'maj7'],
+  '4,7,10': ['dom7', true, '7'],
+  '3,7,10': ['min7', false, '7'],
+  '3,6,10': ['m7b5', false, 'ø7'],
+  '3,6,9': ['dim7', false, '°7'],
+  '3,7,11': ['minMaj7', false, 'maj7'],
+  '4,8,11': ['augMaj7', true, '+maj7'],
+}
+
+/**
+ * The chords built on each degree of a seven-note scale in `key` (triads, or 7th chords with `sevenths`):
+ * [{ numeral: 'bVII', name: 'G', type: 'maj', rootName, rootPc, intervals }]. Numerals are counted from the major
+ * scale, so A minor reads i ii° bIII iv v bVI bVII. Short scales use their parent (A minor pentatonic → A minor).
+ */
+export const diatonicChords = (key, scaleId, sevenths = false) => {
+  const id = sevenNoteScale(scaleId)
+  const intervals = SCALES[id].intervals
+  const { root, names } = spellNotes(key, intervals, true)
+  const rootPc = noteToPc(root)
+  return intervals.map((start, d) => {
+    const above = (steps) => mod12(intervals[(d + steps) % 7] - start)
+    const shape = (sevenths ? [2, 4, 6] : [2, 4]).map(above).join(',')
+    const [type, upper, suffix] = (sevenths ? SEVENTH_TYPES : TRIAD_TYPES)[shape] ?? ['maj', true, '?']
+    const shift = start - MAJOR_DEGREES[d]
+    const accidental = shift < 0 ? '♭' : shift > 0 ? '♯' : ''
+    const numeral = accidental + (upper ? ROMAN_NUMERALS[d] : ROMAN_NUMERALS[d].toLowerCase()) + suffix
+    return { degree: d, numeral, type, rootName: names[d], rootPc: mod12(rootPc + start), name: names[d] + CHORDS[type].symbol, intervals: CHORDS[type].intervals }
+  })
 }

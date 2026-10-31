@@ -6,6 +6,7 @@ import {
   TUNING_GROUPS,
   chordInversions,
   chordVoicings,
+  diatonicChords,
   findPositions,
   intervalName,
   noteRole,
@@ -17,6 +18,7 @@ import {
   pitchName,
   scaleAcrossNeck,
   scalePosition,
+  sevenNoteScale,
   spellNotes,
   stringSets,
   tuningNotes,
@@ -242,5 +244,36 @@ describe('scaleAcrossNeck', () => {
   it('never runs past the last fret', () => {
     const notes = run(9, SCALES.major.intervals, 3)
     expect(Math.max(...notes.map((n) => n.fret))).toBeLessThanOrEqual(NUM_FRETS)
+  })
+})
+
+describe('chords in a key', () => {
+  const read = (key, scale, sevenths) => diatonicChords(key, scale, sevenths).map((c) => `${c.numeral}:${c.name}`).join(' ')
+
+  it('harmonises major and minor keys with Roman numerals counted from the major scale', () => {
+    expect(read('C', 'major')).toBe('I:C ii:Dm iii:Em IV:F V:G vi:Am vii°:Bdim')
+    expect(read('A', 'minor')).toBe('i:Am ii°:Bdim ♭III:C iv:Dm v:Em ♭VI:F ♭VII:G')
+    expect(read('G', 'major', true)).toBe('Imaj7:Gmaj7 ii7:Am7 iii7:Bm7 IVmaj7:Cmaj7 V7:D7 vi7:Em7 viiø7:F#m7♭5')
+  })
+
+  it('keeps the mode whatever the key, and spells every chord on its own letter', () => {
+    expect(read('E', 'dorian')).toBe('i:Em ii:F#m ♭III:G IV:A v:Bm vi°:C#dim ♭VII:D')
+    expect(read('F#', 'major')).toBe('I:F# ii:G#m iii:A#m IV:B V:C# vi:D#m vii°:E#dim')
+    expect(read('A', 'harmonicMinor', true)).toBe('imaj7:Am(maj7) iiø7:Bm7♭5 ♭III+maj7:Cmaj7♯5 iv7:Dm7 V7:E7 ♭VImaj7:Fmaj7 vii°7:G#dim7')
+  })
+
+  it('uses the parent scale for pentatonic and blues scales', () => {
+    expect(sevenNoteScale('minorPentatonic')).toBe('minor')
+    expect(sevenNoteScale('majorBlues')).toBe('major')
+    expect(sevenNoteScale('lydian')).toBe('lydian')
+    expect(read('A', 'blues')).toBe(read('A', 'minor'))
+  })
+})
+
+describe('math rock tunings', () => {
+  it('lists FACGCE, Open C6 and Open F in their own group', () => {
+    const names = Object.values(TUNINGS).filter((t) => t.group === 'Math rock').map((t) => `${t.name} ${tuningNotes(t)}`)
+    expect(names).toEqual(['FACGCE F A C G C E', 'Open C6 C A C G C E', 'Open F F A C F C F'])
+    expect(TUNING_GROUPS).toContain('Math rock')
   })
 })
