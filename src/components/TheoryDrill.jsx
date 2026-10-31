@@ -5,19 +5,17 @@ import {
   DRILLS,
   KEY_MODES,
   KEY_SETS,
-  QUALITY_RULES,
-  buildHint,
-  choiceHint,
+  THEORY_RECIPE,
   chordFormula,
+  chordWorkingText,
   drillChordPitches,
+  drillFeedback,
   drillReducer,
   drillState,
   initialDrill,
-  ordinal,
+  keyPatternText,
   pickedIn,
-  qualityName,
   randomDrillQuestion,
-  stackedThirds,
   toneName,
 } from '../lib/theoryDrill.js'
 import usePersistentState from '../lib/usePersistentState.js'
@@ -26,12 +24,10 @@ import { Disclosure } from './layout.jsx'
 
 const ANSWER_KEYS = ['1', '2', '3', '4', '5', '6', '7']
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
-const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`
 
 /** How a chord is built: its notes against the formula, and the 3rds stacked between them. */
 function ChordWorking({ chord }) {
   const formula = chordFormula(chord.type)
-  const thirds = stackedThirds(chord.notes, chord.type)
   return (
     <div className="drill-working">
       <ol className="drill-formula" aria-label={`${chord.name}: ${chord.notes.join(' ')}`}>
@@ -42,15 +38,7 @@ function ChordWorking({ chord }) {
           </li>
         ))}
       </ol>
-      <p>
-        {thirds.map((t, i) => (
-          <span key={i}>
-            {i > 0 && ', '}
-            {t.from}→{t.to} {t.label} ({t.semitones} frets)
-          </span>
-        ))}
-        . {qualityName(chord.type)} = {QUALITY_RULES[chord.type]}.
-      </p>
+      <p>{chordWorkingText(chord)}</p>
     </div>
   )
 }
@@ -118,18 +106,8 @@ export default function TheoryDrill({ keyName }) {
   const info = question.key
   const building = question.drill === 'build' && game.step === 0 && !done
   const picked = pickedIn(game, 0)
-  const feedback = (() => {
-    const numeral = info ? info.chords[question.degree].numeral : ''
-    const where = info ? ` It’s the ${numeral} chord (the ${ordinal(question.degree + 1)}) in ${info.title}.` : ''
-    const what = `${chord.name} (${chord.notes.join(' ')}) is ${withArticle(qualityName(chord.type).toLowerCase())} chord.`
-    if (state === 'solved') return `${game.missed ? 'Got it.' : 'Right!'} ${what}${where}`
-    if (state === 'revealed') return `${what}${where}`
-    if (game.wrong.length) {
-      if (building) return buildHint(question, game.progress)
-      return choiceHint(question)
-    }
-    return question.drill === 'build' ? step.prompt : 'Pick one.'
-  })()
+  const feedback = drillFeedback(game)
+  const pattern = keyPatternText(question)
 
   const keySet = KEY_SETS.find((k) => k.value === keys)
   const summary = [keySet?.label ?? 'Major', keyMode === 'fixed' ? `only ${keyName}` : 'any key', autoPlay ? 'plays when right' : 'silent'].join(' · ')
@@ -227,10 +205,8 @@ export default function TheoryDrill({ keyName }) {
           <ChordWorking chord={chord} />
           {info && (
             <>
-              <p>
-                In {info.title} ({info.scale.join(' ')}), start on the {ordinal(question.degree + 1)} note and stack every other note: {chord.notes.join(' ')}.
-              </p>
-              <p className="drill-pattern">{info.parent ? `${info.title} borrows the chords of ${info.parent} major, started on its ${ordinal(info.modeIndex + 1)} note:` : `Every ${info.scaleId} key follows the same pattern:`}</p>
+              <p>{pattern.stack}</p>
+              <p className="drill-pattern">{pattern.pattern}</p>
               <ol className="diatonic-chords">
                 {info.chords.map((c) => (
                   <li key={c.degree}>
@@ -262,18 +238,12 @@ export default function TheoryDrill({ keyName }) {
 
       <Disclosure label="How to build the chords of any key" quiet storageKey="music.theoryRecipeOpen" className="drill-recipe">
         <ol>
-          <li>
-            <strong>Write out the scale</strong>, one note per letter: D major is D E F# G A B C#.
-          </li>
-          <li>
-            <strong>Stack every other note</strong> from the chord’s number: the 2nd chord is notes 2, 4, 6 (E G B). Add note 8 (the 1st again) for a 7th chord.
-          </li>
-          <li>
-            <strong>Check the 3rds:</strong> 4 frets is a major 3rd, 3 frets a minor 3rd. Major = big then small, minor = small then big, diminished = small + small.
-          </li>
-          <li>
-            <strong>Or just remember the pattern.</strong> Major keys: I ii iii IV V vi vii° (7ths: Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7). Natural minor: i ii° ♭III iv v ♭VI ♭VII.
-          </li>
+          {THEORY_RECIPE.map(([lead, rest]) => (
+            <li key={lead}>
+              <strong>{lead}</strong>
+              {rest}
+            </li>
+          ))}
         </ol>
       </Disclosure>
     </div>

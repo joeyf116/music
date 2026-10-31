@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { audioContext } from '../lib/audio.js'
 import { soundById } from '../lib/clickSounds.js'
-import { METRONOME_METERS, SUBDIVISIONS, clampBpm, fitAccents, gapStatus, nextAccent, subdivisionById, tapTempo, tempoName } from '../lib/rhythm.js'
+import { METRONOME_METERS, SUBDIVISIONS, clampBpm, fitAccents, nextAccent, subdivisionById, tapTempo, tempoName } from '../lib/rhythm.js'
+import { ACCENT_NAMES, metronomeStatus } from '../lib/rhythmView.js'
 import { startClickTrack } from '../lib/rhythmEngine.js'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { SoundChips } from './SoundPicker.jsx'
 import { Disclosure } from './layout.jsx'
 
 const soundLabel = (id) => soundById(id).name
-const ACCENT_NAMES = { accent: 'accented', beat: 'normal', mute: 'silent' }
 
 /** One subdivision drawn as dots (big dot on the beat), so the choice is visible without reading. */
 export const SubdivisionIcon = ({ sub }) => (
@@ -141,8 +141,7 @@ export default function Metronome({ settings, update, sound, onSoundChange }) {
   }, [])
 
   const shown = liveBpm ?? bpm
-  const counting = pulse?.bar < 0
-  const status = counting ? `Count-in ${pulse.beat + 1}…` : pulse ? gapStatus(pulse.bar, settings.gap) || (settings.speed.on ? `Bar ${pulse.bar + 1}` : '') : ''
+  const status = metronomeStatus(pulse, settings)
 
   return (
     <div className="metronome">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { playEvent, startPlayback } from '../lib/player.js'
 import { PLAY_ON, RHYTHMS, RHYTHM_LEVELS, clampBpm, parseBeats, regridBeat, rhythmById, rhythmCells, rhythmScore, toggleCell } from '../lib/rhythm.js'
+import { BEAT_GRIDS as GRIDS, DRILL_MODES as MODES, RHYTHM_DRILL_DEFAULTS as DEFAULTS, RHYTHM_DRILL_KEY, RHYTHM_STEPS, rhythmColumnWidth } from '../lib/rhythmView.js'
 import { noteToPc } from '../lib/theory.js'
 import useTapJudge from '../lib/useTapJudge.js'
 import usePersistentState from '../lib/usePersistentState.js'
@@ -9,17 +10,6 @@ import Tab from './Tab.jsx'
 import TapPad, { TapResults } from './TapPad.jsx'
 import { Disclosure } from './layout.jsx'
 
-const DEFAULTS = { level: 1, rhythm: 'q-e-q-e', beats: rhythmById('q-e-q-e').beats, playOn: 'muted', mode: 'listen', countIn: true, clickGrid: false, showTab: true }
-const MODES = [
-  { value: 'listen', label: 'Listen', title: 'Hear the rhythm with the click' },
-  { value: 'along', label: 'Play along', title: 'Only the click plays; you strum the rhythm' },
-]
-const GRIDS = [
-  { value: 2, label: '8ths' },
-  { value: 3, label: 'Trip' },
-  { value: 4, label: '16ths' },
-]
-const COLUMN_WIDTH = { 1: 34, 2: 30, 3: 26, 4: 22, 6: 18 }
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 /**
@@ -27,7 +17,7 @@ const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
  * then play along (or tap it) and get timing feedback. Tap the grid while editing to write your own.
  */
 export default function RhythmDrills({ tuning, stringName, keyName, minor, settings, update }) {
-  const [stored, setStored] = usePersistentState('music.rhythmDrill', DEFAULTS)
+  const [stored, setStored] = usePersistentState(RHYTHM_DRILL_KEY, DEFAULTS)
   const drill = { ...DEFAULTS, ...stored }
   const set = (patch) => setStored({ ...drill, ...patch })
   const [playing, setPlaying] = useState(false)
@@ -226,7 +216,7 @@ export default function RhythmDrills({ tuning, stringName, keyName, minor, setti
         </div>
       </div>
 
-      {drill.showTab && <Tab columns={columns} tuningNames={tuningNames} columnWidth={COLUMN_WIDTH[finest] ?? 24} active={active} onSelect={(i) => !playing && score.events[i]?.notes.length && playEvent(score.events[i])} follow={playing} />}
+      {drill.showTab && <Tab columns={columns} tuningNames={tuningNames} columnWidth={rhythmColumnWidth(finest)} active={active} onSelect={(i) => !playing && score.events[i]?.notes.length && playEvent(score.events[i])} follow={playing} />}
 
       <div className="tap-along">
         <h3>Tap it</h3>
@@ -237,18 +227,11 @@ export default function RhythmDrills({ tuning, stringName, keyName, minor, setti
 
       <Disclosure label="How to practise a rhythm" quiet className="option-panel how-to">
         <ol>
-          <li>
-            <strong>Listen</strong> once or twice and follow the boxes.
-          </li>
-          <li>
-            <strong>Count out loud</strong> (“1 & 2 &…”) and clap or tap the filled boxes.
-          </li>
-          <li>
-            <strong>Play along</strong> on muted strings, keeping your strumming hand moving down-up even through the gaps.
-          </li>
-          <li>
-            <strong>Speed up</strong> only when it feels easy at this tempo; 5 BPM at a time.
-          </li>
+          {RHYTHM_STEPS.map(([lead, rest]) => (
+            <li key={lead}>
+              <strong>{lead}</strong> {rest}
+            </li>
+          ))}
         </ol>
       </Disclosure>
     </div>

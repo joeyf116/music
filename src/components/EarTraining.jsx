@@ -1,3 +1,4 @@
+import { TRAINING_TABS as TABS, TRAINING_TIPS } from '../lib/theoryDrill.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import ChordQuiz from './ChordQuiz.jsx'
 import IntervalQuiz from './IntervalQuiz.jsx'
@@ -5,12 +6,6 @@ import PageTabs from './PageTabs.jsx'
 import TheoryDrill from './TheoryDrill.jsx'
 import './Rhythm.css'
 import { PageHeader } from './layout.jsx'
-
-const TABS = [
-  { id: 'chords', label: 'Chords', hint: 'By ear' },
-  { id: 'intervals', label: 'Intervals', hint: 'By ear' },
-  { id: 'theory', label: 'Theory', hint: 'Keys & chords' },
-]
 
 /** Training: name chord qualities and intervals by ear, and build the chords of any key. */
 export default function EarTraining({ tuning, tuningId, onTuningChange, stringName, keyName }) {
@@ -29,9 +24,7 @@ export default function EarTraining({ tuning, tuningId, onTuningChange, stringNa
         )}
       </PageTabs>
       <p className="hint ear-tip">
-        {current === 'theory'
-          ? 'Short and often works best: a few minutes a day until I ii iii IV V vi vii° comes without thinking.'
-          : 'Short and often works best: ten minutes a day trains your ear faster than an hour once a week. Sing or hum the notes back when you can.'}
+        {current === 'theory' ? TRAINING_TIPS.theory : TRAINING_TIPS.ear}
       </p>
     </section>
   )

@@ -1,6 +1,23 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { playPitch } from '../lib/audio.js'
-import { DIRECTIONS, INTERVALS, PRESETS, answerLabel, gameReducer, initialGame, intervalInfo, pitchesOf, randomQuestion, roundState } from '../lib/intervalQuiz.js'
+import {
+  DIRECTIONS,
+  DIRECTION_TEXT,
+  FRET_RANGES as RANGES,
+  INTERVALS,
+  PRESETS,
+  answerLabel,
+  gameReducer,
+  initialGame,
+  intervalPresetName,
+  intervalQuizText,
+  intervalWithArticle as withArticle,
+  pitchesOf,
+  randomQuestion,
+  roundState,
+  stringOrdinal,
+  toggleInterval as toggledIntervals,
+} from '../lib/intervalQuiz.js'
 import { pcName } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Toggle } from './controls.jsx'
@@ -8,24 +25,16 @@ import Fretboard from './Fretboard.jsx'
 import TuningSelect from './TuningSelect.jsx'
 import { Disclosure } from './layout.jsx'
 
-const RANGES = [
-  { maxFret: 5, label: 'Frets 0–5' },
-  { maxFret: 12, label: 'Frets 0–12' },
-  { maxFret: 22, label: 'Whole neck' },
-]
 const DIRECTION_OPTIONS = DIRECTIONS.map((d) => ({ value: d.id, label: d.label }))
 const RANGE_OPTIONS = RANGES.map((r) => ({ value: r.maxFret, label: r.label.replace('Frets ', '') }))
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
 // Seconds between the two notes, how long each rings, and the pause before a loop repeats.
 const GAP = 0.9
 const RING = 1.4
 const LOOP_PAUSE = 0.8
-const DIRECTION_TEXT = { up: 'going up', down: 'going down', together: 'played together' }
 // Keyboard shortcuts for the answer buttons, in order.
 const ANSWER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=']
 const STATS_KEY = 'music.intervalStats'
 const BEST_KEY = 'music.intervalBest'
-const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name.toLowerCase()}`
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 const load = (key, fallback) => {
@@ -133,8 +142,8 @@ export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringN
   }
 
   const toggleInterval = (size) => {
-    const list = enabled.includes(size) ? enabled.filter((s) => s !== size) : [...enabled, size].sort((a, b) => a - b)
-    if (list.length) setEnabled(list)
+    const list = toggledIntervals(enabled, size)
+    if (list) setEnabled(list)
   }
 
   // Space plays/stops anywhere on the page (it never presses a focused button, so it can't skip a
@@ -161,31 +170,17 @@ export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringN
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const info = question && intervalInfo(question.semitones)
   const wrongGuesses = guesses.filter((g) => g !== question?.semitones)
-  const feedback = (() => {
-    if (!question) return ''
-    if (state === 'solved') {
-      const cue = question.direction === 'up' ? ` Think “${info.song}”.` : ''
-      return `${wrongGuesses.length ? 'Got it.' : 'Correct!'} That's ${withArticle(info.name)}, ${question.semitones} frets apart.${cue}`
-    }
-    if (state === 'revealed') return `It was ${withArticle(info.name)}, ${question.semitones} frets apart. Think “${info.song}”.`
-    if (wrongGuesses.length) {
-      const last = intervalInfo(wrongGuesses[wrongGuesses.length - 1])
-      return `Not ${withArticle(last.name)}. Same notes, try again: press Play to hear them.`
-    }
-    return 'Press Play, listen, then pick the interval.'
-  })()
-  const compareHint = done && wrongGuesses.length ? `Tap ${wrongGuesses.map((g) => intervalInfo(g).short).join(', ')} and ${info.short} to hear the difference.` : done ? 'Tap any interval to hear it from this root.' : ''
+  const { feedback, compare: compareHint } = intervalQuizText(game)
 
-  const stringLabel = (s) => `${ORDINALS[tuning.length - s] ?? ''} string`
+  const stringLabel = (s) => stringOrdinal(s, tuning.length)
   const notes = []
   if (question) {
     notes.push({ ...question.root, role: 'root', level: playing ? 'active' : 'shape' })
     if (done) notes.push({ ...question.target, role: 'correct', level: 'shape' })
   }
 
-  const presetName = PRESETS.find((p) => p.semitones.join() === semitones.join())?.label
+  const presetName = intervalPresetName(semitones)
   const settingsSummary = [DIRECTIONS.find((d) => d.id === direction)?.label, presetName ?? choices.map((i) => i.short).join(' '), RANGES.find((r) => r.maxFret === maxFret)?.label].join(' · ')
   const statRows = choices.map((i) => ({ ...i, ...(stats[i.semitones] ?? { right: 0, tries: 0 }) }))
   const tried = statRows.filter((r) => r.tries)

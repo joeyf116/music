@@ -1,23 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { DEFAULT_SETTINGS, EXERCISES, PROGRESSIONS, buildExercise, randomProgression } from '../lib/exercises.js'
 import {
-  CHORD_LENGTHS,
-  CHROMATIC_PATTERNS,
-  DEFAULT_SETTINGS,
-  EXERCISES,
-  LAYOUTS,
-  METERS,
-  NECK_AREAS,
-  PICKING,
-  PROGRESSIONS,
-  RATES,
-  SEQUENCES,
-  STRUMS,
-  buildExercise,
-  randomProgression,
-  rateFits,
-} from '../lib/exercises.js'
+  EXERCISE_GROUPS,
+  SPEED_UPS,
+  exerciseColumnWidth,
+  exerciseColumns,
+  exerciseFields,
+  exerciseLayoutField,
+  exerciseNeckLabel,
+  exerciseNeckNotes,
+  exercisePositions,
+  exerciseTitle,
+  isMelodic,
+} from '../lib/exerciseView.js'
+import { progressionToken } from '../lib/fretboardView.js'
 import { playEvent, startPlayback } from '../lib/player.js'
-import { CHORDS, SCALES, noteToPc, pcName, scalePosition, sevenNoteScale, spellNotes, stringSets, usesFlats } from '../lib/theory.js'
+import { sevenNoteScale } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
@@ -27,25 +25,25 @@ import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
 import { Disclosure } from './layout.jsx'
 
-const GROUPS = [...new Set(EXERCISES.map((e) => e.group))]
-const SEVEN_NOTE_SCALES = Object.entries(SCALES).filter(([, s]) => s.intervals.length === 7)
-const INVERSIONS = ['Root', '1st', '2nd']
-const ARP_DIRECTIONS = [
-  { value: 'up', label: 'Up' },
-  { value: 'updown', label: 'Up & down' },
-  { value: 'alternate', label: 'Alternate', title: 'Alternate up / down' },
-]
-const SPEED_UPS = [0, 2, 5, 10]
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']
-// Tab column width by the shortest note in the exercise, so 16ths pack tighter than quarters.
-const COLUMN_WIDTHS = { 2: 20, 3: 22, 4: 24, 6: 26, 12: 34 }
 const clampBpm = (bpm) => Math.max(30, Math.min(300, Number(bpm) || 80))
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
-// A chord from the key's strip as the progression box writes it (♭VII → bVII; the parser has no +maj7, so III+ stands in).
-const progressionToken = (chord) => chord.numeral.replace('♭', 'b').replace('♯', '#').replace('+maj7', '+')
-const fretHint = (notes) => {
-  const frets = notes.map((n) => n.fret)
-  return `fr ${Math.min(...frets)}–${Math.max(...frets)}`
+
+/** One exercise setting (see exerciseFields): a list, a few buttons or a number. */
+function ExerciseField({ field, onChange }) {
+  if (field.kind === 'stepper') return <Stepper label={field.label} value={field.value} onChange={onChange} min={field.min} max={field.max} fallback={field.fallback} />
+  if (field.kind === 'choice') return <Choice label={field.label} options={field.options} value={field.value} onChange={onChange} />
+  return (
+    <label className="field">
+      <span className="field-label">{field.label}</span>
+      <select value={field.value} onChange={(e) => onChange(field.options.find((o) => String(o.value) === e.target.value).value)}>
+        {field.options.map((o) => (
+          <option key={String(o.value)} value={o.value} disabled={o.disabled}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
 }
 
 /** Generated practice exercises (scales, arpeggios, progressions, fingerstyle) with tab that plays along in time. */
@@ -73,7 +71,6 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
     if (Object.keys(rest).length) setStored({ ...stored, ...rest })
   }
   const key = s.key
-  const flats = usesFlats(key)
   const { exercise, meter, events } = score
   const has = (control) => exercise.controls.includes(control)
   const tempo = clampBpm(bpm)
@@ -141,48 +138,15 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
   }, [])
 
   const activeIndex = active !== null && active < events.length ? active : null
-  const current = activeIndex === null ? null : events[activeIndex]
 
-  const noteName = (n) => n.name ?? pcName(n.pitch, flats)
-  const melodic = !has('progression')
-  const columns = events.map((e) => ({
-    notes: e.notes,
-    heading: e.heading,
-    label: e.label ?? (melodic && e.notes.length === 1 ? (labels === 'notes' ? noteName(e.notes[0]) : e.notes[0].degree) : ''),
-    sublabel: e.count,
-    groupStart: e.barStart,
-  }))
-  const shortest = Math.min(...events.slice(1).map((e, i) => e.tick - events[i].tick), 12)
-  const columnWidth = COLUMN_WIDTHS[shortest] ?? 26
-
-  // Fretboard: the whole exercise (or the current chord) with the playing note highlighted.
-  const fretboardNotes = (() => {
-    const map = new Map()
-    const add = (n, level) => map.set(`${n.string}-${n.fret}`, { ...n, level })
-    const shapeSource = melodic ? events.flatMap((e) => e.notes) : (current ?? events[0])?.shape ?? []
-    shapeSource.forEach((n) => add(n, 'shape'))
-    current?.notes.forEach((n) => add(n, 'active'))
-    return [...map.values()].sort((a, b) => (a.level === 'active') - (b.level === 'active'))
-  })()
-  const fretLabel = (n) => (labels === 'notes' || !melodic ? noteName(n) : n.degree)
-
-  const scale = SCALES[has('scale7') ? s.scale7 : s.scale] ?? SCALES.major
-  const positions = (() => {
-    if (!has('position')) return []
-    const rootPc = noteToPc(key)
-    const intervals = exercise.id === 'chordArpeggio' ? (CHORDS[s.chord] ?? CHORDS.maj7).intervals : scale.intervals
-    // Each button shows its box's frets, so a position means the same place whichever fingering is chosen.
-    return intervals.map((_, i) => fretHint(scalePosition(rootPc, intervals, tuning, i)))
-  })()
-  const sets = stringSets(3, tuning.length)
-  const stringLabel = (i) => `${ORDINALS[tuning.length - i]} (${stringName(i)})`
-
-  const title = (() => {
-    if (exercise.id === 'progression' || exercise.id === 'fingerstyle') return `${exercise.name} in ${key}`
-    if (exercise.id === 'chromatic') return `${exercise.name}: ${s.fingers}`
-    if (exercise.id === 'chordArpeggio') return `${key}${(CHORDS[s.chord] ?? CHORDS.maj7).symbol} arpeggio`
-    return `${spellNotes(key, scale.intervals, true).root} ${scale.name}: ${exercise.name.toLowerCase()}`
-  })()
+  const melodic = isMelodic(score)
+  const columns = exerciseColumns(score, labels)
+  const columnWidth = exerciseColumnWidth(score)
+  const fretboardNotes = exerciseNeckNotes(score, activeIndex)
+  const fretLabel = (n) => exerciseNeckLabel(score, labels, n)
+  const positions = exercisePositions(score, tuning)
+  const layoutField = exerciseLayoutField(score)
+  const title = exerciseTitle(score)
 
   return (
     <div className="exercises">
@@ -197,7 +161,7 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
       <label className="field exercise-field">
         <span className="field-label">Exercise</span>
         <select value={exercise.id} onChange={(e) => set({ exercise: e.target.value })}>
-          {GROUPS.map((group) => (
+          {EXERCISE_GROUPS.map((group) => (
             <optgroup key={group} label={group}>
               {EXERCISES.filter((e) => e.group === group).map((e) => (
                 <option key={e.id} value={e.id}>
@@ -258,212 +222,12 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
 
       {/* Every setting is the same shape, so the row reflows cleanly from phone to desktop. */}
       <div className="field-grid exercise-fields">
-        {has('scale') && (
-          <label className="field">
-            <span className="field-label">Scale</span>
-            <select value={s.scale} onChange={(e) => set({ scale: e.target.value, position: 0 })}>
-              {Object.entries(SCALES).map(([id, sc]) => (
-                <option key={id} value={id}>
-                  {sc.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('scale7') && (
-          <label className="field">
-            <span className="field-label">Scale</span>
-            <select value={s.scale7} onChange={(e) => set({ scale7: e.target.value })}>
-              {SEVEN_NOTE_SCALES.map(([id, sc]) => (
-                <option key={id} value={id}>
-                  {sc.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('chord') && (
-          <label className="field">
-            <span className="field-label">Chord</span>
-            <select value={s.chord} onChange={(e) => set({ chord: e.target.value, position: 0 })}>
-              {Object.entries(CHORDS).map(([id, c]) => (
-                <option key={id} value={id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('sequence') && (
-          <label className="field">
-            <span className="field-label">Pattern</span>
-            <select value={s.sequence} onChange={(e) => set({ sequence: e.target.value })}>
-              {Object.entries(SEQUENCES).map(([id, q]) => (
-                <option key={id} value={id}>
-                  {q.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('string') && (
-          <label className="field">
-            <span className="field-label">String</span>
-            <select value={Math.min(s.string, tuning.length - 1)} onChange={(e) => set({ string: Number(e.target.value) })}>
-              {tuning.map((_, i) => (
-                <option key={i} value={i}>
-                  {stringLabel(i)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('fingers') && (
-          <label className="field">
-            <span className="field-label">Finger order</span>
-            <select value={s.fingers} onChange={(e) => set({ fingers: e.target.value })}>
-              {CHROMATIC_PATTERNS.map((p) => (
-                <option key={p} value={p}>
-                  {[...p].join('-')}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('startFret') && (
-          <Stepper label="Start fret" value={s.startFret} onChange={(v) => set({ startFret: v })} min={1} max={19} fallback={5} />
-        )}
-        {has('arpSize') && (
-          <Choice
-            label="Chords"
-            options={[
-              { value: 'triads', label: 'Triads' },
-              { value: 'sevenths', label: '7th chords' },
-            ]}
-            value={s.arpSize}
-            onChange={(v) => set({ arpSize: v })}
-          />
-        )}
-        {has('arpDirection') && (
-          <Choice label="Direction" options={ARP_DIRECTIONS} value={s.arpDirection} onChange={(v) => set({ arpDirection: v })} />
-        )}
-        {has('stringSet') && (
-          <label className="field">
-            <span className="field-label">Strings</span>
-            <select value={Math.min(s.stringSet, sets.length - 1)} onChange={(e) => set({ stringSet: Number(e.target.value) })}>
-              {sets.map((strings, i) => (
-                <option key={i} value={i}>
-                  {strings.map((st) => stringName(st)).join(' ')} ({strings.map((st) => tuning.length - st).reverse().join('-')})
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('inversion') && (
-          <Choice label="Inversion" options={INVERSIONS.map((text, i) => ({ value: i, label: text }))} value={Number(s.inversion)} onChange={(v) => set({ inversion: v })} />
-        )}
-        {has('triadStyle') && (
-          <Choice
-            label="Played as"
-            options={[
-              { value: 'arpeggio', label: 'Arpeggiated' },
-              { value: 'block', label: 'Block chords' },
-            ]}
-            value={s.triadStyle}
-            onChange={(v) => set({ triadStyle: v })}
-          />
-        )}
-        {has('sevenths') && (
-          <Choice
-            label="Chord type"
-            options={[
-              { value: false, label: 'As written' },
-              { value: true, label: '7th chords' },
-            ]}
-            value={Boolean(s.sevenths)}
-            onChange={(v) => set({ sevenths: v })}
-          />
-        )}
-        {has('chordLength') && (
-          <label className="field">
-            <span className="field-label">Each chord</span>
-            <select value={s.chordLength} onChange={(e) => set({ chordLength: Number(e.target.value) })}>
-              {Object.entries(CHORD_LENGTHS).map(([id, c]) => (
-                <option key={id} value={id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('neck') && (
-          <label className="field">
-            <span className="field-label">Voicings</span>
-            <select value={s.neck} onChange={(e) => set({ neck: e.target.value })}>
-              {Object.entries(NECK_AREAS).map(([id, a]) => (
-                <option key={id} value={id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('strum') && (
-          <label className="field">
-            <span className="field-label">Strum</span>
-            <select value={s.strum} onChange={(e) => set({ strum: e.target.value })}>
-              {Object.entries(STRUMS).map(([id, p]) => (
-                <option key={id} value={id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('picking') && (
-          <label className="field">
-            <span className="field-label">Picking</span>
-            <select value={s.picking} onChange={(e) => set({ picking: e.target.value })}>
-              {Object.entries(PICKING).map(([id, p]) => (
-                <option key={id} value={id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {has('rate') && (
-          <label className="field">
-            <span className="field-label">Note value</span>
-            <select value={s.rate} onChange={(e) => set({ rate: e.target.value })}>
-              {Object.entries(RATES).map(([id, r]) => (
-                <option key={id} value={id} disabled={!rateFits(id, meter)}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label className="field">
-          <span className="field-label">Time signature</span>
-          <select value={meter.id} onChange={(e) => set({ meter: e.target.value })}>
-            {Object.keys(METERS).map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-        </label>
+        {exerciseFields(score, tuning, stringName).map((field) => (
+          <ExerciseField key={field.id} field={field} onChange={(value) => set({ [field.id]: value, ...(field.resetsPosition ? { position: 0 } : {}) })} />
+        ))}
       </div>
 
-      {has('layout') && (
-        <Choice
-          label="Fingering"
-          options={Object.entries(LAYOUTS).map(([value, l]) => ({ value, label: l.name, title: l.title }))}
-          value={LAYOUTS[s.layout] ? s.layout : 'position'}
-          onChange={(v) => set({ layout: v })}
-        />
-      )}
+      {layoutField && <ExerciseField field={layoutField} onChange={(v) => set({ layout: v })} />}
 
       {positions.length > 0 && (
         <div className="field">
@@ -471,10 +235,10 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
             {s.layout === 'across' ? 'Starts in position' : 'Position'}
           </span>
           <div className="options" role="group" aria-labelledby="exercise-position-label">
-            {positions.map((hint, i) => (
+            {positions.map((p, i) => (
               <button key={i} className={Math.min(s.position, positions.length - 1) === i ? 'on' : ''} onClick={() => set({ position: i })}>
-                {i + 1}
-                <small>{hint}</small>
+                {p.label}
+                <small>{p.hint}</small>
               </button>
             ))}
           </div>

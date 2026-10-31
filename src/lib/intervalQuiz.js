@@ -122,3 +122,45 @@ export function gameReducer(game, action) {
       return game
   }
 }
+
+// ---- Words on screen ----
+
+export const FRET_RANGES = [
+  { maxFret: 5, label: 'Frets 0–5' },
+  { maxFret: 12, label: 'Frets 0–12' },
+  { maxFret: 22, label: 'Whole neck' },
+]
+export const DIRECTION_TEXT = { up: 'going up', down: 'going down', together: 'played together' }
+const STRING_ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th']
+/** "6th string" for string index `string` (0 = lowest) of a `count`-string tuning. */
+export const stringOrdinal = (string, count) => `${STRING_ORDINALS[count - string] ?? ''} string`
+
+const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name.toLowerCase()}`
+export const intervalWithArticle = withArticle
+
+/** What the page says about the current question: `feedback` and, once it's over, `compare`. */
+export const intervalQuizText = (game) => {
+  const { question, guesses } = game
+  if (!question) return { feedback: '', compare: '' }
+  const state = roundState(game)
+  const info = intervalInfo(question.semitones)
+  const wrong = guesses.filter((g) => g !== question.semitones)
+  const done = state === 'solved' || state === 'revealed'
+  let feedback = 'Press Play, listen, then pick the interval.'
+  if (state === 'solved') {
+    const cue = question.direction === 'up' ? ` Think “${info.song}”.` : ''
+    feedback = `${wrong.length ? 'Got it.' : 'Correct!'} That's ${withArticle(info.name)}, ${question.semitones} frets apart.${cue}`
+  } else if (state === 'revealed') feedback = `It was ${withArticle(info.name)}, ${question.semitones} frets apart. Think “${info.song}”.`
+  else if (wrong.length) feedback = `Not ${withArticle(intervalInfo(wrong[wrong.length - 1]).name)}. Same notes, try again: press Play to hear them.`
+  const compare = done && wrong.length ? `Tap ${wrong.map((g) => intervalInfo(g).short).join(', ')} and ${info.short} to hear the difference.` : done ? 'Tap any interval to hear it from this root.' : ''
+  return { feedback, compare }
+}
+
+/** The preset matching the chosen intervals, if any. */
+export const intervalPresetName = (semitones) => PRESETS.find((p) => p.semitones.join() === semitones.join())?.label
+
+/** Turn one interval on or off (never leaving none). Returns null if not allowed. */
+export const toggleInterval = (enabled, size) => {
+  const list = enabled.includes(size) ? enabled.filter((s) => s !== size) : [...enabled, size].sort((a, b) => a - b)
+  return list.length ? list : null
+}

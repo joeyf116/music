@@ -1,6 +1,22 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { playPitch } from '../lib/audio.js'
-import { CHORD_PRESETS, PLAY_STYLES, QUALITIES, ROOT_MODES, VOICINGS, chordGameReducer, chordPitches, chordRoundState, guitarShape, initialChordGame, qualityInfo, randomChordQuestion } from '../lib/chordQuiz.js'
+import {
+  CHORD_PRESETS,
+  PLAY_STYLES,
+  QUALITIES,
+  ROOT_MODES,
+  VOICINGS,
+  chordGameReducer,
+  chordPitches,
+  chordPresetName,
+  chordQuizText,
+  chordRoundState,
+  guitarShape,
+  initialChordGame,
+  qualityInfo,
+  randomChordQuestion,
+  toggleQuality as toggledQualities,
+} from '../lib/chordQuiz.js'
 import { intervalName, noteToPc, pcName, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Toggle } from './controls.jsx'
@@ -12,7 +28,6 @@ const STATS_KEY = 'music.chordQualityStats'
 const ARP_GAP = 0.32
 const RING = 2.2
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
-const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`
 
 const loadStats = () => {
   try {
@@ -113,8 +128,8 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
     play(question)
   }
   const toggleQuality = (id) => {
-    const list = enabled.includes(id) ? enabled.filter((q) => q !== id) : QUALITIES.map((q) => q.id).filter((q) => q === id || enabled.includes(q))
-    if (list.length >= 2) setEnabled(list)
+    const list = toggledQualities(enabled, id)
+    if (list) setEnabled(list)
   }
 
   const keyRef = useRef(null)
@@ -143,17 +158,10 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
   const flats = usesFlats(keyName)
   const rootName = question ? pcName(question.rootPc, flats) : ''
   const wrong = guesses.filter((g) => g !== question?.quality)
-  const feedback = (() => {
-    if (!question) return ''
-    if (state === 'solved') return `${wrong.length ? 'Got it.' : 'Correct!'} ${rootName}${info.symbol} is ${withArticle(info.name.toLowerCase())} chord: ${info.feel.toLowerCase()}`
-    if (state === 'revealed') return `It was ${rootName}${info.symbol}, ${withArticle(info.name.toLowerCase())} chord: ${info.feel.toLowerCase()}`
-    if (wrong.length) return `Not ${qualityInfo(wrong[wrong.length - 1]).name.toLowerCase()}. Press Play to hear it again.`
-    return 'Press Play, listen to the colour of the chord, then name it.'
-  })()
-  const compareHint = done ? `Tap any answer to hear it on ${rootName}${wrong.length ? `, e.g. ${qualityInfo(wrong[0]).short} next to ${info.short}` : ''}. ${info.listen}` : ''
+  const { feedback, compare: compareHint } = chordQuizText(game, rootName)
 
   const shape = done && question ? guitarShape(question.rootPc, question.quality, tuning) : []
-  const presetName = CHORD_PRESETS.find((p) => p.qualities.join() === ids.join())?.label
+  const presetName = chordPresetName(ids)
   const summary = [presetName ?? qualities.map((q) => q.short).join(' '), ROOT_MODES.find((r) => r.value === rootMode)?.label, PLAY_STYLES.find((s) => s.value === style)?.label].join(' · ')
   const statRows = qualities.map((q) => ({ ...q, ...(stats[q.id] ?? { right: 0, tries: 0 }) }))
 

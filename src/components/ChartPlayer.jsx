@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { CHANNELS, playBand } from '../lib/band.js'
 import { ALL_KEYS, compileChart, isMinorKey, keyDistance, transposeChart, transposeKey } from '../lib/chart.js'
+import { CHANNEL_LABELS, DEFAULT_MIX, bandStatus, transposeText } from '../lib/chartView.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { barSymbols } from '../lib/voicings.js'
 import ChartSheet from './ChartSheet.jsx'
@@ -9,8 +10,6 @@ import ChordReference from './ChordReference.jsx'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { Disclosure } from './layout.jsx'
 
-const CHANNEL_LABELS = { drums: 'Drums', bass: 'Bass', piano: 'Piano' }
-const DEFAULT_MIX = { drums: 0.8, bass: 0.9, piano: 0.7 }
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName) || el?.isContentEditable
 
 /** Transpose / tempo / style controls, the band mixer and the chart itself, lit up while the band plays. */
@@ -113,7 +112,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
           {playing ? '■ Stop' : '▶ Play'}
         </button>
         <span className="band-status" aria-live="polite">
-          {count ? `Count ${count}` : activeBar !== null ? `Bar ${activeBar + 1} / ${totalBars}` : startBar > 0 ? `Start at bar ${startBar + 1}` : `${totalBars} bars`}
+          {bandStatus({ count, activeBar, startBar, totalBars })}
         </span>
         <div className="toggles">
           <Toggle checked={loop} onChange={setLoop}>
@@ -179,7 +178,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
       </Disclosure>
 
       <ChordReference chart={shown} playingSymbols={activeBar === null ? [] : symbolsByBar[activeBar] ?? []} tuning={tuning} tuningId={tuningId} onTuningChange={onTuningChange} />
-      {shift !== 0 && <p className="hint">Transposed {shift <= 6 ? `up ${shift}` : `down ${12 - shift}`} half step{shift === 1 || shift === 11 ? '' : 's'} from {chart.key}.</p>}
+      {shift !== 0 && <p className="hint">{transposeText(shift, chart.key)}</p>}
       <ChartSheet
         chart={shown}
         activeBar={activeBar}

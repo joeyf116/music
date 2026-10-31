@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { ALL_KEYS, badTokens, CHART_LIMITS, TIME_SIGNATURES, validateChart } from '../lib/chart.js'
+import { moveSection, nextSection, spreadBars } from '../lib/chartView.js'
 import ChartPlayer from './ChartPlayer.jsx'
 import { Choice, Field, Stepper } from './controls.jsx'
 import { Disclosure } from './layout.jsx'
 
-const NEXT_LABEL = { A: 'B', B: 'C', C: 'D', Verse: 'Chorus', Chorus: 'Bridge', Intro: 'A' }
 
 /** Form for writing a chart: details, then sections of bar boxes, with the band underneath to try it out. */
 export default function ChartEditor({ initial, canShare, sharedAlready, onSave, onCancel }) {
@@ -18,26 +18,10 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
   const setSections = (fn) => setDraft((d) => ({ ...d, sections: fn(d.sections) }))
   const setSection = (s, patch) => setSections((all) => all.map((sec, i) => (i === s ? { ...sec, ...patch } : sec)))
   const setBars = (s, fn) => setSections((all) => all.map((sec, i) => (i === s ? { ...sec, bars: fn(sec.bars) } : sec)))
-  const move = (s, by) =>
-    setSections((all) => {
-      const next = [...all]
-      const [sec] = next.splice(s, 1)
-      next.splice(Math.max(0, Math.min(all.length - 1, s + by)), 0, sec)
-      return next
-    })
+  const move = (s, by) => setSections((all) => moveSection(all, s, by))
 
   // Typing or pasting "C | Am | F G |" into a box spreads it over that bar and the ones after it.
-  const editBar = (s, b, value) => {
-    if (!value.includes('|')) return setBars(s, (bars) => bars.map((t, i) => (i === b ? value : t)))
-    const pieces = value.split('|').map((t) => t.trim())
-    while (pieces.length > 1 && pieces.at(-1) === '') pieces.pop()
-    if (pieces[0] === '' && pieces.length > 1) pieces.shift()
-    setBars(s, (bars) => {
-      const next = [...bars]
-      next.splice(b, Math.min(pieces.length, bars.length - b), ...pieces)
-      return next.slice(0, CHART_LIMITS.barsPerSection)
-    })
-  }
+  const editBar = (s, b, value) => setBars(s, (bars) => spreadBars(bars, b, value))
 
   const totalBars = draft.sections.reduce((n, s) => n + s.bars.length, 0)
   const preview = { ...draft, tempo: Number(draft.tempo) || 120, sections: draft.sections.filter((s) => s.bars.length) }
@@ -171,7 +155,7 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
       ))}
       <button
         type="button"
-        onClick={() => setSections((all) => [...all, { label: NEXT_LABEL[all.at(-1)?.label] ?? '', bars: Array(8).fill('') }])}
+        onClick={() => setSections((all) => [...all, nextSection(all)])}
         disabled={draft.sections.length >= CHART_LIMITS.sections}
       >
         + Add section

@@ -1,24 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { clampBpm, fitAccents, gapStatus } from '../lib/rhythm.js'
+import { clampBpm, fitAccents } from '../lib/rhythm.js'
+import { CLICK_MODES, clickModeAccents, clickModeGap, timingStatus } from '../lib/rhythmView.js'
 import { startClickTrack } from '../lib/rhythmEngine.js'
 import useTapJudge from '../lib/useTapJudge.js'
 import { Choice, Stepper } from './controls.jsx'
 import TapPad, { TapResults } from './TapPad.jsx'
 import { Disclosure } from './layout.jsx'
-
-// How much of the click you get. Less click = more of the time is yours to keep.
-const CLICK_MODES = [
-  { value: 'full', label: 'Every beat', title: 'Click on every beat' },
-  { value: 'one', label: 'Beat 1 only', title: 'Only the first beat of each bar clicks' },
-  { value: 'backbeat', label: '2 & 4', title: 'Only the backbeat clicks, like a drummer’s snare' },
-  { value: 'gap', label: 'Gaps', title: 'Two bars of click, then two bars of silence' },
-]
-
-const accentsFor = (mode, accents) => {
-  if (mode === 'one') return accents.map((a, i) => (i === 0 ? 'accent' : 'mute'))
-  if (mode === 'backbeat') return accents.map((a, i) => (i % 2 === 1 ? 'accent' : 'mute'))
-  return accents
-}
 
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
@@ -31,8 +18,8 @@ export default function TimingTest({ settings, update, sound }) {
   const judge = useTapJudge(Number(correction) || 0)
   const engine = useRef(null)
   const bpm = clampBpm(settings.bpm)
-  const accents = accentsFor(mode, fitAccents(settings.accents, settings.meter))
-  const gap = mode === 'gap' ? { on: true, play: 2, mute: 2 } : { on: false }
+  const accents = clickModeAccents(mode, fitAccents(settings.accents, settings.meter))
+  const gap = clickModeGap(mode)
   const engineSettings = useRef(null)
   const latest = { ...settings, bpm, accents, sound, subdivision: 'beats', gap, speed: { on: false }, countIn: true }
   const { addTarget, clearTargets } = judge
@@ -72,7 +59,7 @@ export default function TimingTest({ settings, update, sound }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const status = pulse?.bar < 0 ? `Count-in ${pulse.beat + 1}… start tapping on 1` : pulse ? gapStatus(pulse.bar, gap) || `Bar ${pulse.bar + 1} · beat ${pulse.beat + 1}` : ''
+  const status = timingStatus(pulse, gap)
 
   return (
     <div className="timing-test">
