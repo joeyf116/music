@@ -9,6 +9,8 @@ import useHashPage from './lib/useHashPage.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
 
+const PRIVACY_URL = 'https://joeyf116.github.io/music/privacy.html'
+
 const PAGES = [
   {
     id: 'fretboard',
@@ -109,6 +111,12 @@ export default function App() {
           />
         )}
       </main>
+
+      <footer className="site-footer">
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+          Privacy
+        </a>
+      </footer>
     </div>
   )
 }

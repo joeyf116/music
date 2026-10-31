@@ -3,14 +3,45 @@ import { playClickSound, storedSound } from './clickSounds.js'
 
 let ctx = null
 
+// One AudioContext for the whole app (pitches, clicks, backing band). Phones, iOS in particular, only let
+// audio start inside a tap, so the first touch anywhere "unlocks" it (see unlockAudioOnFirstTouch below).
 export const audioContext = () => {
   if (!ctx) {
     const Ctx = window.AudioContext || window.webkitAudioContext
     if (!Ctx) return null
     ctx = new Ctx()
   }
-  if (ctx.state === 'suspended') ctx.resume()
+  if (ctx.state !== 'running') ctx.resume().catch(() => {})
   return ctx
+}
+
+// iOS Safari mutes Web Audio when the ring/silent switch is on unless the page asks for "playback".
+if (typeof navigator !== 'undefined' && navigator.audioSession) {
+  try {
+    navigator.audioSession.type = 'playback'
+  } catch {
+    // Older browsers expose the object without allowing changes.
+  }
+}
+
+// Creates and resumes the context during the first tap and plays one silent sample, which is what iOS needs
+// before later (timer-scheduled) sounds are allowed. Also wakes the context when the app comes back to the front.
+export function unlockAudioOnFirstTouch() {
+  if (typeof window === 'undefined') return
+  const events = ['pointerdown', 'touchend', 'keydown']
+  const unlock = () => {
+    const ac = audioContext()
+    if (!ac) return
+    const silent = ac.createBufferSource()
+    silent.buffer = ac.createBuffer(1, 1, ac.sampleRate)
+    silent.connect(ac.destination)
+    silent.start(0)
+    events.forEach((e) => window.removeEventListener(e, unlock, true))
+  }
+  events.forEach((e) => window.addEventListener(e, unlock, true))
+  document.addEventListener('visibilitychange', () => {
+    if (ctx && document.visibilityState === 'visible' && ctx.state !== 'running') ctx.resume().catch(() => {})
+  })
 }
 
 export const midiToFrequency = (pitch) => 440 * 2 ** ((pitch - 69) / 12)
