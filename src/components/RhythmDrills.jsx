@@ -7,6 +7,7 @@ import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import Tab from './Tab.jsx'
 import TapPad, { TapResults } from './TapPad.jsx'
+import { Disclosure } from './layout.jsx'
 
 const DEFAULTS = { level: 1, rhythm: 'q-e-q-e', beats: rhythmById('q-e-q-e').beats, playOn: 'muted', mode: 'listen', countIn: true, clickGrid: false, showTab: true }
 const MODES = [
@@ -143,12 +144,12 @@ export default function RhythmDrills({ tuning, stringName, keyName, minor, setti
         <button type="button" className="icon-button" onClick={() => step(-1)} aria-label="Previous rhythm">
           ‹
         </button>
-        <h3>
+        <h2>
           {custom ? 'Your rhythm' : preset.name}
           <small>
             {beats.length}/4 · {hits} {hits === 1 ? 'strum' : 'strums'} a bar
           </small>
-        </h3>
+        </h2>
         <button type="button" className="icon-button" onClick={() => step(1)} aria-label="Next rhythm">
           ›
         </button>
@@ -228,14 +229,13 @@ export default function RhythmDrills({ tuning, stringName, keyName, minor, setti
       {drill.showTab && <Tab columns={columns} tuningNames={tuningNames} columnWidth={COLUMN_WIDTH[finest] ?? 24} active={active} onSelect={(i) => !playing && score.events[i]?.notes.length && playEvent(score.events[i])} follow={playing} />}
 
       <div className="tap-along">
-        <h4>Tap it</h4>
+        <h3>Tap it</h3>
         <p className="hint">Press Play, then tap the rhythm (not the beat) on the pad or any letter key. Each tap is checked against the nearest strum.</p>
         <TapPad judge={judge} disabled={!playing} idle={playing ? 'Tap the rhythm here' : 'Press Play, then tap the rhythm here'} label="Tap the rhythm" />
         <TapResults judge={judge} onReset={judge.reset} />
       </div>
 
-      <details className="option-panel how-to">
-        <summary>How to practise a rhythm</summary>
+      <Disclosure label="How to practise a rhythm" quiet className="option-panel how-to">
         <ol>
           <li>
             <strong>Listen</strong> once or twice and follow the boxes.
@@ -250,7 +250,7 @@ export default function RhythmDrills({ tuning, stringName, keyName, minor, setti
             <strong>Speed up</strong> only when it feels easy at this tempo; 5 BPM at a time.
           </li>
         </ol>
-      </details>
+      </Disclosure>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { ALL_KEYS, badTokens, CHART_LIMITS, TIME_SIGNATURES, validateChart } from '../lib/chart.js'
 import ChartPlayer from './ChartPlayer.jsx'
 import { Choice, Field, Stepper } from './controls.jsx'
+import { Disclosure } from './layout.jsx'
 
 const NEXT_LABEL = { A: 'B', B: 'C', C: 'D', Verse: 'Chorus', Chorus: 'Bridge', Intro: 'A' }
 
@@ -95,8 +96,7 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
         <Stepper label="Tempo (BPM)" value={draft.tempo} onChange={(tempo) => set({ tempo })} min={40} max={300} step={5} fallback={120} />
       </div>
 
-      <details className="chart-help">
-        <summary>How to write bars</summary>
+      <Disclosure label="How to write bars" quiet className="chart-help">
         <ul>
           <li>
             One box is one bar. Put several chords in a box to split the bar: <code>Dm7 G7</code> is two beats each.
@@ -111,7 +111,7 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
             Paste a whole line like <code>| C | Am | F G | C |</code> into a box to fill several bars at once.
           </li>
         </ul>
-      </details>
+      </Disclosure>
 
       {draft.sections.map((section, s) => (
         <fieldset className="editor-section" key={s}>

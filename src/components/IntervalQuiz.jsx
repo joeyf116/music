@@ -6,6 +6,7 @@ import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
 import TuningSelect from './TuningSelect.jsx'
+import { Disclosure } from './layout.jsx'
 
 const RANGES = [
   { maxFret: 5, label: 'Frets 0–5' },
@@ -192,49 +193,22 @@ export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringN
   return (
     <div className="quiz">
       <div className="section-head">
-        <h3>Guess the interval</h3>
+        <h2>Guess the interval</h2>
         <span className="quiz-score" aria-live="polite">
           Score {score.right}/{score.tries} · Streak {streak} · Best {best}
         </span>
       </div>
 
-      <details className="quiz-settings-panel" open={settingsOpen} onToggle={(e) => setSettingsOpen(e.currentTarget.open)}>
-        <summary>
-          Settings <span className="settings-summary">{settingsSummary}</span>
-        </summary>
-        <div className="field-grid quiz-settings">
-          <Choice label="Direction" options={DIRECTION_OPTIONS} value={direction} onChange={setDirection} />
-          <Choice label="Frets" options={RANGE_OPTIONS} value={maxFret} onChange={setMaxFret} />
-          <Field label="Tuning">
-            <TuningSelect value={tuningId} onChange={onTuningChange} />
-          </Field>
-          <div className="toggles">
-            <Toggle checked={loop} onChange={setLoop}>
-              Loop until stopped
-            </Toggle>
-            <Toggle checked={autoPlay} onChange={setAutoPlay}>
-              Auto-play next
-            </Toggle>
-          </div>
+      <div className="field quiz-setup">
+        <span className="field-label" id="interval-presets">Intervals to practise</span>
+        <div className="presets" role="group" aria-labelledby="interval-presets">
+          {PRESETS.map((p) => (
+            <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} aria-pressed={p.label === presetName} onClick={() => setEnabled(p.semitones)}>
+              {p.label}
+            </button>
+          ))}
         </div>
-        <div className="interval-picker">
-          <span className="field-label">Intervals</span>
-          <div className="presets" role="group" aria-label="Interval presets">
-            {PRESETS.map((p) => (
-              <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} onClick={() => setEnabled(p.semitones)}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <div className="interval-toggles" role="group" aria-label="Intervals to practise">
-            {INTERVALS.map((i) => (
-              <button key={i.semitones} type="button" className={enabled.includes(i.semitones) ? 'on' : ''} aria-pressed={enabled.includes(i.semitones)} title={i.name} onClick={() => toggleInterval(i.semitones)}>
-                {i.short}
-              </button>
-            ))}
-          </div>
-        </div>
-      </details>
+      </div>
 
       {question ? (
         <>
@@ -304,8 +278,7 @@ export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringN
           <p className="hint keys-hint">Keys: Space play/stop · 1–{Math.min(choices.length, 9)} answer · Enter or N next.</p>
 
           {tried.length > 0 && (
-            <details className="quiz-stats">
-              <summary>Accuracy by interval</summary>
+            <Disclosure label="Accuracy by interval" className="quiz-stats">
               <ul>
                 {statRows.map((r) => (
                   <li key={r.semitones}>
@@ -320,12 +293,40 @@ export default function IntervalQuiz({ tuning, tuningId, onTuningChange, stringN
               <button type="button" onClick={() => dispatch({ type: 'resetStats' })}>
                 Reset stats
               </button>
-            </details>
+            </Disclosure>
           )}
         </>
       ) : (
         <p className="empty">None of these intervals fit in this fret range. Try a wider range.</p>
       )}
+
+      <Disclosure label="Settings" summary={settingsSummary} open={settingsOpen} onToggle={setSettingsOpen} className="quiz-settings-panel">
+        <div className="field-grid quiz-settings">
+          <Choice label="Direction" options={DIRECTION_OPTIONS} value={direction} onChange={setDirection} />
+          <Choice label="Frets" options={RANGE_OPTIONS} value={maxFret} onChange={setMaxFret} />
+          <Field label="Tuning">
+            <TuningSelect value={tuningId} onChange={onTuningChange} />
+          </Field>
+          <div className="toggles">
+            <Toggle checked={loop} onChange={setLoop}>
+              Loop until stopped
+            </Toggle>
+            <Toggle checked={autoPlay} onChange={setAutoPlay}>
+              Auto-play next
+            </Toggle>
+          </div>
+        </div>
+        <div className="interval-picker">
+          <span className="field-label">Or pick intervals one by one</span>
+          <div className="interval-toggles" role="group" aria-label="Intervals to practise">
+            {INTERVALS.map((i) => (
+              <button key={i.semitones} type="button" className={enabled.includes(i.semitones) ? 'on' : ''} aria-pressed={enabled.includes(i.semitones)} title={i.name} onClick={() => toggleInterval(i.semitones)}>
+                {i.short}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Disclosure>
     </div>
   )
 }

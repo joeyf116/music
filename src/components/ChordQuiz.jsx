@@ -5,6 +5,7 @@ import { intervalName, noteToPc, pcName, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
+import { Disclosure } from './layout.jsx'
 
 const ANSWER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-']
 const STATS_KEY = 'music.chordQualityStats'
@@ -29,7 +30,7 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
   const [rootMode, setRootMode] = usePersistentState('music.chordRoot', 'fixed')
   const [inversions, setInversions] = usePersistentState('music.chordInversions', false)
   const [autoPlay, setAutoPlay] = usePersistentState('music.chordAutoPlay', true)
-  const [settingsOpen, setSettingsOpen] = usePersistentState('music.chordSettingsOpen', !window.matchMedia?.('(max-width: 640px)').matches)
+  const [settingsOpen, setSettingsOpen] = usePersistentState('music.chordSettingsOpen', false)
   const qualities = QUALITIES.filter((q) => enabled.includes(q.id))
   const ids = qualities.length ? qualities.map((q) => q.id) : CHORD_PRESETS[0].qualities
   const keyPc = noteToPc(keyName)
@@ -159,47 +160,22 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
   return (
     <div className="quiz chord-quiz">
       <div className="section-head">
-        <h3>Name the chord</h3>
+        <h2>Name the chord</h2>
         <span className="quiz-score" aria-live="polite">
           Score {score.right}/{score.tries}
         </span>
       </div>
 
-      <details className="quiz-settings-panel" open={settingsOpen} onToggle={(e) => setSettingsOpen(e.currentTarget.open)}>
-        <summary>
-          Settings <span className="settings-summary">{summary}</span>
-        </summary>
-        <div className="interval-picker">
-          <span className="field-label">Chords to practise</span>
-          <div className="presets" role="group" aria-label="Chord presets">
-            {CHORD_PRESETS.map((p) => (
-              <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} onClick={() => setEnabled(p.qualities)}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <div className="interval-toggles" role="group" aria-label="Chord qualities">
-            {QUALITIES.map((q) => (
-              <button key={q.id} type="button" className={enabled.includes(q.id) ? 'on' : ''} aria-pressed={enabled.includes(q.id)} title={q.name} onClick={() => toggleQuality(q.id)}>
-                {q.short}
-              </button>
-            ))}
-          </div>
+      <div className="field quiz-setup">
+        <span className="field-label" id="chord-presets">Chords to practise</span>
+        <div className="presets" role="group" aria-labelledby="chord-presets">
+          {CHORD_PRESETS.map((p) => (
+            <button key={p.id} type="button" className={p.label === presetName ? 'on' : ''} aria-pressed={p.label === presetName} onClick={() => setEnabled(p.qualities)}>
+              {p.label}
+            </button>
+          ))}
         </div>
-        <div className="field-grid quiz-settings">
-          <Choice label="Played as" options={PLAY_STYLES} value={style} onChange={setStyle} />
-          <Choice label="Root" options={ROOT_MODES} value={rootMode} onChange={setRootMode} />
-          <Choice label="Voicing" options={VOICINGS} value={voicing} onChange={setVoicing} />
-          <div className="toggles">
-            <Toggle checked={inversions} onChange={setInversions} disabled={voicing === 'guitar'}>
-              Inversions (another chord note in the bass)
-            </Toggle>
-            <Toggle checked={autoPlay} onChange={setAutoPlay}>
-              Auto-play next
-            </Toggle>
-          </div>
-        </div>
-      </details>
+      </div>
 
       <div className="quiz-listen">
         <button type="button" className="primary play-button" onClick={togglePlay} aria-pressed={playing}>
@@ -231,7 +207,7 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
                 {done && <span aria-hidden="true">🔊 </span>}
                 {q.short}
               </strong>
-              <small>{done ? `${rootName}${q.symbol}` : q.name}</small>
+              {(done || q.name !== q.short) && <small>{done ? `${rootName}${q.symbol}` : q.name}</small>}
             </button>
           )
         })}
@@ -256,12 +232,38 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
       </div>
       <p className="hint keys-hint">Keys: Space play/stop · 1–{Math.min(qualities.length, 9)} answer · Enter or N next.</p>
 
+      <Disclosure label="Settings" summary={summary} open={settingsOpen} onToggle={setSettingsOpen} className="quiz-settings-panel">
+        <div className="interval-picker">
+          <span className="field-label">Or pick chords one by one</span>
+          <div className="interval-toggles" role="group" aria-label="Chord qualities">
+            {QUALITIES.map((q) => (
+              <button key={q.id} type="button" className={enabled.includes(q.id) ? 'on' : ''} aria-pressed={enabled.includes(q.id)} title={q.name} onClick={() => toggleQuality(q.id)}>
+                {q.short}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field-grid quiz-settings">
+          <Choice label="Played as" options={PLAY_STYLES} value={style} onChange={setStyle} />
+          <Choice label="Root" options={ROOT_MODES} value={rootMode} onChange={setRootMode} />
+          <Choice label="Voicing" options={VOICINGS} value={voicing} onChange={setVoicing} />
+          <div className="toggles">
+            <Toggle checked={inversions} onChange={setInversions} disabled={voicing === 'guitar'}>
+              Inversions (another chord note in the bass)
+            </Toggle>
+            <Toggle checked={autoPlay} onChange={setAutoPlay}>
+              Auto-play next
+            </Toggle>
+          </div>
+        </div>
+      </Disclosure>
+
       {shape.length > 0 && (
         <div className="chord-shape">
-          <h4>
+          <h3>
             Play {rootName}
             {info.symbol} on guitar
-          </h4>
+          </h3>
           <Fretboard
             tuning={tuning}
             intervals={info.intervals}
@@ -273,8 +275,7 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
         </div>
       )}
 
-      <details className="quiz-stats listening-guide">
-        <summary>What each chord sounds like</summary>
+      <Disclosure label="What each chord sounds like" quiet className="quiz-stats listening-guide">
         <ul className="quality-guide">
           {qualities.map((q) => (
             <li key={q.id}>
@@ -287,11 +288,10 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
             </li>
           ))}
         </ul>
-      </details>
+      </Disclosure>
 
       {statRows.some((r) => r.tries) && (
-        <details className="quiz-stats">
-          <summary>Accuracy by chord</summary>
+        <Disclosure label="Accuracy by chord" className="quiz-stats">
           <ul>
             {statRows.map((r) => (
               <li key={r.id}>
@@ -306,7 +306,7 @@ export default function ChordQuiz({ tuning, stringName, keyName }) {
           <button type="button" onClick={() => dispatch({ type: 'resetStats' })}>
             Reset stats
           </button>
-        </details>
+        </Disclosure>
       )}
     </div>
   )

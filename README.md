@@ -24,12 +24,13 @@
 
 - [What's inside](#whats-inside)
 - [Fretboard](#-fretboard)
-- [Exercises](#-exercises)
-- [Quiz: guess the interval](#-quiz-guess-the-interval)
+- [Rhythm](#-rhythm)
+- [Ear training](#-ear-training)
 - [Charts: play along with a band](#-charts-play-along-with-a-band)
 - [Resources](#-resources)
 - [Works everywhere](#-works-everywhere)
 - [Shared catalogs (Supabase)](#-shared-catalogs-supabase)
+- [Design system](#-design-system)
 - [Development](#-development)
 - [Project layout](#-project-layout)
 - [Deployment](#-deployment)
@@ -39,45 +40,52 @@
 | Page | What it's for |
 | --- | --- |
 | 🎯 **[Fretboard](https://joeyf116.github.io/music/#fretboard)** | See any scale, chord or inversion on a 22-fret neck, with tab you can play back |
-| 🏋️ **[Exercises](https://joeyf116.github.io/music/#exercises)** | Generated technique, scale, arpeggio, rhythm and fingerstyle drills with synced tab playback |
-| 👂 **[Quiz](https://joeyf116.github.io/music/#quiz)** | Ear training: hear two notes and name the interval |
+| 🥁 **[Rhythm](https://joeyf116.github.io/music/#exercises)** | A metronome with 12 sounds and 7 subdivisions, strumming rhythms, a timing test, and scale and chord drills in tab |
+| 👂 **[Ear training](https://joeyf116.github.io/music/#quiz)** | Name chord qualities (major, minor, dim, aug, sus, 7ths) and intervals by ear |
 | 🎼 **[Charts](https://joeyf116.github.io/music/#charts)** | iReal Pro-style chord charts with a drums, bass and piano backing band, plus a chart editor |
 | 📚 **[Resources](https://joeyf116.github.io/music/#resources)** | A shared catalog of lessons, tabs, videos, PDFs and tools anyone can add to |
 
-Each page has its own link, your settings are remembered in the browser, and nothing needs an account.
+Each page has its own link, your settings are remembered in the browser, and nothing needs an account. Every page
+is laid out the same way: a title and one line on what it's for, the few choices you change most, the thing you
+practise with, and a folded **Settings** panel for everything else (see [Design system](#-design-system)).
 
 ## 🎯 Fretboard
 
-- **Every key, three modes.** Choose one of the 12 keys, then:
-  - **Scales:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode. Scales are split into playable positions (3 notes per string for 7-note scales, boxes for pentatonic and blues).
-  - **Chords:** 17 chord types with voicings found all the way up the neck.
-  - **Inversions:** close triads and drop‑2 seventh chords on every adjacent string set, walking root → 1st → 2nd (→ 3rd) up the neck.
+- **Pick a key and a scale or mode once.** They're shared with the Rhythm page, so drills start where you left off.
+- **Explore four ways:**
+  - **Scale:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode, in playable positions (boxes or diagonal 3-notes-per-string runs) or across the whole neck.
+  - **Chords:** tap any chord of the key in the *Chords in the key* strip, or pick from 17 chord types, with voicings all the way up the neck.
+  - **Inversions:** close triads, plus drop 2 and drop 3 seventh chords, on every string set.
+  - **Progressions:** type numerals or chord names (`I V vi IV`, `Am F C G`), start from a common progression, or roll a random one.
 - **Notes are coloured and shaped by role** (root, 3rd, 5th, 7th, other), so the neck reads even without colour. Labels can show note names or intervals.
-- **Tab under the neck** for whatever is selected. Click a column to hear it, step through with ← / →, or press **Play** at any BPM.
-- **22 tunings** in four groups: standard down to B, drop tunings down to Drop A, open tunings (G, D, E, A, C and minors) and more.
-- **Metronome and drone** right next to the tab player.
+- **Tab under the neck** for whatever is selected. Tap a column to hear it, step through with ← / →, or press **Play** at any BPM, with a metronome and drone beside it.
+- **25 tunings** in five groups: standard down to B, drop tunings, open tunings, math rock (FACGCE, open C6, open F) and more. Tuning, labels and "show every note" live in **Neck settings**.
+- **Practise it →** opens a matching drill on the Rhythm page.
 
-## 🏋️ Exercises
+## 🥁 Rhythm
 
-<img src="docs/screenshots/exercises.png" alt="The exercises page" width="900">
+<img src="docs/screenshots/exercises.png" alt="The Rhythm page with the metronome tab open" width="900">
 
-Drills built on the fly for any key, tuning and neck area, with tab and a fretboard that follow the playback:
+A rhythm trainer in four tabs:
 
-- **Scales:** scale sequences (3s, 4s, in 3rds, 4ths, 6ths…) and scales along one string
-- **Technique:** a subdivision ladder (quarters → 8ths → triplets → 16ths) and chromatic finger workouts
-- **Arpeggios:** arpeggios through the key, chord arpeggio shapes and triads on a string set
-- **Chords & rhythm:** progressions such as I–V–vi–IV with strum patterns
-- **Fingerstyle:** Travis picking and other fingerpicking patterns
+- **Metronome:** big tempo readout, tap tempo, ±5/±10 nudges, and beat lights you tap to accent or silence. Seven subdivisions (beats, 8ths, triplets, 16ths, swing 8ths, quintuplets, sextuplets), seven natural sounds (woodblock, clave, drumsticks, cowbell, wind-up metronome, drum kit, shaker) and five digital ones. **Trainers** add a gap click (the click drops out for a few bars) and a speed trainer that raises the tempo as you go.
+- **Rhythms:** strumming rhythms in six levels on a counting grid with strum arrows, shown as tab too. Listen first, then play along, and tap the rhythm on the pad to see how close you are.
+- **Timing:** tap along with the click and see how early or late each tap is, and whether you rush or drag.
+- **Drills:** scale sequences, arpeggios, triads on string sets, strummed progressions, technique and fingerstyle patterns, with tab and a fretboard that follow the audio.
 
-## 👂 Quiz: guess the interval
+## 👂 Ear training
 
-<img src="docs/screenshots/quiz.png" alt="The interval quiz" width="900">
+<img src="docs/screenshots/quiz.png" alt="The Ear training page asking you to name a chord" width="900">
 
-The root is shown on the neck, two notes are played, and you name the gap by ear. Start with the presets (Starter, + 3rds & 4th, All), play the notes up, down, together or mixed, set the fret range, and watch your score and best streak.
+Two tabs, each one question at a time: press **Play**, listen, pick the answer. Wrong picks stay silent so they're never mistaken for the next question, and once you've answered you can tap every option to compare.
+
+- **Chords:** name the quality. Start with *Major vs minor*, then add triads, sus chords and 7th chords (11 qualities in all). Hear them as an arpeggio, a strum or both, on one root or any root, in close voicing or a real guitar shape, with optional inversions. The answer shows the shape on the neck.
+- **Intervals:** the root is shown on the neck and you name the gap. Start with the presets (Starter, + 3rds & 4th, All), play the notes up, down, together or mixed, and set the fret range.
+- Score, streak and accuracy per chord or interval, so you know what to practise next.
 
 ## 🎼 Charts: play along with a band
 
-<img src="docs/screenshots/charts-player.png" alt="Autumn Leaves on the Charts page with the band controls above the lead sheet" width="900">
+<img src="docs/screenshots/charts-player.png" alt="Jazz Blues in F on the Charts page with the band controls above the lead sheet" width="900">
 
 A lead-sheet player inspired by [iReal Pro](https://www.irealpro.com/):
 
@@ -118,7 +126,7 @@ A practice catalog of PDFs, tabs, lessons, videos, backing tracks and tools:
 
 <img src="docs/screenshots/phone-charts.png" alt="The Charts page on a phone" width="260" align="right">
 
-- Phones get a bottom tab bar within thumb reach and nothing pinned over the top of the page.
+- Phones get a bottom tab bar within thumb reach and nothing pinned over the top of the page. The main thing on each page (the neck, the quiz, the metronome) comes first; extra options fold away.
 - Touch targets are 44px, the neck scrolls to the selected shape, tab reflows to the screen and charts keep four bars to a line.
 - Fields never trigger zoom on iOS, contrast meets WCAG AA, and keyboard focus is always visible.
 - The site is fully static and works on GitHub Pages or any sub-path.
@@ -140,6 +148,15 @@ Shared resources and shared charts are stored in a free [Supabase](https://supab
 
 Setup steps are in [`supabase/README.md`](supabase/README.md). If the database can't be reached, every page still works: shared items are simply hidden.
 
+## 🎨 Design system
+
+All pages follow the rules in [`docs/DESIGN.md`](docs/DESIGN.md): the page anatomy (title and purpose → setup →
+stage → folded settings → reference), the spacing, type and colour tokens in [`src/index.css`](src/index.css),
+which control to use for which kind of choice, and mobile and accessibility checklists. The shared building blocks
+are in [`src/components/layout.jsx`](src/components/layout.jsx) (`PageHeader`, `Disclosure`, `Section`) and
+[`src/components/controls.jsx`](src/components/controls.jsx) (`Field`, `Choice`, `Stepper`, `Toggle`). Read it
+before adding a page or a control.
+
 ## 🛠 Development
 
 ```bash
@@ -157,16 +174,26 @@ To use the shared catalogs locally, copy the two `VITE_SUPABASE_*` lines from `.
 
 ```text
 src/
-├── App.jsx                 pages, header and the Fretboard page
-├── components/             one file per page or widget (Charts, Exercises, Quiz, Resources, Tab, …)
+├── App.jsx                 page list, header and tab bar, shared key / scale / tuning
+├── index.css               design tokens, form controls      App.css  page layout and page styles
+├── components/
+│   ├── layout.jsx          PageHeader, Disclosure, Section (see docs/DESIGN.md)
+│   ├── controls.jsx        Field, Choice, Stepper, Toggle
+│   ├── FretboardPage.jsx   Fretboard page                   RhythmPage.jsx   Rhythm page and its tabs
+│   ├── EarTraining.jsx     Ear training page (ChordQuiz, IntervalQuiz)
+│   ├── Charts.jsx          Charts page                      Resources.jsx    Resources page
+│   └── …                   widgets: Fretboard, Tab, Metronome, ChordReference, …
 └── lib/
     ├── theory.js           notes, scales, chords, voicings, inversions, tunings
-    ├── exercises.js        exercise generators        player.js   tab playback
-    ├── intervalQuiz.js     quiz logic                  audio.js    plucked-string synth, metronome, drone
+    ├── exercises.js        drill generators            player.js        tab playback
+    ├── rhythm.js           rhythms, subdivisions, tap grading   clickSounds.js   metronome sounds
+    ├── intervalQuiz.js     interval quiz logic         chordQuiz.js     chord quiz logic
+    ├── audio.js            plucked-string synth, metronome, drone
     ├── chart.js            chord-symbol parser, transposition, chart compiler
     ├── arranger.js         band styles: drum patterns, bass lines, comping, voicings
     ├── band.js             Web Audio backing band scheduler
     └── shared*.js          Supabase calls for shared resources and charts
+docs/DESIGN.md              layout, theme and writing rules for every page
 supabase/                   database SQL and seed data
 resources/                  bundled PDFs, files and links
 ```
