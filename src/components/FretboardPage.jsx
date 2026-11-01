@@ -26,6 +26,7 @@ import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard from './Fretboard.jsx'
 import KeyPicker from './KeyPicker.jsx'
+import Menu from './Menu.jsx'
 import PracticeTools from './PracticeTools.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
@@ -251,23 +252,13 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
             <Field label="Progression" className="progression-field">
               <input type="text" value={progression} onChange={(e) => setProgression(e.target.value)} spellCheck="false" autoCapitalize="off" placeholder="I V vi IV" />
             </Field>
-            <Field label="Start from" className="preset-field">
-              <select
-                value=""
-                onChange={(e) => {
-                  if (!e.target.value) return
-                  setProgression(e.target.value)
-                }}
-              >
-                <option value="">Common progressions…</option>
-                {PROGRESSIONS.map((p) => (
-                  <option key={p.name} value={p.text}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
             <div className="progression-buttons">
+              <Menu
+                  label="Common progressions"
+                    items={PROGRESSIONS.map((p) => ({ label: p.name, detail: p.text, onSelect: () => setProgression(p.text) }))}
+                >
+                  Common ▾
+                </Menu>
               <button type="button" onClick={() => setProgression(randomProgression(progressionMood(scaleType), 4))}>
                 🎲 Random
               </button>

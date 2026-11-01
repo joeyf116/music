@@ -21,6 +21,7 @@ import { Choice, Field, Stepper, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard from './Fretboard.jsx'
 import KeyPicker from './KeyPicker.jsx'
+import Menu from './Menu.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
 import { Disclosure } from './layout.jsx'
@@ -195,14 +196,12 @@ export default function Exercises({ tuning, tuningId, onTuningChange, stringName
               placeholder="I V vi IV"
             />
             <div className="progression-actions">
-              <select value="" onChange={(e) => e.target.value && set({ progression: e.target.value })} aria-label="Common progressions">
-                <option value="">Common progressions…</option>
-                {PROGRESSIONS.map((p) => (
-                  <option key={p.name} value={p.text}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+<Menu
+                label="Common progressions"
+                items={PROGRESSIONS.map((p) => ({ label: p.name, detail: p.text, onSelect: () => set({ progression: p.text }) }))}
+              >
+                Common ▾
+              </Menu>
               <button type="button" onClick={() => set({ progression: randomProgression('major', 4), scale: 'major' })}>
                 🎲 Major
               </button>

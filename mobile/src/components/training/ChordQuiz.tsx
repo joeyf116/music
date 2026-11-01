@@ -24,8 +24,10 @@ import { intervalName, noteToPc, pcName, usesFlats } from '@music/theory.js'
 import { useStored } from '@/lib/prefs'
 import { colors, space, text } from '@/theme'
 import Fretboard from '../Fretboard'
-import { Button, ChipRow, Disclosure, Group, HeaderButton, Section, Segmented, SwitchRow } from '../ui'
+import { oneSection } from '@/lib/choose'
+import { Button, ChipRow, ChoiceRow, Disclosure, Group, HeaderButton, Section, SwitchRow } from '../ui'
 import { Answers, Feedback, QuizActions, StatBars } from './Answers'
+import { TRAINING_SHEET } from './IntervalQuiz'
 
 const ARP_GAP = 0.32
 const RING = 2.2
@@ -175,14 +177,11 @@ export default function ChordQuiz({ tuning, stringName, keyName }: { tuning: num
       <Disclosure title="Settings" summary={summary}>
         <Text style={styles.label}>Or pick chords one by one</Text>
         <ChipRow label="Chord qualities" options={QUALITIES.map((q) => ({ value: q.id, label: q.short, on: enabled.includes(q.id), a11y: q.name }))} onChange={(id: string) => setEnabled(toggleQuality(enabled, id) ?? enabled)} wrap />
-        <Text style={styles.label}>Played as</Text>
-        <Segmented options={PLAY_STYLES} value={style} onChange={setStyle} />
-        <Text style={styles.label}>Root</Text>
-        <Segmented options={ROOT_MODES} value={rootMode} onChange={setRootMode} />
-        <Text style={styles.label}>Voicing</Text>
-        <Segmented options={VOICINGS} value={voicing} onChange={setVoicing} />
         <Group>
-          <SwitchRow label="Inversions (another chord note in the bass)" value={inversions} onChange={setInversions} disabled={voicing === 'guitar'} first />
+          <ChoiceRow label="Played as" value={style} sections={oneSection([...PLAY_STYLES])} onChange={setStyle} sheet={TRAINING_SHEET} first />
+          <ChoiceRow label="Root" value={rootMode} sections={oneSection([...ROOT_MODES])} onChange={setRootMode} sheet={TRAINING_SHEET} />
+          <ChoiceRow label="Voicing" value={voicing} sections={oneSection([...VOICINGS])} onChange={setVoicing} sheet={TRAINING_SHEET} />
+          <SwitchRow label="Inversions (another chord note in the bass)" value={inversions} onChange={setInversions} disabled={voicing === 'guitar'} />
           <SwitchRow label="Auto-play next" value={autoPlay} onChange={setAutoPlay} last />
         </Group>
       </Disclosure>

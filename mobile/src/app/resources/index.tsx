@@ -5,7 +5,8 @@ import { LEVELS, SORTS, filterResources, sortResources, tagCounts, type Resource
 import ResourceRow from '@/components/resources/ResourceRow'
 import TabFinder from '@/components/resources/TabFinder'
 import { ChipRow, ChoiceRow, Disclosure, Group, HeaderButton, Hint, Notice, TextButton } from '@/components/ui'
-import { confirm, showActions } from '@/lib/actions'
+import type { MenuItem } from '@/components/Menu'
+import { confirm } from '@/lib/actions'
 import { useStored } from '@/lib/prefs'
 import { useResources } from '@/lib/resources'
 import { colors, space, text } from '@/theme'
@@ -41,17 +42,7 @@ export default function ResourcesScreen() {
   const cloud = allTags ? tags : [...tags.slice(0, TAG_CLOUD_SIZE), ...tags.slice(TAG_CLOUD_SIZE).filter(([t]) => filters.tags.includes(t))]
   const fail = (err: unknown) => setNotice(err instanceof Error ? err.message : String(err))
 
-  const more = (r: Resource) =>
-    showActions(r.title, [
-      ...(canRemove(r)
-        ? [
-            {
-              label: r.source === 'local' ? 'Remove' : 'Remove for everyone',
-              destructive: true,
-              onPress: () => (r.source === 'local' ? remove(r).catch(fail) : confirm(`Remove “${r.title}” for everyone?`, 'This can’t be undone.', 'Remove', () => remove(r).catch(fail))),
-            },
-          ]
-        : []),
+  const more = (r: Resource): MenuItem[] => [
       ...(canReport(r)
         ? [
             {
@@ -63,7 +54,16 @@ export default function ResourcesScreen() {
             },
           ]
         : []),
-    ])
+      ...(canRemove(r)
+        ? [
+            {
+              label: r.source === 'local' ? 'Remove' : 'Remove for everyone',
+              destructive: true,
+              onPress: () => (r.source === 'local' ? remove(r).catch(fail) : confirm(`Remove “${r.title}” for everyone?`, 'This can’t be undone.', 'Remove', () => remove(r).catch(fail))),
+            },
+          ]
+        : []),
+  ]
 
   const countText = `${visible.length === all.length ? `${all.length} resources` : `${visible.length} of ${all.length} resources`}${status === 'loading' ? ' · loading shared links…' : status === 'error' ? ' · shared links couldn’t be loaded right now' : ''}`
 
@@ -90,7 +90,7 @@ export default function ResourcesScreen() {
           ) : null
         }
         renderItem={({ item }) => (
-          <ResourceRow resource={item} starred={starred.includes(item.url)} onStar={() => toggleStar(item)} activeTags={filters.tags} onTag={tagFilter} onMore={canRemove(item) || canReport(item) ? () => more(item) : undefined} />
+          <ResourceRow resource={item} starred={starred.includes(item.url)} onStar={() => toggleStar(item)} activeTags={filters.tags} onTag={tagFilter} more={canRemove(item) || canReport(item) ? more(item) : undefined} />
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={

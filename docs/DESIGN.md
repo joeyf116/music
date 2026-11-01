@@ -17,7 +17,8 @@ with in the first screen, give it one obvious main button, and fold everything e
 2. **Play first, configure later.** Every page works the moment it opens with sensible defaults. The main
    action (Play, Start, pick a chart) is never more than one tap away, and no setting has to be touched first.
 3. **Fewest taps to the goal.** Common choices are visible as buttons (one tap), not hidden in menus (two
-   taps). Rare or advanced choices go behind one disclosure, never behind two.
+   taps). Rare or advanced choices go behind one disclosure, never behind two. How to pick the right selector
+   or menu for a choice is in [section 7](#7-menus-and-selectors).
 4. **Show the state, hide the knobs.** A closed Settings drawer still shows its current values
    (`Standard · note names · all notes`), so nobody has to open it to know what is going on.
 5. **Remember everything.** Choices persist per browser (`usePersistentState`), and key, scale/mode, tuning
@@ -75,9 +76,9 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | --- | --- | --- | --- | --- | --- |
 | **Fretboard** `#fretboard` | See a scale, chord or inversion on the neck | Key, scale/mode, Explore (Scale · Chords · Inversions · Progressions), position or chord | Neck + note chips, then tab with Play | Neck settings: tuning, note labels, show every note | Chords in the key (picker in chord views, reference at the end for scales) |
 | **Rhythm** `#exercises` | Play in time | Tab: Metronome · Rhythms · Timing · Drills | Tempo + Start / the rhythm grid / the tap pad / the drill tab | Sound & volume, Trainers, Playback | How to practise a rhythm |
-| **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right) | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
-| **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style | Band mix | Chord shapes |
-| **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list | More filters: level, category, tags | Tab finder |
+| **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right); in the app these are menu rows | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
+| **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style; one visible action (Edit, or Copy & edit) and the rest in ⋯ | Band mix | Chord shapes |
+| **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
 
 The page title in the header names the page; the tab bar uses the same word (Rhythm, Training…), so people
 always know where they are.
@@ -173,13 +174,15 @@ Rules:
 ## 6. Components and when to use them
 
 All shared controls live in `src/components/controls.jsx` (form controls) and `src/components/layout.jsx`
-(`PageHeader`, `Disclosure`, `Section`). The app's equivalents are listed in [section 11](#11-the-native-app).
+(`PageHeader`, `Disclosure`, `Section`). The app's equivalents are listed in [section 12](#12-the-native-app).
 
 | Need | Use | Notes |
 | --- | --- | --- |
 | Page title + purpose + main action | `PageHeader` | one per page |
 | 2-5 short options | `Choice` (segmented) | labels ≤ 10 characters so they fit a phone |
 | 6+ options or long names | native `<select>` inside `Field` | grouped with `<optgroup>` when it helps |
+| Actions for one thing (a chart, a link, a section) | `Menu` (⋯) | see [section 7](#7-menus-and-selectors); never a `<select>` used as a launcher |
+| A list of presets to start from | `Menu` with a text label (**Common ▾**) | each item can show a second line (`detail`) |
 | A number with small steps (BPM) | `Stepper` | type or tap − / + |
 | Setting that applies instantly | `Toggle` | not for actions |
 | Something that happens (Play, Next) | `<button>` | `.primary` for the main one |
@@ -197,7 +200,56 @@ Buttons:
 
 ---
 
-## 7. Writing
+## 7. Menus and selectors
+
+Every choice on a page is one of four kinds, and each kind has one control. Picking the right one is most of what
+keeps a page calm: people see the options that matter, and everything else is a tap away without being in the way.
+This follows Apple's guidance on segmented controls, pop-up buttons and pull-down menus, Material's menus, and the
+WAI-ARIA menu button pattern (sources at the end).
+
+| The choice | Web | App (iOS / Android) | Rules |
+| --- | --- | --- | --- |
+| **Switch the view** of the page or stage, 2-5 options, changed often | `Choice` / `PageTabs` | `Segmented` | All options visible. At most 5 on a phone, labels ≤ 10 characters, nouns, all the same kind. Never a second row of tabs. |
+| **Pick one value** that you change often (key, position, chord in the key) | buttons / chips | `ChipRow` | One tap. The selected one is filled. |
+| **Pick one value** from a short list (≤ 8, one line each) | `Choice` if ≤ 5, else `<select>` | `ChoiceRow` → a **pop-up menu** under the finger, checkmark on the current value | The row always shows the current value, so you know what's set without opening it. |
+| **Pick one value** from a long or wordy list (tunings, scales, exercises, anything with a second line) | `<select>` with `<optgroup>` | `ChoiceRow` → the tab's **list sheet**, sections and second lines, checkmark on the current value | Sections stand in for groups. The sheet closes as soon as you pick. |
+| **Do something** to one thing (edit, duplicate, report, delete) | `Menu` (⋯ button) | `MoreMenu` (⋯, a native pull-down) | See below. |
+| **Start from a preset** (common progressions) | `Menu` with a label (**Common ▾**) | button → list sheet | It fills in a field you can still edit; never a `<select>` that resets itself. |
+| **On / off** that applies at once | `Toggle` | `SwitchRow` | Not for actions. |
+
+Settings that are folded away are rarely changed, so inside a **Settings** disclosure the app shows them as rows in
+one group (a `ChoiceRow` per choice, then switches), like a section of the system Settings app, rather than a stack
+of labelled segmented controls. Each row shows its value, so the group reads as a summary. On the web, where
+there is room, short choices in Settings stay as `Choice`.
+
+**Action menus (⋯):**
+
+- Keep the main action visible next to the ⋯ (Edit your own chart, Copy & edit someone else's). Don't put every
+  action in the menu. When the only action is the main one, show it as a button and leave out the ⋯. A ⋯ holding
+  just a rare action (Report on someone else's link) is fine: it keeps that action out of the way.
+- Order: the common actions first, then any group (Report → Spam · Wrong chords · Offensive), then a separator and
+  the destructive item last, in red. Submenus only one level deep.
+- Labels start with a verb and say exactly what happens (**Remove for everyone**, not **Remove**, when it affects
+  other people). No "Click here", no full stops.
+- Anything that can't be undone still asks to confirm after it's chosen from the menu.
+- Up to about 8 items. A longer list is a picker, not a menu.
+
+**Pop-up menus and pickers:**
+
+- The control shows the current value (and in the app, a ↕ chevron). Choosing closes the menu or sheet at once and
+  applies the change; there is no separate Done.
+- The current value has a checkmark. Disabled options stay in the list, dimmed, so the list doesn't jump about.
+- A list with more than 8 options, or with second lines (tuning notes, chord symbols, progression numerals), opens
+  as a sheet so it can scroll and group. `fitsMenu` in `mobile/src/lib/choose.ts` makes that call for every list.
+
+**Web menus** (`src/components/Menu.jsx`) follow the WAI-ARIA menu button pattern: the button has `aria-haspopup`
+and `aria-expanded`; arrow keys move through the items, Home / End jump, Escape closes and puts focus back on the
+button, and a click outside closes it. The list opens towards whichever side has room so it never runs off a phone
+screen, and long lists scroll inside it. Items are at least 44 px tall.
+
+---
+
+## 8. Writing
 
 - Sentence case everywhere. British spelling in UI copy ("practise" as a verb, "colour").
 - Say what something does for the player: "Hear two notes and name the interval", not "Interval quiz module".
@@ -206,7 +258,7 @@ Buttons:
 
 ---
 
-## 8. Feedback, motion and sound
+## 9. Feedback, motion and sound
 
 - Every tap gives a visible response within 100 ms (selected state, playing column, pressed button).
 - Live results (score, right/wrong) are announced with `aria-live="polite"`.
@@ -216,7 +268,7 @@ Buttons:
 
 ---
 
-## 9. Mobile checklist
+## 10. Mobile checklist
 
 Run through this on a 360-390 px wide phone before merging any UI change:
 
@@ -227,7 +279,7 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 - [ ] Segmented choices fit their row (or wrap to a clean 2 × 2).
 - [ ] Safe-area insets respected on notched phones.
 
-## 10. Accessibility checklist
+## 11. Accessibility checklist
 
 - [ ] One `h1`, headings in order, landmarks (`header`, `nav`, `main`).
 - [ ] Every control has a visible label (or `aria-label` for icon buttons).
@@ -237,7 +289,7 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 
 ---
 
-## 11. The native app
+## 12. The native app
 
 The iPhone, iPad and Android app in [`mobile/`](../mobile) follows every rule above (one job per screen, play
 first, settings folded with a summary, the same words and the same page map), but each control is the
@@ -249,12 +301,13 @@ platform's own, so it feels like an iOS or Android app rather than a web page in
 | `PageHeader` | stack screen with a large title, plus `Page`'s one-line summary | the main action goes in the navigation bar (**+**, **⋯**) |
 | Search input | the navigation bar's search field (`headerSearchBarOptions`) | Charts, Resources |
 | `Choice` (2-5 options) | `Segmented` (UISegmentedControl / Material segmented buttons) | labels ≤ 10 characters |
-| `<select>` (6+ options) | `ChoiceRow`, which opens the stack's `choose` sheet | sections stand in for `<optgroup>` |
+| `<select>` (6+ options) | `ChoiceRow`: a pop-up menu for ≤ 8 one-line options, otherwise the stack's `choose` sheet | sections stand in for `<optgroup>` |
 | `Toggle` | `SwitchRow` (the platform switch) | inside a `Group` |
 | `<input type="range">` | `SliderRow` / `TempoSlider` (native slider) | |
 | `Stepper` | `Stepper` (VoiceOver / TalkBack can swipe it) | |
 | `Disclosure` | `Disclosure` | value summary when closed, as on the web |
-| `window.confirm`, row menus | `showActions` / `confirm` (action sheet on iOS, alert on Android) | destructive actions are red and ask first |
+| `Menu` (⋯ actions, presets) | `MoreMenu` / `Menu` (SwiftUI `Menu` on iOS, Material dropdown menu on Android, from `@expo/ui`) | destructive items last and red |
+| `window.confirm` | `confirm` (an alert) | asks before anything that can't be undone |
 | A form (new chart, add a link) | a modal or sheet with **Cancel** and **Save** / **Add** in its bar | |
 | A link | the in-app browser (`expo-web-browser`: Safari view / Custom Tabs) | |
 
@@ -279,3 +332,7 @@ under the same keys (`music.*`).
 - Apple, [Human Interface Guidelines: Layout](https://developer.apple.com/design/human-interface-guidelines/layout) (44 pt targets)
 - Material Design 3, [Accessibility: touch targets](https://m3.material.io/foundations/designing/structure) (48 dp) and [Navigation bar](https://m3.material.io/components/navigation-bar/guidelines) (3-5 destinations)
 - Baymard Institute, [Line length readability](https://baymard.com/blog/line-length-readability)
+- Apple, Human Interface Guidelines: [Segmented controls](https://developer.apple.com/design/human-interface-guidelines/segmented-controls) (about five segments on iPhone), [Pop-up buttons](https://developer.apple.com/design/human-interface-guidelines/pop-up-buttons), [Pull-down buttons](https://developer.apple.com/design/human-interface-guidelines/pull-down-buttons) and [Menus](https://developer.apple.com/design/human-interface-guidelines/menus) (group items, verbs, destructive in red, one level of submenu)
+- Material Design 3, [Menus](https://m3.material.io/components/menus/guidelines) and [Segmented buttons](https://m3.material.io/components/segmented-buttons/guidelines)
+- Expo, [`@expo/ui` Menu](https://docs.expo.dev/versions/v58.0.0/sdk/ui/drop-in-replacements/menu/) (SwiftUI `Menu` / Compose `DropdownMenu`)
+- W3C WAI-ARIA Authoring Practices, [Menu button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/)

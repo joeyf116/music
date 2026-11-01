@@ -19,7 +19,7 @@ import {
 import { progressionToken, tabStringNames } from '@music/fretboardView.js'
 import { playEvent, startPlayback } from '@music/player.js'
 import { KEYS, sevenNoteScale } from '@music/theory.js'
-import { choose } from '@/lib/choose'
+import { choose, oneSection } from '@/lib/choose'
 import { useMusic } from '@/lib/music'
 import { usePref, useStored } from '@/lib/prefs'
 import { colors, space, text } from '@/theme'
@@ -212,10 +212,9 @@ export default function Drills() {
           <Group>
             <SwitchRow label="Click" value={click} onChange={setClick} first />
             <SwitchRow label="Count-in" value={countIn} onChange={setCountIn} />
-            <SwitchRow label="Loop" value={loop} onChange={setLoop} last />
+            <SwitchRow label="Loop" value={loop} onChange={setLoop} />
+            <ChoiceRow label="Speed up each loop" value={String(loop ? speedUp : 0)} sections={oneSection(SPEED_OPTIONS)} onChange={(v) => setSpeedUp(Number(v))} sheet={RHYTHM_SHEET} disabled={!loop} last />
           </Group>
-          <Text style={styles.label}>Speed up each loop (BPM)</Text>
-          <Segmented options={SPEED_OPTIONS} value={String(loop ? speedUp : 0)} onChange={(v) => loop && setSpeedUp(Number(v))} />
         </Disclosure>
         <View style={styles.tab}>
           <Tab columns={exerciseColumns(score, labels)} tuningNames={tabStringNames(tuning, stringName)} columnWidth={exerciseColumnWidth(score)} active={activeIndex} onSelect={selectColumn} />

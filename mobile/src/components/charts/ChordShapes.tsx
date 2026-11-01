@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance 
 import { playChord } from '@music/audio.js'
 import { chordParts, type Chart, type ParsedChartChord } from '@music/chart.js'
 import { chartChords, fretText, voicingsFor } from '@music/voicings.js'
-import { PICKERS } from '@/lib/pickers'
+import { tuningSections as allTunings } from '@/lib/pickers'
 import { useMusic } from '@/lib/music'
 import { useStored } from '@/lib/prefs'
 import { colors, mono, space, text } from '@/theme'
@@ -60,7 +60,7 @@ export default function ChordShapes({ chart, playingSymbols, sheet }: { chart: C
   }, [open, current, chords])
 
   if (!chords.length) return null
-  const tuningSections = PICKERS.tuning.sections().map((sec) => ({ title: sec.title ?? undefined, options: sec.options }))
+  const tuningSections = allTunings()
   return (
     <Disclosure title="Chord shapes" summary={`${chords.length} chords`} open={open} onToggle={setOpen}>
       <Hint>Tap a shape to hear it. The arrows show more ways to play it.</Hint>

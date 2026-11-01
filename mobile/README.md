@@ -3,19 +3,19 @@
 The native app, built with [Expo](https://expo.dev) (React Native). It shares its music logic with the web site:
 scales, chords, voicings, rhythms and the sound engine all come from [`../src/lib`](../src/lib), so a fix there fixes
 both. The screens are native: the system tab bar, navigation bars with large titles, sheets that slide up, the
-platform's own segmented controls and switches, and haptic taps.
+platform's own segmented controls, menus and switches, and haptic taps.
 
 Every page of the web site is here, rebuilt with native controls:
 
 | Tab | What's native |
 |---|---|
-| Fretboard | large title, settings and pickers as sheets, segmented controls, switches |
+| Fretboard | large title, settings as a sheet, scale / tuning / chord type lists as sheets, pop-up menus, segmented controls, switches |
 | Rhythm | segmented tabs, tempo stepper and slider, sound picker sheet, switches, haptic tap pad |
-| Training | segmented tabs, answer grids, settings in a fold-away section, tuning picker sheet |
-| Charts | search in the navigation bar, chart list, chart screen with an actions menu, editor as a modal |
-| Resources | search in the navigation bar, sectioned list, links open in the in-app browser, Add as a sheet |
+| Training | segmented tabs, answer grids, settings as menu rows in a fold-away section, tuning picker sheet |
+| Charts | search in the navigation bar, chart list, chart screen with a ⋯ pull-down menu, editor as a modal |
+| Resources | search in the navigation bar, sectioned list, ⋯ menu per link, links open in the in-app browser, Add as a sheet |
 
-The table of web controls and their native counterparts is in [`docs/DESIGN.md`](../docs/DESIGN.md#11-the-native-app).
+The table of web controls and their native counterparts is in [`docs/DESIGN.md`](../docs/DESIGN.md#12-the-native-app).
 Settings are saved on the device under the same names as the web site's, and the shared charts and links come
 from the same database (see [Shared catalogs](#shared-catalogs)).
 
@@ -45,14 +45,15 @@ src/
 ├── app/                    one folder per tab (expo-router): _layout.tsx is its stack, index.tsx the page,
 │   │                       choose.tsx the shared list sheet, plus the tab's own screens
 │   ├── _layout.tsx         the native tab bar
-│   ├── (fretboard)/        Fretboard, its settings sheet and pickers
+│   ├── (fretboard)/        Fretboard and its settings sheet
 │   ├── rhythm/  training/  Rhythm and Training
 │   ├── charts/             catalog, [id] (a chart with its band), edit (the editor modal)
 │   └── resources/          catalog and add (the Add a resource sheet)
-├── components/             ui.tsx (Segmented, ChoiceRow, SwitchRow, SliderRow, Stepper, Disclosure, …),
-│                           Fretboard, Page, TabStack, and one folder per tab
-├── lib/                    prefs (saved settings), choose (sheet requests), charts / resources (catalogs),
-│                           sharing (Supabase config), actions (action sheets), haptics, music (key, tuning…)
+├── components/             ui.tsx (Segmented, ChoiceRow, SwitchRow, SliderRow, Stepper, Disclosure, …), Menu
+│                           (native menus via @expo/ui), Fretboard, Page, TabStack, and one folder per tab
+├── lib/                    prefs (saved settings), choose (sheet requests, menu-or-sheet rule), pickers (the
+│                           long lists), charts / resources (catalogs), sharing (Supabase config), actions
+│                           (confirm), haptics, music (key, tuning…)
 └── types/shared-music.d.ts types for the shared JavaScript in ../src/lib
 ```
 

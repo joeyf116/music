@@ -5,9 +5,9 @@ import { STYLES, STYLE_IDS } from '@music/arranger.js'
 import { ALL_KEYS, CHART_LIMITS, TIME_SIGNATURES, badTokens, blankChart, validateChart, type Chart, type ChartSection } from '@music/chart.js'
 import { CHART_HELP, editableChart, moveSection, nextSection, spreadBars } from '@music/chartView.js'
 import ChartPlayer, { CHARTS_SHEET } from '@/components/charts/ChartPlayer'
+import { MoreMenu, type MenuItem } from '@/components/Menu'
 import Page from '@/components/Page'
-import { Button, ChoiceRow, Disclosure, Field, Group, HeaderButton, Hint, Notice, Section, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui'
-import { showActions } from '@/lib/actions'
+import { Button, ChoiceRow, Disclosure, Field, Group, Hint, Notice, Section, Segmented, Stepper, SwitchRow, TextButton } from '@/components/ui'
 import { useCharts } from '@/lib/charts'
 import { CAN_SHARE } from '@/lib/sharing'
 import { colors, mono, space, text } from '@/theme'
@@ -56,13 +56,12 @@ export default function ChartEditorScreen() {
     }
   }
 
-  const sectionActions = (s: number) =>
-    showActions(`Section ${draft.sections[s].label || s + 1}`, [
+  const sectionActions = (s: number): MenuItem[] => [
       ...(s > 0 ? [{ label: 'Move up', onPress: () => setSections((all) => moveSection(all, s, -1)) }] : []),
       ...(s < draft.sections.length - 1 ? [{ label: 'Move down', onPress: () => setSections((all) => moveSection(all, s, 1)) }] : []),
       ...(draft.sections.length < CHART_LIMITS.sections ? [{ label: 'Duplicate', onPress: () => setSections((all) => [...all.slice(0, s + 1), { ...all[s], bars: [...all[s].bars] }, ...all.slice(s + 1)]) }] : []),
       ...(draft.sections.length > 1 ? [{ label: 'Delete', destructive: true, onPress: () => setSections((all) => all.filter((_, i) => i !== s)) }] : []),
-    ])
+  ]
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -96,7 +95,7 @@ export default function ChartEditorScreen() {
         </Disclosure>
 
         {draft.sections.map((section, s) => (
-          <Section key={s} title={`Section ${section.label || s + 1}`} sub={`${section.bars.length} bars`} right={<HeaderButton ios="ellipsis.circle" android="more_vert" label={`Section ${s + 1} actions`} onPress={() => sectionActions(s)} />}>
+          <Section key={s} title={`Section ${section.label || s + 1}`} sub={`${section.bars.length} bars`} right={<MoreMenu label={`Section ${s + 1} actions`} items={sectionActions(s)} />}>
             <View style={styles.fields}>
               <Field value={section.label} maxLength={CHART_LIMITS.label} onChangeText={(label) => setSection(s, { label })} placeholder="Section name (A, Verse…)" accessibilityLabel={`Section ${s + 1} name`} />
             </View>

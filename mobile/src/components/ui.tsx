@@ -5,9 +5,10 @@ import type { Href } from 'expo-router'
 import { SymbolView, type SymbolViewProps } from 'expo-symbols'
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Platform, Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Switch, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native'
-import { choose, type ChoiceValue, type ChooseSection } from '@/lib/choose'
+import { choose, fitsMenu, type ChoiceValue, type ChooseSection } from '@/lib/choose'
 import { impact, selection } from '@/lib/haptics'
 import { colors, space, text, touch } from '@/theme'
+import { Menu } from './Menu'
 
 // The package's class typings predate React 19's JSX types; its props are what matter here.
 const SegmentedControl = SegmentedControlBase as unknown as ComponentType<SegmentedControlProps>
@@ -154,19 +155,6 @@ interface RowProps {
   last?: boolean
 }
 
-/** A row that opens something (a picker sheet), showing the current value and a chevron. */
-export function PickerRow({ label, value, onPress, first, last }: RowProps & { value: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} style={({ pressed }) => [styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, pressed && styles.rowPressed]}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={1}>
-        {value}
-      </Text>
-      <Icon ios="chevron.right" android="chevron_right" size={14} color={colors.muted} />
-    </Pressable>
-  )
-}
-
 /** An on/off setting as the platform switch. */
 export function SwitchRow({ label, value, onChange, disabled, first, last }: RowProps & { value: boolean; onChange: (value: boolean) => void; disabled?: boolean }) {
   return (
@@ -296,29 +284,51 @@ interface ChoiceRowProps<V extends ChoiceValue> extends RowProps {
   /** The list, as sections (or one section of options). */
   sections: ChooseSection<V>[]
   onChange: (value: V) => void
-  /** The tab stack's choose sheet, e.g. '/rhythm/choose'. */
+  /** The tab stack's choose sheet, e.g. '/rhythm/choose', for lists too long or too wordy for a menu. */
   sheet: Href
   /** Title of the sheet; the row label by default. */
   title?: string
   disabled?: boolean
 }
 
-/** A setting picked from a list: shows the current choice and opens the list as a sheet. */
+/**
+ * A setting picked from a list, showing the current choice (a pop-up button). A short list opens as the platform's
+ * menu right under the finger with a checkmark on the current value; a long one (tunings, scales, exercises) opens
+ * the stack's `choose` sheet with sections and second lines.
+ */
 export function ChoiceRow<V extends ChoiceValue>({ label, value, sections, onChange, sheet, title, disabled, first, last }: ChoiceRowProps<V>) {
   const current = sections.flatMap((s) => s.options).find((o) => o.value === value)
+  const rowStyle = [styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, disabled && styles.disabled]
+  const content = (
+    <>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue} numberOfLines={1}>
+        {current?.label ?? ''}
+      </Text>
+      <Icon ios="chevron.up.chevron.down" android="unfold_more" size={14} color={colors.muted} />
+    </>
+  )
+  if (!disabled && fitsMenu(sections as ChooseSection[])) {
+    const toItems = (options: ChooseSection<V>['options']) => options.map((o) => ({ label: o.label, checked: o.value === value, disabled: o.disabled, onPress: () => onChange(o.value) }))
+    const items =
+      sections.length === 1 && !sections[0].title ? toItems(sections[0].options) : sections.map((s) => ({ label: s.title ?? '', inline: true, items: toItems(s.options) }))
+    return (
+      <Menu items={items} style={[first && styles.rowFirst, last && styles.rowLast]}>
+        <View style={rowStyle} accessible accessibilityRole="button" accessibilityLabel={`${label}: ${current?.label ?? ''}`} accessibilityHint="Opens a menu">
+          {content}
+        </View>
+      </Menu>
+    )
+  }
   return (
     <Pressable
       disabled={disabled}
       onPress={() => choose(sheet, { title: title ?? label, sections, value, onChoose: onChange })}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${current?.label ?? ''}`}
-      style={({ pressed }) => [styles.row, first && styles.rowFirst, last && styles.rowLast, !last && styles.rowDivider, pressed && styles.rowPressed, disabled && styles.disabled]}
+      style={({ pressed }) => [...rowStyle, pressed && styles.rowPressed]}
     >
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={1}>
-        {current?.label ?? ''}
-      </Text>
-      <Icon ios="chevron.up.chevron.down" android="unfold_more" size={14} color={colors.muted} />
+      {content}
     </Pressable>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { blankChart } from '../lib/chart.js'
-import { ALL_SHELF, SHARE_COOLDOWN_MS, barCount, catalogCharts, chartCountText, chartShelves, chartSummary, editableChart as editable, filterCharts, keyLabel } from '../lib/chartView.js'
+import { ALL_SHELF, SHARE_COOLDOWN_MS, barCount, catalogCharts, chartCountText, chartShelves, REPORT_REASONS, chartSummary, editableChart as editable, filterCharts, keyLabel } from '../lib/chartView.js'
 import { addSharedChart, fetchSharedCharts, removeSharedChart, reportSharedChart, updateSharedChart } from '../lib/sharedCharts.js'
 import { newOwnerToken, sharingEnabled } from '../lib/sharedResources.js'
 import usePersistentState from '../lib/usePersistentState.js'
@@ -9,6 +9,7 @@ import ChartEditor from './ChartEditor.jsx'
 import ChartPlayer from './ChartPlayer.jsx'
 import './Charts.css'
 import { PageHeader } from './layout.jsx'
+import Menu from './Menu.jsx'
 
 const CAN_SHARE = sharingEnabled()
 const COOLDOWN_MS = SHARE_COOLDOWN_MS
@@ -97,9 +98,7 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
     setOpenId(null)
   }
 
-  const report = async (chart) => {
-    const reason = window.prompt(`What's wrong with "${chart.title}"? (spam, wrong chords, ...)`, '')
-    if (reason === null) return
+  const report = async (chart, reason) => {
     try {
       await reportSharedChart(chart.sharedId, reason)
       setNotice('Thanks, the chart was reported.')
@@ -137,24 +136,31 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
               {chartSummary(open)}
             </p>
           </div>
+          {/* One visible action (edit your own chart, or copy someone else's); the rest wait in the ⋯ menu. */}
           <div className="chart-actions">
             {open.mine ? (
               <button type="button" onClick={() => setEditing({ target: open, draft: editable(open) })}>
                 Edit
               </button>
-            ) : null}
-            <button type="button" onClick={() => setEditing({ target: null, draft: { ...editable(open), title: open.mine ? `${open.title} (copy)` : open.title } })}>
-              {open.mine ? 'Duplicate' : 'Copy & edit'}
-            </button>
-            {open.mine && (
-              <button type="button" onClick={() => remove(open)}>
-                Delete
+            ) : (
+              <button type="button" onClick={() => setEditing({ target: null, draft: editable(open) })}>
+                Copy &amp; edit
               </button>
             )}
-            {open.source === 'shared' && !open.mine && (
-              <button type="button" className="icon-button" onClick={() => report(open)} aria-label="Report this chart" title="Report this chart">
-                ⚑
-              </button>
+            {(open.mine || open.source === 'shared') && (
+              <Menu
+                label="Chart actions"
+                buttonClassName="icon-button"
+                items={
+                  open.mine
+                    ? [
+                        { label: 'Duplicate', onSelect: () => setEditing({ target: null, draft: { ...editable(open), title: `${open.title} (copy)` } }) },
+                        { separator: true },
+                        { label: open.source === 'shared' ? 'Remove for everyone' : 'Delete', destructive: true, onSelect: () => remove(open) },
+                      ]
+                    : [{ heading: 'Report this chart' }, ...REPORT_REASONS.map((reason) => ({ label: reason, onSelect: () => report(open, reason) }))]
+                }
+              />
             )}
           </div>
         </div>

@@ -723,6 +723,7 @@ declare module '@music/chartView.js' {
   export const SHARED_SHELF: string
   export const MINE_SHELF: string
   export const SHARE_COOLDOWN_MS: number
+  export const REPORT_REASONS: string[]
   export const BUILT_IN_CHARTS: CatalogChart[]
   export const BARS_PER_ROW: number
   export const CHANNEL_LABELS: Record<Channel, string>

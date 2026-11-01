@@ -4,9 +4,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import DiatonicStrip from '@/components/DiatonicStrip'
 import Fretboard, { Legend } from '@/components/Fretboard'
 import Tab from '@/components/Tab'
-import { Button, ChipRow, Field, HeaderButton, Hint, PickerRow, Section, Segmented, Stepper } from '@/components/ui'
+import { Button, ChipRow, ChoiceRow, Field, HeaderButton, Hint, Section, Segmented, Stepper } from '@/components/ui'
+import { choose } from '@/lib/choose'
 import { impact } from '@/lib/haptics'
 import { useMusic } from '@/lib/music'
+import { chordTypeSections, progressionSections, scaleSections } from '@/lib/pickers'
 import { usePref } from '@/lib/prefs'
 import { colors, space, text } from '@/theme'
 import { playChord, playPitch } from '@music/audio.js'
@@ -39,7 +41,7 @@ const KEY_OPTIONS = KEYS.map((k) => ({ value: k, label: k }))
  * (src/lib/fretboardView.js): pick a key and scale, what to look at, and which one; the neck and its tab follow.
  */
 export default function FretboardScreen() {
-  const { keyName, setKey, scaleType, tuning, tuningId, tuningSpec, stringName, bpm, setBpm } = useMusic()
+  const { keyName, setKey, scaleType, setScaleType, tuning, tuningId, tuningSpec, stringName, bpm, setBpm } = useMusic()
   const [storedView, setView] = usePref('music.mode')
   const [chordDegree, setChordDegree] = usePref('music.chordDegree')
   const [chordOverride, setChordOverride] = usePref('music.chordType')
@@ -57,7 +59,7 @@ export default function FretboardScreen() {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, tuning, tuningId })
-  const { view, picked, overrideOk, chordType, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote } = model
+  const { view, picked, overrideOk, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote } = model
   const activeIndex = activeColumnIndex(model, active)
 
   const stop = useCallback(() => {
@@ -142,7 +144,7 @@ export default function FretboardScreen() {
           <ChipRow label="Key" options={KEY_OPTIONS} value={keyName} onChange={setKey} wrap style={styles.keys} />
         </Section>
         <View style={styles.group}>
-          <PickerRow label="Scale" value={SCALES[scaleType]?.name ?? 'Major'} onPress={() => router.push('/pick?id=scale')} first last />
+          <ChoiceRow label="Scale" value={SCALES[scaleType] ? scaleType : 'major'} sections={scaleSections()} onChange={setScaleType} sheet="/choose" title="Scale or mode" first last />
         </View>
 
         {/* 2. What to look at. */}
@@ -165,7 +167,15 @@ export default function FretboardScreen() {
 
         {(view === 'chord' || view === 'inversion') && (
           <View style={styles.group}>
-            <PickerRow label="Chord type" value={overrideOk ? CHORDS[chordType].name : `As in the key (${CHORDS[picked.type].name})`} onPress={() => router.push('/pick?id=chordType')} first last />
+            <ChoiceRow
+              label="Chord type"
+              value={overrideOk ? chordOverride : ''}
+              sections={chordTypeSections(CHORDS[picked.type].name, view === 'inversion')}
+              onChange={setChordOverride}
+              sheet="/choose"
+              first
+              last
+            />
           </View>
         )}
         {view === 'inversion' && (
@@ -184,7 +194,7 @@ export default function FretboardScreen() {
               </Text>
             )}
             <View style={styles.buttons}>
-              <Button title="Common…" onPress={() => router.push('/pick?id=progression')} />
+              <Button title="Common…" onPress={() => choose('/choose', { title: 'Common progressions', sections: progressionSections(), value: progression, onChoose: setProgression })} />
               <Button title="Random" onPress={() => setProgression(randomProgression(progressionMood(scaleType), 4))} />
               <Button title="Clear" onPress={() => setProgression('')} disabled={!progression} />
             </View>
