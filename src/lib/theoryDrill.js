@@ -301,3 +301,60 @@ export const drillChordPitches = (chord) => {
   const root = 48 + mod12(chord.rootPc)
   return chord.intervals.map((i) => root + i)
 }
+
+// ---- Words on screen ----
+
+const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`
+
+/** What the page says under the question: the result, a hint after a wrong tap, or what to do. */
+export const drillFeedback = (game) => {
+  const { question } = game
+  const state = drillState(game)
+  const done = state === 'solved' || state === 'revealed'
+  const step = question.steps[Math.min(game.step, question.steps.length - 1)]
+  const { chord } = question
+  const info = question.key
+  const numeral = info ? info.chords[question.degree].numeral : ''
+  const where = info ? ` It’s the ${numeral} chord (the ${ordinal(question.degree + 1)}) in ${info.title}.` : ''
+  const what = `${chord.name} (${chord.notes.join(' ')}) is ${withArticle(qualityName(chord.type).toLowerCase())} chord.`
+  if (state === 'solved') return `${game.missed ? 'Got it.' : 'Right!'} ${what}${where}`
+  if (state === 'revealed') return `${what}${where}`
+  if (game.wrong.length) {
+    if (question.drill === 'build' && game.step === 0 && !done) return buildHint(question, game.progress)
+    return choiceHint(question)
+  }
+  return question.drill === 'build' ? step.prompt : 'Pick one.'
+}
+
+/** "3rds: E→G minor 3rd (3 frets), G→B major 3rd (4 frets). Minor = minor 3rd + major 3rd." */
+export const chordWorkingText = (chord) =>
+  `${stackedThirds(chord.notes, chord.type)
+    .map((t) => `${t.from}→${t.to} ${t.label} (${t.semitones} frets)`)
+    .join(', ')}. ${qualityName(chord.type)} = ${QUALITY_RULES[chord.type]}.`
+
+/** How the key's chords follow from its scale, for the explanation after a question. */
+export const keyPatternText = (question) => {
+  const info = question.key
+  if (!info) return null
+  return {
+    stack: `In ${info.title} (${info.scale.join(' ')}), start on the ${ordinal(question.degree + 1)} note and stack every other note: ${question.chord.notes.join(' ')}.`,
+    pattern: info.parent ? `${info.title} borrows the chords of ${info.parent} major, started on its ${ordinal(info.modeIndex + 1)} note:` : `Every ${info.scaleId} key follows the same pattern:`,
+  }
+}
+
+export const THEORY_RECIPE = [
+  ['Write out the scale', ', one note per letter: D major is D E F# G A B C#.'],
+  ['Stack every other note', ' from the chord’s number: the 2nd chord is notes 2, 4, 6 (E G B). Add note 8 (the 1st again) for a 7th chord.'],
+  ['Check the 3rds:', ' 4 frets is a major 3rd, 3 frets a minor 3rd. Major = big then small, minor = small then big, diminished = small + small.'],
+  ['Or just remember the pattern.', ' Major keys: I ii iii IV V vi vii° (7ths: Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7). Natural minor: i ii° ♭III iv v ♭VI ♭VII.'],
+]
+
+export const TRAINING_TABS = [
+  { id: 'chords', label: 'Chords', hint: 'By ear' },
+  { id: 'intervals', label: 'Intervals', hint: 'By ear' },
+  { id: 'theory', label: 'Theory', hint: 'Keys & chords' },
+]
+export const TRAINING_TIPS = {
+  theory: 'Short and often works best: a few minutes a day until I ii iii IV V vi vii° comes without thinking.',
+  ear: 'Short and often works best: ten minutes a day trains your ear faster than an hour once a week. Sing or hum the notes back when you can.',
+}

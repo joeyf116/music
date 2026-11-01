@@ -14,6 +14,9 @@ export const colors = {
   accentSoft: 'rgba(240, 160, 51, 0.16)',
   onAccent: '#1b1307',
   danger: '#ff8b8e',
+  good: '#30a46c',
+  paper: '#f7f4ec',
+  ink: '#1c1c1c',
   // Note roles on the neck
   root: '#e5484d',
   third: '#3e9bff',

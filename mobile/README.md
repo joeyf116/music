@@ -5,10 +5,19 @@ scales, chords, voicings, rhythms and the sound engine all come from [`../src/li
 both. The screens are native: the system tab bar, navigation bars with large titles, sheets that slide up, the
 platform's own segmented controls and switches, and haptic taps.
 
-| Tab | Status |
+Every page of the web site is here, rebuilt with native controls:
+
+| Tab | What's native |
 |---|---|
-| Fretboard | Native |
-| Rhythm, Training, Charts, Resources | Coming next (they open the web version for now) |
+| Fretboard | large title, settings and pickers as sheets, segmented controls, switches |
+| Rhythm | segmented tabs, tempo stepper and slider, sound picker sheet, switches, haptic tap pad |
+| Training | segmented tabs, answer grids, settings in a fold-away section, tuning picker sheet |
+| Charts | search in the navigation bar, chart list, chart screen with an actions menu, editor as a modal |
+| Resources | search in the navigation bar, sectioned list, links open in the in-app browser, Add as a sheet |
+
+The table of web controls and their native counterparts is in [`docs/DESIGN.md`](../docs/DESIGN.md#11-the-native-app).
+Settings are saved on the device under the same names as the web site's, and the shared charts and links come
+from the same database (see [Shared catalogs](#shared-catalogs)).
 
 ## Try it on a phone
 
@@ -28,6 +37,34 @@ JavaScript for the web site; the app sees it through typed declarations in
 [`src/types/shared-music.d.ts`](src/types/shared-music.d.ts), and a web test (`src/lib/sharedTypes.test.js`) fails if
 a declared export disappears. Saved settings are typed too: every key, its type and default live in
 [`src/lib/prefs.ts`](src/lib/prefs.ts), and a stored value of the wrong type falls back to the default.
+
+## Layout
+
+```text
+src/
+├── app/                    one folder per tab (expo-router): _layout.tsx is its stack, index.tsx the page,
+│   │                       choose.tsx the shared list sheet, plus the tab's own screens
+│   ├── _layout.tsx         the native tab bar
+│   ├── (fretboard)/        Fretboard, its settings sheet and pickers
+│   ├── rhythm/  training/  Rhythm and Training
+│   ├── charts/             catalog, [id] (a chart with its band), edit (the editor modal)
+│   └── resources/          catalog and add (the Add a resource sheet)
+├── components/             ui.tsx (Segmented, ChoiceRow, SwitchRow, SliderRow, Stepper, Disclosure, …),
+│                           Fretboard, Page, TabStack, and one folder per tab
+├── lib/                    prefs (saved settings), choose (sheet requests), charts / resources (catalogs),
+│                           sharing (Supabase config), actions (action sheets), haptics, music (key, tuning…)
+└── types/shared-music.d.ts types for the shared JavaScript in ../src/lib
+```
+
+Screen logic that the web site also needs (feedback text, filters, field lists) goes in `../src/lib`, not here,
+so both stay the same. See "One source of truth" in the design doc.
+
+## Shared catalogs
+
+Shared charts and links use the web site's Supabase project. [`.env`](.env) sets `EXPO_PUBLIC_SUPABASE_URL` and
+`EXPO_PUBLIC_SUPABASE_ANON_KEY` (the public anon key, the same as `../.env.production`); Expo builds them into the
+app. Remove them and sharing turns off: everything is then saved on the device only. Things shared from the app
+are owned by a secret token kept on the device, exactly like the web site's browser token.
 
 ## Develop
 
@@ -57,3 +94,6 @@ Build numbers go up automatically on every production build (`eas.json`), and th
 `version` in `app.json`.
 
 App id: `io.github.joeyf116.fretboard` on both stores. It can change until the first upload, never after.
+
+The full store checklist (accounts, listings, privacy answers, screenshots, review notes) is in
+[PUBLISHING.md](PUBLISHING.md).

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
 import { blankChart } from '../lib/chart.js'
-import { COLLECTIONS, LIBRARY } from '../lib/chartLibrary.js'
+import { ALL_SHELF, SHARE_COOLDOWN_MS, barCount, catalogCharts, chartCountText, chartShelves, chartSummary, editableChart as editable, filterCharts, keyLabel } from '../lib/chartView.js'
 import { addSharedChart, fetchSharedCharts, removeSharedChart, reportSharedChart, updateSharedChart } from '../lib/sharedCharts.js'
 import { newOwnerToken, sharingEnabled } from '../lib/sharedResources.js'
 import usePersistentState from '../lib/usePersistentState.js'
@@ -11,15 +11,8 @@ import './Charts.css'
 import { PageHeader } from './layout.jsx'
 
 const CAN_SHARE = sharingEnabled()
-const COOLDOWN_MS = 30_000
-const BUILT_IN = LIBRARY.map((c) => ({ ...c, id: `lib:${c.slug}`, source: 'library' }))
-const ALL = 'All'
-const SHARED = 'Shared'
-const MINE = 'My charts'
-
-const barCount = (chart) => chart.sections.reduce((n, s) => n + s.bars.length, 0)
-const keyLabel = (key) => (key.endsWith('m') ? `${key.slice(0, -1)} minor` : key)
-const editable = ({ title, composer, style, key, time, tempo, sections }) => ({ title, composer, style, key, time, tempo, sections })
+const COOLDOWN_MS = SHARE_COOLDOWN_MS
+const ALL = ALL_SHELF
 
 /** iReal Pro-style charts: a catalog to browse, a player with a backing band, and an editor to write new ones. */
 export default function Charts({ tuning, tuningId, onTuningChange }) {
@@ -47,25 +40,11 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
     }
   }, [])
 
-  const all = useMemo(
-    () => [
-      ...BUILT_IN,
-      ...shared.map((c) => ({ ...c, sharedId: c.id, id: `shared:${c.id}`, source: 'shared', collection: c.collection || SHARED, mine: Boolean(mine[c.id]) })),
-      ...local.map((c) => ({ ...c, source: 'local', collection: MINE, mine: true })),
-    ],
-    [shared, local, mine],
-  )
+  const all = useMemo(() => catalogCharts(shared, local, mine), [shared, local, mine])
   const open = all.find((c) => c.id === openId) ?? null
 
-  // Built-in shelves first, then any others the shared catalog uses (e.g. Folk & Country), then Shared and My charts.
-  const sharedShelves = [...new Set(shared.map((c) => c.collection).filter((c) => c && !COLLECTIONS.includes(c)))].sort()
-  const collections = [ALL, ...COLLECTIONS, ...sharedShelves, ...(shared.some((c) => !c.collection) ? [SHARED] : []), ...(local.length || Object.keys(mine).length ? [MINE] : [])]
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  const visible = all
-    .filter((c) => collection === ALL || c.collection === collection || (collection === MINE && c.mine))
-    .filter((c) => !style || c.style === style)
-    .filter((c) => words.every((w) => `${c.title} ${c.composer} ${c.key} ${STYLES[c.style]?.name}`.toLowerCase().includes(w)))
-    .sort((a, b) => a.title.localeCompare(b.title))
+  const collections = chartShelves(shared, local, mine)
+  const visible = filterCharts(all, { collection, style, query })
 
   const show = (id) => {
     setEditing(null)
@@ -155,7 +134,7 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
           <div className="chart-title">
             <h1>{open.title}</h1>
             <p className="page-summary">
-              {[open.composer, STYLES[open.style]?.name, keyLabel(open.key), open.time, `${open.tempo} bpm`].filter(Boolean).join(' · ')}
+              {chartSummary(open)}
             </p>
           </div>
           <div className="chart-actions">
@@ -223,7 +202,7 @@ export default function Charts({ tuning, tuningId, onTuningChange }) {
       </div>
 
       <p className="results-count" aria-live="polite">
-        {visible.length === all.length ? `${all.length} charts` : `${visible.length} of ${all.length} charts`}
+        {chartCountText(visible.length, all.length)}
       </p>
 
       {sharedStatus === 'error' && <p className="notice">Shared charts couldn’t be loaded right now, so only built-in charts and your own are shown.</p>}

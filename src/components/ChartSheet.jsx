@@ -1,9 +1,6 @@
-import { chordParts } from '../lib/chart.js'
+import { BARS_PER_ROW, barTokens, sectionStarts } from '../lib/chartView.js'
 
-const BARS_PER_ROW = 4
-
-function Chord({ symbol }) {
-  const { root, quality, bass } = chordParts(symbol)
+function Chord({ root, quality, bass }) {
   return (
     <span className="chart-chord">
       {root}
@@ -14,18 +11,21 @@ function Chord({ symbol }) {
 }
 
 function BarContent({ text }) {
-  const tokens = text.trim().split(/\s+/).filter(Boolean)
-  if (!tokens.length) return null
-  if (tokens.length === 1 && tokens[0] === '%') return <span className="chart-repeat" aria-label="repeat previous bar">𝄎</span>
-  return tokens.map((t, i) =>
-    t === '/' || t === '-' ? (
+  return barTokens(text).map((t, i) =>
+    t.kind === 'repeat' ? (
+      <span key={i} className="chart-repeat" aria-label="repeat previous bar">
+        𝄎
+      </span>
+    ) : t.kind === 'slash' ? (
       <span key={i} className="chart-slash" aria-hidden="true">
         /
       </span>
-    ) : /^(n\.?c\.?|x)$/i.test(t) ? (
-      <span key={i} className="chart-nc">N.C.</span>
+    ) : t.kind === 'nc' ? (
+      <span key={i} className="chart-nc">
+        N.C.
+      </span>
     ) : (
-      <Chord key={i} symbol={t} />
+      <Chord key={i} {...t} />
     ),
   )
 }
@@ -33,7 +33,7 @@ function BarContent({ text }) {
 /** The lead sheet grid: sections down the page, four bars to a row, the playing bar lit. */
 export default function ChartSheet({ chart, activeBar = null, startBar = 0, onBarClick }) {
   // Number of the first bar in each section, counting through the whole chart.
-  const firsts = chart.sections.reduce((acc, section, s) => [...acc, s ? acc[s - 1] + chart.sections[s - 1].bars.length : 0], [])
+  const firsts = sectionStarts(chart)
   return (
     <div className="chart-sheet" aria-label="Chart">
       {chart.sections.map((section, s) => {

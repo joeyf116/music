@@ -9,7 +9,7 @@ const modules = [...declarations.matchAll(/declare module '@music\/([\w.]+)' \{(
 
 describe('typed contract with the mobile app', () => {
   it('declares the shared modules', () => {
-    expect(modules.map((m) => m[1])).toEqual(['theory.js', 'exercises.js', 'audio.js', 'fretboardView.js'])
+    expect(modules.map((m) => m[1])).toEqual(expect.arrayContaining(['theory.js', 'exercises.js', 'audio.js', 'fretboardView.js', 'rhythm.js', 'chart.js']))
   })
 
   it.each(modules.map((m) => [m[1], m[2]]))('%s exports everything the app declares', async (file, body) => {

@@ -158,6 +158,13 @@ are in [`src/components/layout.jsx`](src/components/layout.jsx) (`PageHeader`, `
 [`src/components/controls.jsx`](src/components/controls.jsx) (`Field`, `Choice`, `Stepper`, `Toggle`). Read it
 before adding a page or a control.
 
+## 📱 iPhone, iPad and Android app
+
+[`mobile/`](mobile) is the native app (Expo / React Native) with all five pages rebuilt from the platform's own
+controls. It shares the music logic and the page logic in `src/lib` with this site, so a fix there fixes both.
+How to run it is in [`mobile/README.md`](mobile/README.md); getting it into the stores is in
+[`mobile/PUBLISHING.md`](mobile/PUBLISHING.md).
+
 ## 🛠 Development
 
 ```bash
@@ -193,8 +200,10 @@ src/
     ├── chart.js            chord-symbol parser, transposition, chart compiler
     ├── arranger.js         band styles: drum patterns, bass lines, comping, voicings
     ├── band.js             Web Audio backing band scheduler
+    ├── *View.js            page logic shared with the app (exercise fields, rhythm, charts)
     └── shared*.js          Supabase calls for shared resources and charts
-docs/DESIGN.md              layout, theme and writing rules for every page
+docs/DESIGN.md              layout, theme and writing rules for every page (web and app)
+mobile/                     the native app (see mobile/README.md)
 supabase/                   database SQL and seed data
 resources/                  bundled PDFs, files and links
 ```

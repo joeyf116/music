@@ -1,9 +1,11 @@
 
+import { tapPosition, tapVerdict } from '../lib/rhythmView.js'
+
 /** The big pad you tap in time (pointer down, so there is no click delay), with the last tap's verdict. */
 export default function TapPad({ judge, disabled, idle = 'Tap here in time', label = 'Tap pad' }) {
   const { last } = judge
   const tone = !last ? '' : last.miss ? 'off' : last.grade
-  const text = !last ? idle : last.miss ? 'No beat near that tap' : `${last.label}${last.grade === 'perfect' ? '' : ` · ${last.ms > 0 ? '+' : ''}${last.ms} ms`}`
+  const text = tapVerdict(last, idle)
   return (
     <button
       type="button"
@@ -33,7 +35,7 @@ export default function TapPad({ judge, disabled, idle = 'Tap here in time', lab
 
 /** Where one tap landed: a dot on an early ← → late scale (±100 ms). */
 function TapMeter({ ms }) {
-  const x = 50 + Math.max(-100, Math.min(100, ms)) / 2
+  const x = tapPosition(ms)
   return (
     <span className="tap-meter" aria-hidden="true">
       <span className="tap-meter-zone" />
@@ -57,7 +59,7 @@ export function TapResults({ judge, onReset }) {
         <span className="tap-scatter-center" />
         <span className="tap-scatter-zone" />
         {judged.map((r, i) => (
-          <span key={i} className={`tap-scatter-dot ${r.grade}`} style={{ left: `${50 + Math.max(-100, Math.min(100, r.ms)) / 2}%`, opacity: 0.35 + (0.65 * (i + 1)) / judged.length }} />
+          <span key={i} className={`tap-scatter-dot ${r.grade}`} style={{ left: `${tapPosition(r.ms)}%`, opacity: 0.35 + (0.65 * (i + 1)) / judged.length }} />
         ))}
         <span className="tap-scatter-label left">← early</span>
         <span className="tap-scatter-label right">late →</span>

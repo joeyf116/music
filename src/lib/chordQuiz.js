@@ -129,3 +129,39 @@ export function chordGameReducer(game, action) {
       return game
   }
 }
+
+// ---- Words on screen ----
+
+export const withArticle = (name) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`
+
+/**
+ * What the page says about the current question: `feedback` (right, wrong or what to do) and, once it's over,
+ * `compare` (how to hear the difference). `rootName` is the root spelled for the key.
+ */
+export const chordQuizText = (game, rootName) => {
+  const { question, guesses } = game
+  if (!question) return { feedback: '', compare: '' }
+  const state = chordRoundState(game)
+  const info = qualityInfo(question.quality)
+  const wrong = guesses.filter((g) => g !== question.quality)
+  const done = state === 'solved' || state === 'revealed'
+  const feedback =
+    state === 'solved'
+      ? `${wrong.length ? 'Got it.' : 'Correct!'} ${rootName}${info.symbol} is ${withArticle(info.name.toLowerCase())} chord: ${info.feel.toLowerCase()}`
+      : state === 'revealed'
+        ? `It was ${rootName}${info.symbol}, ${withArticle(info.name.toLowerCase())} chord: ${info.feel.toLowerCase()}`
+        : wrong.length
+          ? `Not ${qualityInfo(wrong[wrong.length - 1]).name.toLowerCase()}. Press Play to hear it again.`
+          : 'Press Play, listen to the colour of the chord, then name it.'
+  const compare = done ? `Tap any answer to hear it on ${rootName}${wrong.length ? `, e.g. ${qualityInfo(wrong[0]).short} next to ${info.short}` : ''}. ${info.listen}` : ''
+  return { feedback, compare }
+}
+
+/** The preset matching the chosen qualities, if any. */
+export const chordPresetName = (ids) => CHORD_PRESETS.find((p) => p.qualities.join() === ids.join())?.label
+
+/** Turn one quality on or off, keeping the list in the usual order and at least two long. Returns null if not allowed. */
+export const toggleQuality = (enabled, id) => {
+  const list = enabled.includes(id) ? enabled.filter((q) => q !== id) : QUALITIES.map((q) => q.id).filter((q) => q === id || enabled.includes(q))
+  return list.length >= 2 ? list : null
+}
