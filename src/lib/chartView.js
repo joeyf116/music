@@ -95,6 +95,9 @@ export const moveSection = (sections, s, by) => {
   return next
 }
 
+/** Why someone reports a shared chart: offered as a short menu on the web and in the app. */
+export const REPORT_REASONS = ['Spam', 'Wrong chords', 'Offensive']
+
 export const CHART_HELP = [
   'One box is one bar. Put several chords in a box to split the bar: Dm7 G7 is two beats each.',
   '/ holds the chord for another beat (C / / G7 is three beats of C, one of G7). % repeats the bar before, an empty box keeps the last chord going and NC is a break.',

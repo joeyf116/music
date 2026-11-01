@@ -24,12 +24,13 @@ import {
   type IntervalQuestion,
 } from '@music/intervalQuiz.js'
 import { pcName } from '@music/theory.js'
-import { PICKERS } from '@/lib/pickers'
+import { tuningSections as allTunings } from '@/lib/pickers'
 import { useMusic } from '@/lib/music'
 import { useStored } from '@/lib/prefs'
 import { colors, space, text } from '@/theme'
 import Fretboard from '../Fretboard'
-import { Button, ChipRow, ChoiceRow, Disclosure, Group, Notice, Section, Segmented, SwitchRow } from '../ui'
+import { oneSection } from '@/lib/choose'
+import { Button, ChipRow, ChoiceRow, Disclosure, Group, Notice, Section, SwitchRow } from '../ui'
 import { Answers, Feedback, QuizActions, StatBars } from './Answers'
 
 export const TRAINING_SHEET = '/training/choose'
@@ -127,7 +128,7 @@ export default function IntervalQuiz() {
   }
   const presetName = intervalPresetName(semitones)
   const settingsSummary = [DIRECTIONS.find((d) => d.id === direction)?.label, presetName ?? choices.map((i) => i.short).join(' '), FRET_RANGES.find((r) => r.maxFret === maxFret)?.label].join(' · ')
-  const tuningSections = PICKERS.tuning.sections().map((sec) => ({ title: sec.title ?? undefined, options: sec.options }))
+  const tuningSections = allTunings()
 
   return (
     <View style={styles.wrap}>
@@ -185,12 +186,10 @@ export default function IntervalQuiz() {
       )}
 
       <Disclosure title="Settings" summary={settingsSummary}>
-        <Text style={styles.label}>Direction</Text>
-        <Segmented options={DIRECTION_OPTIONS} value={direction} onChange={setDirection} />
-        <Text style={styles.label}>Frets</Text>
-        <Segmented options={RANGE_OPTIONS} value={String(maxFret)} onChange={(v) => setMaxFret(Number(v))} />
         <Group>
-          <ChoiceRow label="Tuning" value={tuningId} sections={tuningSections} onChange={setTuningId} sheet={TRAINING_SHEET} first />
+          <ChoiceRow label="Direction" value={direction} sections={oneSection(DIRECTION_OPTIONS)} onChange={setDirection} sheet={TRAINING_SHEET} first />
+          <ChoiceRow label="Frets" value={String(maxFret)} sections={oneSection(RANGE_OPTIONS)} onChange={(v) => setMaxFret(Number(v))} sheet={TRAINING_SHEET} />
+          <ChoiceRow label="Tuning" value={tuningId} sections={tuningSections} onChange={setTuningId} sheet={TRAINING_SHEET} />
           <SwitchRow label="Loop until stopped" value={loop} onChange={setLoop} />
           <SwitchRow label="Auto-play next" value={autoPlay} onChange={setAutoPlay} last />
         </Group>

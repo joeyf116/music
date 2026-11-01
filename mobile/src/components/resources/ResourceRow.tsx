@@ -2,6 +2,7 @@ import { openBrowserAsync } from 'expo-web-browser'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { isNew, type Resource } from '@music/resources.js'
 import { colors, space, text } from '@/theme'
+import { MoreMenu, type MenuItem } from '../Menu'
 import { Badge, HeaderButton } from '../ui'
 
 export const openLink = (url: string) => openBrowserAsync(url, { controlsColor: colors.accent, toolbarColor: colors.bg })
@@ -12,12 +13,12 @@ interface ResourceRowProps {
   onStar: () => void
   activeTags: string[]
   onTag: (tag: string) => void
-  /** Remove / report, when there's anything to offer. */
-  onMore?: () => void
+  /** Remove / report, when there's anything to offer (a ⋯ pull-down). */
+  more?: MenuItem[]
 }
 
 /** One catalog entry: tapping it opens the page in the in-app browser (Safari / Custom Tabs). */
-export default function ResourceRow({ resource: r, starred, onStar, activeTags, onTag, onMore }: ResourceRowProps) {
+export default function ResourceRow({ resource: r, starred, onStar, activeTags, onTag, more }: ResourceRowProps) {
   return (
     <View style={styles.row}>
       <Pressable onPress={() => openLink(r.url)} accessibilityRole="link" accessibilityLabel={`${r.title}, ${r.type}${r.host ? `, ${r.host}` : ''}`} accessibilityHint={r.description || undefined} style={({ pressed }) => [styles.main, pressed && styles.pressed]}>
@@ -45,7 +46,7 @@ export default function ResourceRow({ resource: r, starred, onStar, activeTags, 
       ) : null}
       <View style={styles.actions}>
         <HeaderButton ios={starred ? 'star.fill' : 'star'} android={starred ? 'star' : 'star_border'} label={`${starred ? 'Unstar' : 'Star'} ${r.title}`} onPress={onStar} />
-        {onMore ? <HeaderButton ios="ellipsis" android="more_horiz" label={`More for ${r.title}`} onPress={onMore} /> : null}
+        {more ? <MoreMenu label={`More for ${r.title}`} items={more} /> : null}
       </View>
     </View>
   )

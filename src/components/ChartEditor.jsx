@@ -4,6 +4,7 @@ import { ALL_KEYS, badTokens, CHART_LIMITS, TIME_SIGNATURES, validateChart } fro
 import { moveSection, nextSection, spreadBars } from '../lib/chartView.js'
 import ChartPlayer from './ChartPlayer.jsx'
 import { Choice, Field, Stepper } from './controls.jsx'
+import Menu from './Menu.jsx'
 import { Disclosure } from './layout.jsx'
 
 
@@ -106,18 +107,16 @@ export default function ChartEditor({ initial, canShare, sharedAlready, onSave, 
             </Field>
             <span className="resource-count">{section.bars.length} bars</span>
             <span className="editor-section-actions">
-              <button type="button" className="icon-button" onClick={() => move(s, -1)} disabled={s === 0} aria-label="Move section up">
-                ↑
-              </button>
-              <button type="button" className="icon-button" onClick={() => move(s, 1)} disabled={s === draft.sections.length - 1} aria-label="Move section down">
-                ↓
-              </button>
-              <button type="button" onClick={() => setSections((all) => [...all.slice(0, s + 1), { ...section, bars: [...section.bars] }, ...all.slice(s + 1)])} disabled={draft.sections.length >= CHART_LIMITS.sections}>
-                Duplicate
-              </button>
-              <button type="button" onClick={() => setSections((all) => all.filter((_, i) => i !== s))} disabled={draft.sections.length === 1}>
-                Delete
-              </button>
+              <Menu
+                label={`Section ${section.label || s + 1} actions`}
+                buttonClassName="icon-button"
+                items={[
+                  s > 0 && { label: 'Move up', onSelect: () => move(s, -1) },
+                  s < draft.sections.length - 1 && { label: 'Move down', onSelect: () => move(s, 1) },
+                  draft.sections.length < CHART_LIMITS.sections && { label: 'Duplicate', onSelect: () => setSections((all) => [...all.slice(0, s + 1), { ...section, bars: [...section.bars] }, ...all.slice(s + 1)]) },
+                  draft.sections.length > 1 && { label: 'Delete', destructive: true, onSelect: () => setSections((all) => all.filter((_, i) => i !== s)) },
+                ]}
+              />
             </span>
           </div>
           <div className="editor-bars">

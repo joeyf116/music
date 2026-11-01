@@ -21,8 +21,10 @@ import {
 } from '@music/theoryDrill.js'
 import { useStored } from '@/lib/prefs'
 import { colors, space, text } from '@/theme'
-import { Button, ChipRow, Disclosure, Group, Section, Segmented, SwitchRow } from '../ui'
+import { oneSection } from '@/lib/choose'
+import { Button, ChipRow, ChoiceRow, Disclosure, Group, Section, Segmented, SwitchRow } from '../ui'
 import { Answers, Feedback, QuizActions } from './Answers'
+import { TRAINING_SHEET } from './IntervalQuiz'
 
 /** "Build chords in a key": stack chords from a scale, name a key's chords, and spell chords from their formula. */
 export default function TheoryDrill({ keyName }: { keyName: string }) {
@@ -145,12 +147,10 @@ export default function TheoryDrill({ keyName }: { keyName: string }) {
       ) : null}
 
       <Disclosure title="Settings" summary={summary}>
-        <Text style={styles.label}>Keys</Text>
-        <Segmented options={KEY_SETS} value={keys} onChange={setKeys} />
-        <Text style={styles.label}>Key</Text>
-        <Segmented options={KEY_MODES.map((k) => (k.value === 'fixed' ? { ...k, label: `Only ${keyName}` } : k))} value={keyMode} onChange={setKeyMode} />
         <Group>
-          <SwitchRow label="Play the chord when you get it right" value={autoPlay} onChange={setAutoPlay} first last />
+          <ChoiceRow label="Keys" value={keys} sections={oneSection([...KEY_SETS])} onChange={setKeys} sheet={TRAINING_SHEET} first />
+          <ChoiceRow label="Key" value={keyMode} sections={oneSection(KEY_MODES.map((k) => (k.value === 'fixed' ? { ...k, label: `Only ${keyName}` } : k)))} onChange={setKeyMode} sheet={TRAINING_SHEET} />
+          <SwitchRow label="Play the chord when you get it right" value={autoPlay} onChange={setAutoPlay} last />
         </Group>
       </Disclosure>
 
@@ -183,5 +183,4 @@ const styles = StyleSheet.create({
   body: { color: colors.text, fontSize: text.base, lineHeight: 22, paddingHorizontal: space[4] },
   muted: { color: colors.muted, fontSize: text.sm, paddingHorizontal: space[4] },
   strong: { fontWeight: '700' },
-  label: { color: colors.muted, fontSize: text.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6, paddingHorizontal: space[4] },
 })

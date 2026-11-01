@@ -90,7 +90,6 @@ export default function Resources() {
   }
 
   const reportLink = async (r) => {
-    if (!window.confirm(`Report "${r.title}" as spam or a broken link? It's hidden after a few reports.`)) return
     try {
       await reportSharedLink(r.sharedId, 'Reported from the Resources page')
       setNotice('Thanks, the link was reported.')

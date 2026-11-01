@@ -37,3 +37,12 @@ export const currentChoice = (): ChooseRequest | null => pending
 
 /** Options from a flat list, for the common case of one section. */
 export const oneSection = <V extends ChoiceValue>(options: ChooseOption<V>[]): ChooseSection<V>[] => [{ options }]
+
+/** Most options a pop-up menu shows before the list moves to a sheet (Apple: long menus slow people down). */
+export const MENU_LIMIT = 8
+
+/** A short list with no second lines fits a pop-up menu; anything longer or wordier gets the full sheet. */
+export const fitsMenu = (sections: ChooseSection[]): boolean => {
+  const options = sections.flatMap((s) => s.options)
+  return options.length <= MENU_LIMIT && options.every((o) => !o.sub)
+}

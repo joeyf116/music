@@ -1,6 +1,7 @@
 import { isNew } from '../lib/resources.js'
+import Menu from './Menu.jsx'
 
-// One catalog entry: opens the link, shows type/level/tags, and offers star / remove / report.
+// One catalog entry: opens the link, shows type/level/tags, and offers a star plus a ⋯ menu (report, remove).
 export default function ResourceCard({ resource: r, starred, onStar, onTag, activeTags, onRemove, onReport }) {
   return (
     <li className="resource-card">
@@ -30,15 +31,15 @@ export default function ResourceCard({ resource: r, starred, onStar, onTag, acti
         <button type="button" className={`icon-button star${starred ? ' on' : ''}`} onClick={() => onStar(r)} aria-pressed={starred} aria-label={`${starred ? 'Unstar' : 'Star'} ${r.title}`} title={starred ? 'Starred' : 'Star'}>
           {starred ? '★' : '☆'}
         </button>
-        {onRemove && (
-          <button type="button" className="icon-button" onClick={() => onRemove(r)} aria-label={`Remove ${r.title}`} title="Remove">
-            ×
-          </button>
-        )}
-        {onReport && (
-          <button type="button" className="icon-button report" onClick={() => onReport(r)} aria-label={`Report ${r.title} as spam or broken`} title="Report spam or a broken link">
-            ⚑
-          </button>
+        {(onRemove || onReport) && (
+          <Menu
+            label={`More for ${r.title}`}
+            buttonClassName="icon-button"
+            items={[
+              onReport && { label: 'Report spam or a broken link', onSelect: () => onReport(r) },
+              onRemove && { label: r.source === 'local' ? 'Remove' : 'Remove for everyone', destructive: true, onSelect: () => onRemove(r) },
+            ]}
+          />
         )}
       </div>
     </li>
