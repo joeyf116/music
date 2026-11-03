@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   CHORDS,
   SCALES,
+  KEYS,
+  PENTATONIC,
   TUNINGS,
   TUNING_GROUPS,
+  cagedShapes,
   chordInversions,
   chordVoicings,
   diatonicChords,
@@ -292,5 +295,41 @@ describe('math rock tunings', () => {
     const names = Object.values(TUNINGS).filter((t) => t.group === 'Math rock').map((t) => `${t.name} ${tuningNotes(t)}`)
     expect(names).toEqual(['FACGCE F A C G C E', 'Open C6 C A C G C E', 'Open F F A C F C F'])
     expect(TUNING_GROUPS).toContain('Math rock')
+  })
+})
+
+describe('CAGED', () => {
+  const frets = (chord) => Array.from({ length: 6 }, (_, s) => chord.find((n) => n.string === s)?.fret ?? null)
+
+  it('finds the five shapes for C in order up the neck', () => {
+    const shapes = cagedShapes(0, 'major', STANDARD)
+    expect(shapes.map((s) => s.letter).join('')).toBe('CAGED')
+    expect(shapes.map((s) => tab(frets(s.chord)))).toEqual(['x32010', 'x35553', '875558', '81010988', 'xx10121312'])
+  })
+
+  it('starts the cycle from the open shape of the key', () => {
+    expect(cagedShapes(noteToPc('G'), 'major', STANDARD).map((s) => s.letter).join('')).toBe('GEDCA')
+    expect(cagedShapes(noteToPc('A'), 'minor', STANDARD).map((s) => s.letter).join('')).toBe('AGEDC')
+    expect(tab(frets(cagedShapes(noteToPc('A'), 'minor', STANDARD)[0].chord))).toBe('x02210')
+  })
+
+  it('puts every chord tone inside its pentatonic box, two notes a string, in every key', () => {
+    for (const quality of ['major', 'minor']) {
+      for (const key of KEYS) {
+        const rootPc = noteToPc(key)
+        for (const { chord, box } of cagedShapes(rootPc, quality, STANDARD)) {
+          chord.forEach((c) => expect(box).toContainEqual(expect.objectContaining({ string: c.string, fret: c.fret })))
+          box.forEach((n) => expect(PENTATONIC[quality]).toContain(mod12(STANDARD[n.string] + n.fret - rootPc)))
+          expect(box.every((n) => n.fret >= 0)).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('keeps the box on the neck near the nut (the E shape in E)', () => {
+    const e = cagedShapes(noteToPc('E'), 'major', STANDARD)[0]
+    expect(e.letter).toBe('E')
+    expect(tab(frets(e.chord))).toBe('022100')
+    expect(e.box.length).toBeLessThan(12)
   })
 })

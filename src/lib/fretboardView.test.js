@@ -36,3 +36,34 @@ describe('fretboardView', () => {
     expect(m.shapes.options.length).toBeGreaterThan(0)
   })
 })
+
+describe('CAGED view', () => {
+  const caged = { ...base, view: 'caged', scaleType: 'major', keyName: 'C', cagedShape: 'all' }
+
+  it('climbs the neck through all five shapes, each chord then its box', () => {
+    const m = fretboardView(caged)
+    expect(m.heading.title).toBe('C major pentatonic · CAGED')
+    expect(m.shapes.options.map((o) => o.label)).toEqual(['C', 'A', 'G', 'E', 'D', 'All'])
+    const headings = m.shapes.columns.filter((c) => c.heading).map((c) => c.heading.split(' · ')[0])
+    expect(headings).toEqual(['C shape', 'A shape', 'G shape', 'E shape', 'D shape'])
+    expect(headingChips(m, null).map((c) => c.name)).toEqual(['C', 'D', 'E', 'G', 'A'])
+  })
+
+  it('shows one shape: the chord full, its box soft, and lights the note being played', () => {
+    const m = fretboardView({ ...caged, cagedShape: 'E' })
+    expect(m.shapes.optionIndex).toBe(3)
+    expect(m.shapes.columns[0].notes).toHaveLength(6)
+    const idle = neckNotes(m, null, false, tuning)
+    expect(idle.filter((n) => n.level === 'shape')).toHaveLength(6)
+    expect(idle.filter((n) => n.level === 'path').length).toBeGreaterThan(0)
+    const playing = neckNotes(m, 1, false, tuning)
+    expect(playing.filter((n) => n.level === 'active')).toHaveLength(1)
+    expect(playing.some((n) => n.level === 'path')).toBe(false)
+  })
+
+  it('reads minor modes as the minor pentatonic', () => {
+    const m = fretboardView({ ...caged, keyName: 'A', scaleType: 'dorian' })
+    expect(m.heading.title).toBe('A minor pentatonic · CAGED')
+    expect(m.drill.settings.chord).toBe('min')
+  })
+})

@@ -162,7 +162,7 @@ declare module '@music/audio.js' {
 declare module '@music/fretboardView.js' {
   import type { ChordType, DiatonicChord } from '@music/theory.js'
 
-  export type View = 'scale' | 'chord' | 'inversion' | 'progression'
+  export type View = 'scale' | 'chord' | 'inversion' | 'progression' | 'caged'
   export type Level = 'faint' | 'path' | 'shape' | 'active'
   export interface Option<V extends string = string> {
     value: V
@@ -203,6 +203,8 @@ declare module '@music/fretboardView.js' {
     defaultActive: number | null
     shape?: Position[] | null
     all?: boolean
+    /** Set in the CAGED view: whether every shape is shown, else which one. */
+    caged?: { all: boolean; letter: string | null; quality: 'major' | 'minor' }
   }
   export interface Settings {
     view: string
@@ -217,6 +219,8 @@ declare module '@music/fretboardView.js' {
     stringSet: number
     progression: string
     area: string
+    /** CAGED view: a shape letter (C A G E D) or 'all'. */
+    cagedShape?: string
     tuning: number[]
     tuningId: string
   }
@@ -256,6 +260,7 @@ declare module '@music/fretboardView.js' {
 
   export const VIEWS: Option<View>[]
   export const VIEW_IDS: View[]
+  export const ALL_SHAPES: 'all'
   export const LABEL_OPTIONS: Option<'notes' | 'intervals'>[]
   export const LAYOUT_OPTIONS: Option[]
   export const DROP_OPTIONS: Option[]

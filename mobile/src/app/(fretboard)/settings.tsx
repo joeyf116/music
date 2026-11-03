@@ -15,6 +15,8 @@ export default function NeckSettings() {
   const [position] = usePref('music.fretPosition')
   const [view] = usePref('music.mode')
   const allPositions = view === 'scale' && position === 'all'
+  // CAGED keeps to its pentatonic boxes, so the switch doesn't apply there.
+  const caged = view === 'caged'
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.heading} accessibilityRole="header">
@@ -24,9 +26,10 @@ export default function NeckSettings() {
         <Group>
           <ChoiceRow label="Tuning" value={tuningId} sections={tuningSections()} onChange={setTuningId} sheet="/choose" first />
           <ChoiceRow label="Note labels" value={labels} sections={oneSection([...LABEL_OPTIONS])} onChange={setLabels} sheet="/choose" />
-          <SwitchRow label="Show every note in the key" value={showAll} onChange={setShowAll} disabled={allPositions} last />
+          <SwitchRow label="Show every note in the key" value={showAll} onChange={setShowAll} disabled={allPositions || caged} last />
         </Group>
         {allPositions ? <Text style={styles.note}>The whole-neck view always shows every note.</Text> : null}
+        {caged ? <Text style={styles.note}>CAGED shows each shape inside its pentatonic box.</Text> : null}
       </View>
     </ScrollView>
   )
