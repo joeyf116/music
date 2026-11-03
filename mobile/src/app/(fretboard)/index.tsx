@@ -17,6 +17,7 @@ import {
   type Active,
   type Column,
   ALL_POSITIONS,
+  ALL_SHAPES,
   AREA_OPTIONS,
   DROP_OPTIONS,
   LAYOUT_OPTIONS,
@@ -54,11 +55,12 @@ export default function FretboardScreen() {
   const [stringSet, setStringSet] = usePref('music.stringSet')
   const [progression, setProgression] = usePref('music.fretProgression')
   const [area, setArea] = usePref('music.progressionNeck')
+  const [cagedShape, setCagedShape] = usePref('music.cagedShape')
   const [active, setActive] = useState<Active | null>(null)
   const [playing, setPlaying] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, tuning, tuningId })
+  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, cagedShape, tuning, tuningId })
   const { view, picked, overrideOk, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote } = model
   const activeIndex = activeColumnIndex(model, active)
 
@@ -118,7 +120,9 @@ export default function FretboardScreen() {
   const noteLabel = noteLabeller(model, labels, tuning)
   const notes = neckNotes(model, activeIndex, showAll, tuning)
   const chips = headingChips(model, activeIndex)
-  const columns = shapes.columns.map((c) => (view === 'scale' ? { ...c, label: noteLabel(c.notes[0]) } : c))
+  const columns = shapes.columns.map((c) => (view === 'scale' || (view === 'caged' && c.notes.length === 1) ? { ...c, label: noteLabel(c.notes[0]) } : c))
+  // For scales and CAGED the key's chords are reference at the end; in the chord views they're the picker.
+  const stripIsReference = view === 'scale' || view === 'caged'
 
   const strip = (
     <DiatonicStrip
@@ -127,9 +131,9 @@ export default function FretboardScreen() {
       sevenths={sevenths}
       onSeventhsChange={setSevenths}
       silent={view === 'chord' || view === 'inversion'}
-      onPick={view === 'scale' ? undefined : pickChord}
+      onPick={stripIsReference ? undefined : pickChord}
       highlight={view === 'chord' || view === 'inversion' ? (c) => c.degree === picked.degree : undefined}
-      title={view === 'progression' ? 'Tap chords to add them' : view === 'scale' ? undefined : `Pick a chord in ${keyName}`}
+      title={view === 'progression' ? 'Tap chords to add them' : stripIsReference ? undefined : `Pick a chord in ${keyName}`}
     />
   )
 
@@ -163,7 +167,18 @@ export default function FretboardScreen() {
           </Section>
         )}
 
-        {view !== 'scale' && strip}
+        {view === 'caged' && (
+          <Section title="Shape">
+            <ChipRow
+              label="CAGED shape"
+              options={shapes.options.map((o, i) => ({ value: i === shapes.options.length - 1 ? ALL_SHAPES : o.label, label: o.label, sub: o.hint }))}
+              value={shapes.caged?.all ? ALL_SHAPES : (shapes.caged?.letter ?? ALL_SHAPES)}
+              onChange={setCagedShape}
+            />
+          </Section>
+        )}
+
+        {!stripIsReference && strip}
 
         {(view === 'chord' || view === 'inversion') && (
           <View style={styles.group}>
@@ -244,7 +259,7 @@ export default function FretboardScreen() {
           <Hint>Tap a tab column or a note on the neck to hear it.</Hint>
         </Section>
 
-        {view === 'scale' && strip}
+        {stripIsReference && strip}
       </ScrollView>
     </>
   )

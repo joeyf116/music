@@ -3,6 +3,7 @@ import { playChord, playPitch } from '../lib/audio.js'
 import { DEFAULT_SETTINGS, NECK_AREAS, PROGRESSIONS, randomProgression } from '../lib/exercises.js'
 import {
   ALL_POSITIONS,
+  ALL_SHAPES,
   AREA_OPTIONS,
   DROP_OPTIONS,
   LABEL_OPTIONS,
@@ -64,11 +65,12 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   const [stringSet, setStringSet] = usePersistentState('music.stringSet', 0)
   const [progression, setProgression] = usePersistentState('music.fretProgression', 'I V vi IV')
   const [area, setArea] = usePersistentState('music.progressionNeck', 'open')
+  const [cagedShape, setCagedShape] = usePersistentState('music.cagedShape', ALL_SHAPES)
   const [active, setActive] = useState(null)
   const [playing, setPlaying] = useState(false)
   const timers = useRef([])
 
-  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, tuning, tuningId })
+  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, cagedShape, tuning, tuningId })
   const { view, picked, overrideOk, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote, drill, typeOptions, keyPc } = model
   const activeIndex = activeColumnIndex(model, active)
 
@@ -126,7 +128,8 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   const noteLabel = noteLabeller(model, labels, tuning)
   const fretboardNotes = neckNotes(model, activeIndex, showAll, tuning)
 
-  const columns = shapes.columns.map((c) => (view === 'scale' ? { ...c, label: noteLabel(c.notes[0]) } : c))
+  // Single notes in a run are labelled with their note (or interval) under the tab.
+  const columns = shapes.columns.map((c) => (view === 'scale' || (view === 'caged' && c.notes.length === 1) ? { ...c, label: noteLabel(c.notes[0]) } : c))
   // Open strings follow the tuning's own spelling (Eb standard reads Eb, not D#), otherwise the key's.
   const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? usesFlats(keyName))
   const tuningNames = tabStringNames(tuning, stringName)
@@ -158,8 +161,9 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
 
   const settingsSummary = [tuningSpec.name, labels === 'notes' ? 'note names' : 'intervals', showAll ? 'all notes' : 'shape only'].join(' · ')
 
-  // In the chord views the chords of the key are the picker, so they sit above the neck; for scales they are
-  // reference, so they go to the end of the page.
+  // In the chord views the chords of the key are the picker, so they sit above the neck; for scales (and CAGED)
+  // they are reference, so they go to the end of the page.
+  const stripIsReference = view === 'scale' || view === 'caged'
   const chordStrip = (
     <DiatonicChords
       keyName={keyName}
@@ -167,10 +171,10 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
       sevenths={sevenths}
       onSeventhsChange={setSevenths}
       silent={view === 'chord' || view === 'inversion'}
-      onPick={view === 'scale' ? undefined : pickChord}
-      pickHint={view === 'progression' ? 'add it to the progression' : view === 'scale' ? undefined : 'see it on the neck'}
+      onPick={stripIsReference ? undefined : pickChord}
+      pickHint={view === 'progression' ? 'add it to the progression' : stripIsReference ? undefined : 'see it on the neck'}
       highlight={view === 'chord' || view === 'inversion' ? (c) => c.degree === picked.degree : undefined}
-      title={view === 'progression' ? 'Tap chords to build a progression' : view === 'scale' ? undefined : `Pick a chord in ${keyName}`}
+      title={view === 'progression' ? 'Tap chords to build a progression' : stripIsReference ? undefined : `Pick a chord in ${keyName}`}
     />
   )
 
@@ -196,7 +200,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
 
       {/* 3. Which one: the chords of the key are the chord picker for every chord view. */}
       <div className="explore-options">
-        {view !== 'scale' && chordStrip}
+        {!stripIsReference && chordStrip}
 
         {view === 'scale' && (
           <div className="option-row">
@@ -214,6 +218,24 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
               </div>
             </div>
             {!shapes.all && <Choice label="Fingering" options={LAYOUT_OPTIONS} value={layout === 'across' ? 'across' : 'position'} onChange={setLayout} />}
+          </div>
+        )}
+
+        {view === 'caged' && (
+          <div className="option-row">
+            <div className="field">
+              <span className="field-label" id="caged-label">
+                Shape
+              </span>
+              <div className="options" role="group" aria-labelledby="caged-label">
+                {shapes.options.map((o, i) => (
+                  <button key={o.label} type="button" className={i === shapes.optionIndex ? 'on' : ''} aria-pressed={i === shapes.optionIndex} onClick={() => setCagedShape(i === shapes.options.length - 1 ? ALL_SHAPES : o.label)}>
+                    {o.label}
+                    <small>{o.hint}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -319,7 +341,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
                 <TuningSelect value={tuningId} onChange={onTuningChange} />
               </Field>
               <Choice label="Note labels" options={LABEL_OPTIONS} value={labels} onChange={setLabels} />
-              <Toggle checked={showAll} onChange={setShowAll} disabled={shapes.all}>
+              <Toggle checked={showAll} onChange={setShowAll} disabled={shapes.all || Boolean(shapes.caged)}>
                 Show every note
               </Toggle>
             </div>
@@ -354,7 +376,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
         </div>
       </div>
 
-      {view === 'scale' && chordStrip}
+      {stripIsReference && chordStrip}
     </section>
   )
 }

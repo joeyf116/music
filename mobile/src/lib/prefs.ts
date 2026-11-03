@@ -21,6 +21,7 @@ export interface Prefs {
   'music.stringSet': number
   'music.fretProgression': string
   'music.progressionNeck': string
+  'music.cagedShape': string
 }
 export type PrefKey = keyof Prefs
 /** Settings that hold a free string, which a picker sheet can set. */
@@ -43,6 +44,7 @@ export const PREF_DEFAULTS: Prefs = {
   'music.stringSet': 0,
   'music.fretProgression': 'I V vi IV',
   'music.progressionNeck': 'open',
+  'music.cagedShape': 'all',
 }
 
 export type Update<T> = T | ((previous: T) => T)

@@ -264,6 +264,73 @@ export const scaleAcrossNeck = (rootPc, intervals, tuning, degree) => {
   return notes.filter((n) => n.fret >= 0 && n.fret <= NUM_FRETS)
 }
 
+// ---- CAGED ----
+// The five open chord shapes (C, A, G, E, D) moved up the neck, each with the pentatonic box that sits around it.
+// Shapes are written as frets in standard tuning for C / C minor, low string first (null = not played).
+export const CAGED_LETTERS = ['C', 'A', 'G', 'E', 'D']
+const CAGED_FRETS = {
+  major: { C: [null, 3, 2, 0, 1, 0], A: [null, 3, 5, 5, 5, 3], G: [8, 7, 5, 5, 5, 8], E: [8, 10, 10, 9, 8, 8], D: [null, null, 10, 12, 13, 12] },
+  minor: { C: [null, 3, 1, 0, 1, null], A: [null, 3, 5, 5, 4, 3], G: [8, 6, 5, 5, 8, 8], E: [8, 10, 10, 8, 8, 8], D: [null, null, 10, 12, 13, 11] },
+}
+const STANDARD_PITCHES = [40, 45, 50, 55, 59, 64]
+export const PENTATONIC = { major: [0, 2, 4, 7, 9], minor: [0, 3, 5, 7, 10] }
+
+// A pentatonic box: the scale two notes per string, starting on degree `degree` on the lowest string.
+const pentatonicBox = (rootPc, intervals, tuning, degree, octave) => {
+  const pcs = intervals.map((i) => mod12(rootPc + i))
+  let idx = degree
+  let pitch = tuning[0] + mod12(pcs[idx] - tuning[0]) + octave
+  const notes = []
+  tuning.forEach((open, string) => {
+    for (let k = 0; k < 2; k++) {
+      notes.push({ string, fret: pitch - open, pitch, interval: intervals[idx] })
+      const next = (idx + 1) % intervals.length
+      pitch += mod12(intervals[next] - intervals[idx])
+      idx = next
+    }
+  })
+  return notes
+}
+
+/**
+ * The CAGED system for a key: each chord shape with its pentatonic box, ordered up the neck.
+ * Returns [{ letter, chord: [{ string, fret, interval }], box: [{ string, fret, pitch, interval }] }].
+ * Other tunings keep the same pitches as the standard-tuning shape (strings that can't reach them are left out),
+ * so the chord sounds the same and the box is the one around it in that tuning.
+ */
+export const cagedShapes = (rootPc, quality, tuning) => {
+  const kind = quality === 'minor' ? 'minor' : 'major'
+  const intervals = PENTATONIC[kind]
+  const shift = mod12(rootPc)
+  // Every pentatonic box, also an octave up or down, so a shape can find the one around it anywhere on the neck.
+  const boxes = intervals
+    .flatMap((_, degree) => [0, 12].map((octave) => pentatonicBox(rootPc, intervals, tuning, degree, octave)))
+    // Near the nut a box can run behind fret 0 (the E shape in E): keep the part that's on the neck.
+    .map((box) => box.filter((n) => n.fret >= 0))
+    .filter((box) => box.length >= 8 && box.every((n) => n.fret <= NUM_FRETS))
+  const shapes = CAGED_LETTERS.map((letter) => {
+    let frets = CAGED_FRETS[kind][letter].map((f) => (f === null ? null : f + shift))
+    if (Math.min(...frets.filter((f) => f !== null)) >= 12) frets = frets.map((f) => (f === null ? null : f - 12))
+    const chord = []
+    frets.forEach((f, s) => {
+      if (f === null || s >= tuning.length) return
+      const fret = STANDARD_PITCHES[s] + f - tuning[s]
+      if (fret >= 0 && fret <= NUM_FRETS) chord.push({ string: s, fret, interval: mod12(tuning[s] + fret - rootPc) })
+    })
+    const lo = Math.min(...chord.map((n) => n.fret))
+    const inBox = (box) => chord.filter((c) => box.some((n) => n.string === c.string && n.fret === c.fret)).length
+    const box = boxes.reduce((best, b) => {
+      const d = inBox(b) - inBox(best)
+      if (d !== 0) return d > 0 ? b : best
+      if (b.length !== best.length) return b.length > best.length ? b : best
+      const dist = (x) => Math.abs(Math.min(...x.map((n) => n.fret)) - lo)
+      return dist(b) < dist(best) ? b : best
+    }, boxes[0])
+    return { letter, chord, box, lo }
+  })
+  return shapes.sort((a, b) => a.lo - b.lo).map(({ letter, chord, box }) => ({ letter, chord, box }))
+}
+
 // How a chord's notes are stacked on the strings. Triads are always close (three adjacent strings);
 // 7th chords are drop-2 (four adjacent strings) or drop-3 (the bass note skips a string), the two standard guitar systems.
 export const DROP_VOICINGS = {
