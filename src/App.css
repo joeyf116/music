@@ -707,29 +707,6 @@ label.check {
   width: 9.5rem;
 }
 
-.practice-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.beats {
-  display: inline-flex;
-  gap: 0.25rem;
-}
-
-.beat {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-}
-
-.beat.lit {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -1736,144 +1713,329 @@ button.primary {
   }
 }
 
-/* ---- Fretboard page: key → explore → pick → neck ---- */
-.explore-key {
+/* ---- Fretboard page: key and its chords → scale or chords → the neck → Pin → practice tab ---- */
+.explore-setup {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.9rem 1rem;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.explore-key .key-picker {
-  flex: 1 1 32rem;
+.explore-setup .key-picker {
   margin: 0;
 }
 
-.explore-key .scale-field {
+/* Phones: one row of keys that scrolls sideways, instead of two rows of six. */
+@media (max-width: 640px) {
+  .explore-setup .key-picker .field-label,
+  .explore-row .field-label,
+  .position-field > .field-label,
+  .voicing-choice > .field-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .explore-setup .keys {
+    position: relative;
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(-1 * var(--page-gutter));
+    padding-inline: var(--page-gutter);
+    scroll-padding-inline: var(--page-gutter);
+  }
+
+  .position-options {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(-1 * var(--page-gutter));
+    padding-inline: var(--page-gutter);
+  }
+
+  .position-options button {
+    flex: 0 0 auto;
+  }
+
+  .explore-setup .keys::-webkit-scrollbar {
+    display: none;
+  }
+
+  .explore-setup .keys button {
+    flex: 0 0 3rem;
+    min-height: 2.75rem;
+  }
+}
+
+.explore-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.explore-row .scale-field {
   flex: 1 1 14rem;
   max-width: 20rem;
 }
 
-
-.view-choice .choice {
-  min-height: 2.9rem;
+.explore-row .view-choice {
+  flex: 1 1 14rem;
+  max-width: 22rem;
 }
 
-.view-choice .choice label {
+.view-choice .choice label,
+.voicing-choice .choice label {
   flex: 1 1 0;
-  font-size: var(--text-base);
 }
 
-/* Four views don't fit one row on a narrow phone: two by two instead. */
-@media (max-width: 480px) {
-  .explore-key .scale-field {
+/* Phones: scale and view side by side, so the neck reaches the first screen. */
+@media (max-width: 640px) {
+  .explore-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .explore-row .scale-field,
+  .explore-row .view-choice {
     max-width: none;
   }
 
-  .view-choice .choice {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .explore-setup .diatonic {
+    padding: var(--space-2) var(--space-3) var(--space-3);
   }
 
-  .view-choice .choice label {
-    min-height: 2.5rem;
+  .explore-setup .diatonic-head {
+    margin-bottom: var(--space-1);
+  }
+
+  .explore-setup .diatonic-chord {
+    min-height: 2.75rem;
+    padding-block: 0.15rem;
+  }
+
+  .explore-setup .diatonic-head h3 {
+    font-size: var(--text-sm);
+  }
+
+  .fretboard-page .title-row h2 small {
+    display: inline;
+    margin-left: var(--space-2);
   }
 }
 
-.explore-options {
+.position-options button {
+  min-width: 3rem;
+}
+
+.voicing-stepper {
+  display: grid;
+  grid-template-columns: 3rem 1fr 3rem;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.voicing-stepper button {
+  min-height: 3rem;
+  font-size: var(--text-xl);
+  line-height: 1;
+}
+
+.voicing-stepper p {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.explore-options:empty {
-  display: none;
-}
-
-.option-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-4);
-}
-
-.option-row .options {
+  align-items: center;
+  text-align: center;
   margin: 0;
 }
 
-.option-row .options button {
-  min-width: 3rem;
+.voicing-stepper span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.stage-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tab-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.pin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pin-row button {
+  min-height: var(--control-h);
+}
+
+.pin-button {
+  flex: 1 1 14rem;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.pin-button:hover:not(:disabled),
+.pin-button.done {
+  background: var(--accent-soft);
 }
 
 .type-field {
   flex: 0 1 18rem;
 }
 
-.progression-field {
-  flex: 2 1 16rem;
+/* ---- Practice tab ---- */
+.practice-tab .tab-head {
+  margin: 0;
 }
 
-.progression-field input {
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
-}
-
-.progression-buttons {
+.practice-empty {
   display: flex;
-  gap: 0.4rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
 }
 
-.progression-buttons button {
-  min-height: var(--control-h);
+.practice-empty p {
+  margin: 0;
+  color: var(--muted);
 }
 
-.progression-row .progression-error {
-  flex-basis: 100%;
+.practice-cleared {
+  margin: 0;
+  color: var(--muted);
 }
 
-.neck-foot {
+.practice-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practice-item {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.practice-item.is-playing {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.practice-item-name {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.6rem 1rem;
+  min-width: 0;
+  border: 0;
+  background: none;
+  text-align: left;
 }
 
-.neck-foot > .disclosure {
-  flex: 1 1 100%;
+.practice-item-name span {
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
-.neck-foot .legend {
-  margin-top: 0.6rem;
+.practice-item-tools {
+  display: flex;
+  gap: var(--space-1);
 }
 
-.practice-next {
+.practice-item-tools button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.beat-options {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.practice-foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2) var(--space-4);
 }
 
-.practice-next .hint {
+.practice-foot .hint {
   margin: 0;
 }
 
-.drill-button {
-  min-height: var(--control-h);
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 600;
+/* Phones: a slim bar above the tab bar, so the practice tab is always one tap away. Not a sticky top bar. */
+.practice-bar {
+  display: none;
 }
 
-@media (max-width: 640px) {
-  .drill-button {
-    width: 100%;
+@media (max-width: 719px) {
+  .practice-bar {
+    position: fixed;
+    right: max(var(--page-gutter), env(safe-area-inset-right));
+    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-2));
+    left: max(var(--page-gutter), env(safe-area-inset-left));
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
   }
-}
 
-.drill-button:hover {
-  background: rgba(240, 160, 51, 0.12);
+  .practice-bar-open {
+    flex: 1;
+    min-height: 2.5rem;
+    padding-block: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+  }
+
+  .practice-bar .primary {
+    min-width: 3rem;
+    min-height: 2.5rem;
+    padding-block: 0;
+  }
+
+  /* Hidden while typing, like the tab bar. */
+  body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .practice-bar {
+    display: none;
+  }
+
+  .fretboard-page.has-practice {
+    padding-bottom: 4rem;
+  }
 }
 
 /* ---- Footer ---- */
@@ -1970,4 +2132,12 @@ button.primary {
 
 .menu-button[aria-expanded='true'] {
   border-color: var(--accent);
+}
+
+.position-options {
+  margin-top: 0;
+}
+
+.voicing-choice {
+  max-width: 34rem;
 }

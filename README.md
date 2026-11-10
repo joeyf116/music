@@ -51,16 +51,14 @@ practise with, and a folded **Settings** panel for everything else (see [Design 
 
 ## 🎯 Fretboard
 
-- **Pick a key and a scale or mode once.** They're shared with the Rhythm page, so drills start where you left off.
-- **Explore four ways:**
-  - **Scale:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode, in playable positions (boxes or diagonal 3-notes-per-string runs) or across the whole neck.
-  - **Chords:** tap any chord of the key in the *Chords in the key* strip, or pick from 17 chord types, with voicings all the way up the neck.
-  - **Inversions:** close triads, plus drop 2 and drop 3 seventh chords, on every string set.
-  - **Progressions:** type numerals or chord names (`I V vi IV`, `Am F C G`), start from a common progression, or roll a random one.
+- **Pick a key and a scale or mode once.** They're shared with the Rhythm page, so drills start where you left off. The key's chords sit right under the keys; tap one to see its voicings.
+- **Two views:**
+  - **Scale:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode, in playable positions (boxes or diagonal 3-notes-per-string runs, set in Settings) or across the whole neck.
+  - **Chords:** one voicing at a time, stepped with ‹ › (or ← / →). Pick the voicing type: **Shapes** (open and barre chords), **CAGED** (each shape inside its pentatonic box), **Triads** on every string set, or **Drop 2** / **Drop 3** for 7th chords. Any of 17 chord types can replace the key's own in Settings.
+- **Pin to practice tab** adds whatever is on the neck (a voicing, a CAGED shape and its box, or a scale run) to the **practice tab**. Pinned items keep their own frets and key, so you can mix keys in one session.
+- **The practice tab plays everything pinned as one looping tab**, with the cursor following the sound, at any BPM, with an optional click and a drone on the key. Reorder or remove items, set how many beats a chord rings, choose strum, arpeggio or block chords, or start from a common or random progression. On a phone a small bar above the tab bar keeps it one tap away.
 - **Notes are coloured and shaped by role** (root, 3rd, 5th, 7th, other), so the neck reads even without colour. Labels can show note names or intervals.
-- **Tab under the neck** for whatever is selected. Tap a column to hear it, step through with ← / →, or press **Play** at any BPM, with a metronome and drone beside it.
-- **25 tunings** in five groups: standard down to B, drop tunings, open tunings, math rock (FACGCE, open C6, open F) and more. Tuning, labels and "show every note" live in **Neck settings**.
-- **Practise it →** opens a matching drill on the Rhythm page.
+- **25 tunings** in five groups: standard down to B, drop tunings, open tunings, math rock (FACGCE, open C6, open F) and more. Tuning, labels and "show every note" live in **Settings**.
 
 ## 🥁 Rhythm
 

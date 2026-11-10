@@ -14,7 +14,7 @@ export default function FretboardLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Fretboard', headerLargeTitle: true, headerShadowVisible: false, headerLargeTitleShadowVisible: false }} />
-      <Stack.Screen name="settings" options={{ title: 'Neck settings', presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
+      <Stack.Screen name="settings" options={{ title: 'Settings', presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
       <Stack.Screen name="choose" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
     </Stack>
   )

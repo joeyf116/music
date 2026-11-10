@@ -162,7 +162,8 @@ declare module '@music/audio.js' {
 declare module '@music/fretboardView.js' {
   import type { ChordType, DiatonicChord } from '@music/theory.js'
 
-  export type View = 'scale' | 'chord' | 'inversion' | 'progression' | 'caged'
+  export type View = 'scale' | 'chord'
+  export type VoicingType = 'shapes' | 'caged' | 'triads' | 'drop2' | 'drop3'
   export type Level = 'faint' | 'path' | 'shape' | 'active'
   export interface Option<V extends string = string> {
     value: V
@@ -174,15 +175,12 @@ declare module '@music/fretboardView.js' {
     fret: number
     interval?: number
   }
-  /** A note drawn on the neck. Progression notes carry their own degree name and spelling instead of an interval. */
+  /** A note drawn on the neck. */
   export interface NeckNote extends Position {
     level: Level
     degree?: string
     name?: string
     role?: string
-  }
-  export interface ParsedChord extends Omit<DiatonicChord, 'degree' | 'numeral'> {
-    numeral?: string
   }
   /** One column of tab: the notes played together, with optional labels and a bar line before it. */
   export interface Column {
@@ -192,7 +190,6 @@ declare module '@music/fretboardView.js' {
     heading?: string
     groupStart?: boolean
     shape?: Position[]
-    chord?: ParsedChord
   }
   export interface Shapes {
     options: { label: string; hint: string }[]
@@ -203,7 +200,7 @@ declare module '@music/fretboardView.js' {
     defaultActive: number | null
     shape?: Position[] | null
     all?: boolean
-    /** Set in the CAGED view: whether every shape is shown, else which one. */
+    /** Set for a CAGED voicing: which shape is shown. */
     caged?: { all: boolean; letter: string | null; quality: 'major' | 'minor' }
   }
   export interface Settings {
@@ -213,16 +210,21 @@ declare module '@music/fretboardView.js' {
     chordDegree: number
     chordOverride: string
     sevenths: boolean
-    drop: string
+    voicingType: string
+    voicingIndex: number
     layout: string
     position: number | 'all'
-    stringSet: number
-    progression: string
-    area: string
-    /** CAGED view: a shape letter (C A G E D) or 'all'. */
-    cagedShape?: string
     tuning: number[]
     tuningId: string
+  }
+  /** What Pin adds to the practice tab: the frets themselves, with a name and a line about them. */
+  export interface Pin {
+    kind: 'chord' | 'run'
+    name: string
+    detail: string
+    key: string
+    tuningId: string
+    columns: { notes: { string: number; fret: number }[] }[]
   }
   export interface Model {
     view: View
@@ -233,8 +235,6 @@ declare module '@music/fretboardView.js' {
     chordType: string
     chordName: string
     isFourNote: boolean
-    badTokens: string[]
-    goodChords: { token: string; chord: ParsedChord }[]
     formula: { rootPc: number; intervals: number[]; names: string[]; rootName: string }
     rootPc: number
     intervals: number[]
@@ -242,42 +242,61 @@ declare module '@music/fretboardView.js' {
     selection: string
     heading: { title: string; sub: string }
     tabNote: string
-    drill: { name: string; settings: Record<string, unknown> }
+    voicingTypes: Option<VoicingType>[]
+    voicingType: VoicingType
+    voicings: { label: string; hint: string }[]
+    voicingIndex: number
+    pin: Pin | null
     typeOptions: [string, ChordType][]
   }
   export interface Active {
     selection: string
     index: number
   }
-  export interface Chip {
-    key: number
-    name: string
-    sub: string
-    root: boolean
-    on?: boolean
-    index?: number
-  }
 
   export const VIEWS: Option<View>[]
   export const VIEW_IDS: View[]
-  export const ALL_SHAPES: 'all'
+  export const VOICING_TYPES: Option<VoicingType>[]
   export const LABEL_OPTIONS: Option<'notes' | 'intervals'>[]
   export const LAYOUT_OPTIONS: Option[]
-  export const DROP_OPTIONS: Option[]
-  export const AREA_OPTIONS: Option[]
   export const LEGEND: [string, string][]
   export const ALL_POSITIONS: 'all'
   export const INVERSION_TYPES: string[]
   export function progressionToken(chord: DiatonicChord): string
   export function progressionMood(scaleType: string): 'major' | 'minor'
+  export function voicingTypesFor(chordType: string): Option<VoicingType>[]
+  export function resolveVoicingType(stored: string, chordType: string): VoicingType
+  export function legacyView(mode: string, drop?: string): { view: View; voicingType: VoicingType; progression?: boolean } | null
   export function fretboardView(settings: Settings): Model
   export function activeColumnIndex(model: Model, active: Active | null): number | null
   export function noteLabeller(model: Model, labels: string, tuning: number[]): (note: NeckNote | Position) => string
   export function neckNotes(model: Model, activeIndex: number | null, showAll: boolean, tuning: number[]): NeckNote[]
-  export function headingChips(model: Model, activeIndex: number | null): Chip[]
-  export function columnDuration(view: View, bpm: number): number
+  export function columnDuration(column: Column, bpm: number): number
   export function columnPitches(column: Column, tuning: number[]): number[]
   export function tabStringNames(tuning: number[], stringName: (string: number) => string): string[]
+}
+
+declare module '@music/practiceTab.js' {
+  import type { Score } from '@music/exercises.js'
+  import type { Option, Pin } from '@music/fretboardView.js'
+
+  /** A pinned voicing or run in the practice tab. */
+  export interface PracticeItem extends Pin {
+    id: string
+    beats: number
+  }
+  export type ChordStyle = 'strum' | 'arpeggio' | 'block'
+  export const BEAT_OPTIONS: number[]
+  export const CHORD_STYLES: Option<ChordStyle>[]
+  export function createItem(pin: Pin, id?: string): PracticeItem
+  export function validItems(items: unknown): PracticeItem[]
+  export function addItem(items: PracticeItem[], item: PracticeItem): PracticeItem[]
+  export function removeItem(items: PracticeItem[], index: number): PracticeItem[]
+  export function moveItem(items: PracticeItem[], index: number, delta: number): PracticeItem[]
+  export function setItemBeats(items: PracticeItem[], index: number, beats: number): PracticeItem[]
+  export function practiceColumns(items: PracticeItem[]): { columns: { notes: { string: number; fret: number }[]; heading?: string; groupStart?: boolean }[]; owner: number[] }
+  export function practiceScore(items: PracticeItem[], tuning: number[], style?: string): Score & { events: (Score['events'][number] & { column: number })[] }
+  export function progressionItems(text: string, key: string, tuning: number[], tuningId: string, area?: string): { items: PracticeItem[]; errors: string[] }
 }
 
 declare module '@music/clickSounds.js' {
