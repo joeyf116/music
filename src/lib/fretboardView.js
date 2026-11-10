@@ -1,15 +1,20 @@
 // Everything the Fretboard page works out from its settings: the shapes on the neck, the tab columns, headings and
 // labels. Kept free of React and the DOM so the web page and the iOS / Android app (mobile/) show exactly the same thing.
-import { DROP_VOICINGS, CHORDS, PENTATONIC, cagedShapes, INVERSION_CHORDS, INVERSION_NAMES, SCALES, chordInversions, chordVoicings, diatonicChords, findPositions, intervalName, mod12, noteToPc, NUM_FRETS, pcName, scaleAcrossNeck, scalePosition, sevenNoteScale, spellInterval, spellNotes, usesFlats } from './theory.js'
-import { LAYOUTS, parseProgression, voiceProgression } from './exercises.js'
+import { CHORDS, PENTATONIC, cagedShapes, INVERSION_CHORDS, INVERSION_NAMES, SCALES, chordInversions, chordVoicings, diatonicChords, findPositions, intervalName, mod12, noteToPc, pcName, scaleAcrossNeck, scalePosition, sevenNoteScale, spellNotes, usesFlats } from './theory.js'
+import { LAYOUTS } from './exercises.js'
 
 // One switch for what the neck shows. Everything else on the page follows from the key, the scale and this.
 export const VIEWS = [
   { value: 'scale', label: 'Scale', title: 'The scale in each position, or the whole neck' },
-  { value: 'chord', label: 'Chords', title: 'Full chord shapes up the neck for a chord in the key' },
-  { value: 'inversion', label: 'Inversions', title: 'Triads and drop-2 / drop-3 7th chords on each string set' },
-  { value: 'progression', label: 'Progressions', title: 'A chord progression in the key, voiced close together' },
-  { value: 'caged', label: 'CAGED', title: 'The five CAGED chord shapes in the key, each inside its pentatonic box' },
+  { value: 'chord', label: 'Chords', title: 'Every voicing of a chord in the key, one at a time' },
+]
+// How a chord is voiced in Chords view. Triads are for three-note chords, drop voicings for 7th chords.
+export const VOICING_TYPES = [
+  { value: 'shapes', label: 'Shapes', title: 'Full open and barre chord shapes' },
+  { value: 'caged', label: 'CAGED', title: 'The five CAGED shapes, each inside its pentatonic box' },
+  { value: 'triads', label: 'Triads', title: 'Close triads on each set of three strings' },
+  { value: 'drop2', label: 'Drop 2', title: 'Four adjacent strings: the 2nd voice from the top dropped an octave' },
+  { value: 'drop3', label: 'Drop 3', title: 'Bass note a string apart from the other three' },
 ]
 export const VIEW_IDS = VIEWS.map((v) => v.value)
 export const LABEL_OPTIONS = [
@@ -17,12 +22,6 @@ export const LABEL_OPTIONS = [
   { value: 'intervals', label: 'Intervals' },
 ]
 export const LAYOUT_OPTIONS = Object.entries(LAYOUTS).map(([value, l]) => ({ value, label: l.name, title: l.title }))
-export const DROP_OPTIONS = Object.entries(DROP_VOICINGS).map(([value, d]) => ({ value, label: d.name, title: d.title }))
-export const AREA_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'middle', label: 'Fret 5' },
-  { value: 'high', label: 'Fret 8' },
-]
 export const LEGEND = [
   ['root', 'Root'],
   ['third', '3rd'],
@@ -31,12 +30,11 @@ export const LEGEND = [
   ['other', 'Other'],
 ]
 export const ALL_POSITIONS = 'all'
-export const ALL_SHAPES = 'all'
 const INVERSION_SHORT = ['R', '1st', '2nd', '3rd']
 // Chord types with a clean inversion system on adjacent strings (every chord a seven-note scale can build is here).
 export const INVERSION_TYPES = [...INVERSION_CHORDS, 'augMaj7']
 const LEVELS = { faint: 0, path: 1, shape: 2, active: 3 }
-const MINOR_MODES = ['minor', 'dorian', 'phrygian', 'locrian', 'harmonicMinor', 'melodicMinor']
+export const MINOR_MODES = ['minor', 'dorian', 'phrygian', 'locrian', 'harmonicMinor', 'melodicMinor']
 
 const minFret = (notes) => Math.min(...notes.map((n) => n.fret))
 const fretRange = (notes) => {
@@ -46,7 +44,6 @@ const fretRange = (notes) => {
   return lo === hi ? `fr ${lo}` : `fr ${lo}–${hi}`
 }
 const shapeHint = (notes) => (!notes.length ? '' : notes.some((n) => n.fret === 0) ? 'open' : `fr ${minFret(notes)}`)
-const withOctave = (notes) => [...notes, ...notes.map((n) => ({ ...n, fret: n.fret + 12 })).filter((n) => n.fret <= NUM_FRETS)]
 // The voicing searches are the only slow part of the page; remember recent results so stepping through the tab is instant.
 const cache = new Map()
 const remember = (key, compute) => {
@@ -63,48 +60,130 @@ export const progressionToken = (chord) => chord.numeral.replace('♭', 'b').rep
 /** Whether the key and mode read as minor, for the random progression button. */
 export const progressionMood = (scaleType) => (MINOR_MODES.includes(sevenNoteScale(scaleType)) ? 'minor' : 'major')
 
+/** Whether a chord's triad is major or minor, for CAGED (null for anything else). */
+const triadQuality = (intervals) => {
+  const tones = intervals.map(mod12)
+  if (intervals.length !== 3 || !tones.includes(7)) return null
+  return tones.includes(4) ? 'major' : tones.includes(3) ? 'minor' : null
+}
+
+/** The voicing types a chord can be shown in: full shapes always, CAGED for plain major / minor triads, then triads or drop voicings. */
+export const voicingTypesFor = (chordType) => {
+  const def = CHORDS[chordType]
+  if (!def) return VOICING_TYPES.filter((t) => t.value === 'shapes')
+  const inversions = INVERSION_TYPES.includes(chordType)
+  const four = def.intervals.length === 4
+  return VOICING_TYPES.filter(
+    (t) =>
+      t.value === 'shapes' ||
+      (t.value === 'caged' && triadQuality(def.intervals)) ||
+      (t.value === 'triads' && inversions && def.intervals.length === 3) ||
+      ((t.value === 'drop2' || t.value === 'drop3') && inversions && four),
+  )
+}
+
+/** The voicing type to use: the stored one if the chord has it, else its nearest relative (triads ↔ drop 2), else full shapes. */
+export const resolveVoicingType = (stored, chordType) => {
+  const ids = voicingTypesFor(chordType).map((t) => t.value)
+  if (ids.includes(stored)) return stored
+  if ((stored === 'drop2' || stored === 'drop3') && ids.includes('triads')) return 'triads'
+  if (stored === 'triads' && ids.includes('drop2')) return 'drop2'
+  return 'shapes'
+}
+
+/**
+ * Old saved views (before Inversions, CAGED and Progressions became part of Chords) as the view and voicing type
+ * they now open as. Returns null for a view that needs no change.
+ */
+export const legacyView = (mode, drop) =>
+  mode === 'inversion'
+    ? { view: 'chord', voicingType: drop === 'drop3' ? 'drop3' : 'drop2' }
+    : mode === 'caged'
+      ? { view: 'chord', voicingType: 'caged' }
+      : mode === 'progression'
+        ? { view: 'chord', voicingType: 'shapes', progression: true }
+        : null
+
+const stringNumbers = (strings, tuning) =>
+  strings
+    .map((s) => tuning.length - s)
+    .reverse()
+    .join('-')
+
 /**
  * Works out the page from its settings:
- * { view, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, cagedShape, tuning, tuningId }.
+ * { view, keyName, scaleType, chordDegree, chordOverride, sevenths, voicingType, voicingIndex, layout, position, tuning, tuningId }.
+ * Scale view shows a scale position (or the whole neck); Chords view shows one voicing of a chord in the key at a time.
+ * Either way `pin` is what the Pin button adds to the practice tab.
  */
 export function fretboardView(s) {
-  const { keyName, scaleType, sevenths, drop, layout, position, stringSet, progression, area, tuning, tuningId } = s
-  const view = VIEW_IDS.includes(s.view) ? s.view : 'scale'
+  const { keyName, scaleType, sevenths, layout, position, tuning, tuningId } = s
+  const view = VIEW_IDS.includes(s.view) ? s.view : legacyView(s.view)?.view ?? 'scale'
   const keyPc = noteToPc(keyName)
   const scale = SCALES[scaleType] ?? SCALES.major
   const scaleSpelling = spellNotes(keyName, scale.intervals, true)
   const modeId = sevenNoteScale(scaleType)
 
-  // Chords and inversions are picked from the key: the strip chooses the chord (ii, V…), the type can be changed.
+  // The chord is picked from the key (ii, V…); its type can be changed in Settings.
   const diatonic = diatonicChords(keyName, scaleType, sevenths)
   const picked = diatonic[Math.min(Math.max(0, Number(s.chordDegree) || 0), diatonic.length - 1)]
-  const overrideOk = Boolean(CHORDS[s.chordOverride] && (view !== 'inversion' || INVERSION_TYPES.includes(s.chordOverride)))
-  const chordType = overrideOk ? s.chordOverride : INVERSION_TYPES.includes(picked.type) || view !== 'inversion' ? picked.type : 'maj'
+  const overrideOk = Boolean(CHORDS[s.chordOverride])
+  const chordType = overrideOk ? s.chordOverride : picked.type
   const chordDef = CHORDS[chordType]
   const chordSpelling = spellNotes(picked.rootName, chordDef.intervals)
   const chordName = `${picked.rootName}${chordDef.symbol}`
   const isFourNote = chordDef.intervals.length === 4
-
-  // A progression is read token by token so each chord keeps the numeral it was written as.
-  const progressionChords = progression
-    .split(/[\s,|–—-]+/)
-    .filter(Boolean)
-    .map((token) => ({ token, chord: parseProgression(token, keyName).chords[0] }))
-  const badTokens = progressionChords.filter((c) => !c.chord).map((c) => c.token)
-  const goodChords = progressionChords.filter((c) => c.chord)
-
-  // CAGED reads the key as major or minor and shows its pentatonic, whatever mode is picked.
-  const quality = MINOR_MODES.includes(modeId) ? 'minor' : 'major'
-  const pentatonic = PENTATONIC[quality]
-  const pentatonicSpelling = spellNotes(keyName, pentatonic, true)
+  const voicingTypes = voicingTypesFor(chordType)
+  const voicingType = resolveVoicingType(s.voicingType, chordType)
+  const typeName = VOICING_TYPES.find((t) => t.value === voicingType).label
+  const quality = triadQuality(chordDef.intervals) ?? 'major'
+  const pentatonicSpelling = spellNotes(picked.rootName, PENTATONIC[quality], true)
 
   const formula =
     view === 'scale'
       ? { rootPc: keyPc, intervals: scale.intervals, names: scaleSpelling.names, rootName: scaleSpelling.root }
-      : view === 'caged'
-        ? { rootPc: keyPc, intervals: pentatonic, names: pentatonicSpelling.names, rootName: pentatonicSpelling.root }
+      : voicingType === 'caged'
+        ? { rootPc: picked.rootPc, intervals: PENTATONIC[quality], names: pentatonicSpelling.names, rootName: pentatonicSpelling.root }
         : { rootPc: picked.rootPc, intervals: chordDef.intervals, names: chordSpelling.names, rootName: picked.rootName }
   const { rootPc, intervals } = formula
+
+  // Chords view: every voicing of the chord in the chosen type, low on the neck to high. Each is
+  // { label, hint, notes (the chord shape), path (CAGED: its box), columns (its tab) }.
+  const voicings =
+    view === 'scale'
+      ? []
+      : remember(`${voicingType}|${picked.rootPc}|${chordDef.intervals}|${tuning}`, () => {
+          if (voicingType === 'caged') {
+            return cagedShapes(picked.rootPc, quality, tuning).map((c) => ({
+              label: `${c.letter} shape`,
+              hint: fretRange(c.box),
+              notes: c.chord,
+              path: c.box,
+              // The chord, then its box up and back.
+              columns: [{ notes: c.chord, label: chordName }, ...[...c.box, ...c.box.slice(0, -1).reverse()].map((n) => ({ notes: [n] }))],
+              caged: c.letter,
+            }))
+          }
+          if (voicingType === 'shapes') {
+            return chordVoicings(picked.rootPc, chordDef.intervals, tuning).map((v, i) => ({
+              label: `Shape ${i + 1}`,
+              hint: shapeHint(v.notes),
+              notes: v.notes,
+              columns: [{ notes: v.notes, label: chordName, sublabel: shapeHint(v.notes) }],
+            }))
+          }
+          const drop = voicingType === 'drop3' ? 'drop3' : 'drop2'
+          return chordInversions(picked.rootPc, chordDef.intervals, tuning, drop).flatMap((set) =>
+            set.shapes.map((sh) => ({
+              label: `Strings ${stringNumbers(set.strings, tuning)} · ${INVERSION_NAMES[sh.inversion]}`,
+              hint: `fr ${minFret(sh.notes)}`,
+              notes: sh.notes,
+              columns: [{ notes: sh.notes, label: chordName, sublabel: INVERSION_SHORT[sh.inversion] }],
+            })),
+          )
+        })
+  const voicingIndex = Math.min(Math.max(0, Number(s.voicingIndex) || 0), Math.max(0, voicings.length - 1))
+  const voicing = voicings[voicingIndex] ?? null
 
   const shapes = (() => {
     if (view === 'scale') {
@@ -132,93 +211,54 @@ export function fretboardView(s) {
       const run = [...notes, ...notes.slice(0, -1).reverse()]
       return { options, optionIndex: index, path: [], columns: run.map((n) => ({ notes: [n] })), columnWidth: 28, defaultActive: null, shape: notes }
     }
-    if (view === 'caged') {
-      // Each shape plays its chord, then runs its box; "All" climbs the neck one shape at a time.
-      const list = cagedShapes(rootPc, quality, tuning)
-      const options = [...list.map((c) => ({ label: c.letter, hint: fretRange(c.box) })), { label: 'All', hint: 'whole neck' }]
-      const found = list.findIndex((c) => c.letter === s.cagedShape)
-      const all = found < 0
-      const group = (c, k, back) => {
-        const run = back ? [...c.box, ...c.box.slice(0, -1).reverse()] : c.box
-        return [{ notes: c.chord, heading: `${c.letter} shape · ${fretRange(c.box)}`, groupStart: k > 0, shape: c.box }, ...run.map((n) => ({ notes: [n], shape: c.box }))]
-      }
-      const shown = all ? list : [list[found]]
-      return {
-        options,
-        optionIndex: all ? list.length : found,
-        // "All" repeats the cycle an octave up on the neck wherever it fits; the tab plays it once.
-        path: all ? withOctave(shown.flatMap((c) => c.box)) : shown.flatMap((c) => c.box),
-        shape: all ? withOctave(shown.flatMap((c) => c.chord)) : shown.flatMap((c) => c.chord),
-        columns: shown.flatMap((c, k) => group(c, k, !all)),
-        columnWidth: 28,
-        defaultActive: null,
-        caged: { all, letter: all ? null : list[found].letter, quality },
-      }
-    }
-    if (view === 'chord') {
-      const voicings = remember(`v|${rootPc}|${intervals}|${tuning}`, () => chordVoicings(rootPc, intervals, tuning))
-      return {
-        options: [],
-        path: [],
-        columns: voicings.map((v) => ({ notes: v.notes, label: chordName, sublabel: shapeHint(v.notes) })),
-        columnWidth: 70,
-        defaultActive: 0,
-      }
-    }
-    if (view === 'inversion') {
-      const sets = chordInversions(rootPc, intervals, tuning, drop)
-      const index = Math.min(Number(stringSet) || 0, sets.length - 1)
-      const set = sets[index]
-      const stringNumber = (str) => tuning.length - str
-      return {
-        options: sets.map((set) => ({ label: `Strings ${set.strings.map(stringNumber).reverse().join('-')}`, hint: '' })),
-        optionIndex: index,
-        path: set.shapes.flatMap((sh) => sh.notes),
-        columns: set.shapes.map((sh, i) => ({ notes: sh.notes, label: INVERSION_SHORT[sh.inversion], sublabel: `fr ${minFret(sh.notes)}`, groupStart: i === 0 })),
-        columnWidth: 70,
-        defaultActive: 0,
-      }
-    }
-    const chords = goodChords.map((c) => c.chord)
-    const voicings = remember(`p|${keyName}|${progression}|${tuning}|${area}`, () => voiceProgression(chords, tuning, area))
     return {
       options: [],
-      path: [],
-      columns: chords.map((chord, i) => ({ notes: voicings[i], chord, label: chord.name, sublabel: shapeHint(voicings[i]), groupStart: i > 0 && i % 4 === 0 })),
-      columnWidth: 70,
-      defaultActive: chords.length ? 0 : null,
+      path: voicing?.path ?? [],
+      shape: voicing?.notes ?? [],
+      columns: voicing?.columns ?? [],
+      columnWidth: voicingType === 'caged' ? 28 : 70,
+      defaultActive: voicing ? 0 : null,
+      caged: voicingType === 'caged' && voicing ? { all: false, letter: voicing.caged, quality } : undefined,
     }
   })()
 
-  const selection = [view, keyName, scaleType, chordName, tuningId, shapes.optionIndex, layout, drop, progression, area].join('|')
-  const pentatonicName = `${pentatonicSpelling.root} ${quality} pentatonic`
+  const selection = [view, keyName, scaleType, chordName, tuningId, shapes.optionIndex, layout, voicingType, voicingIndex].join('|')
 
-  const heading = {
-    scale: { title: `${scaleSpelling.root} ${scale.name}`, sub: shapes.all ? 'whole neck' : `${layout === 'across' ? 'diagonal from ' : ''}position ${shapes.optionIndex + 1}` },
-    chord: { title: chordName, sub: `${picked.numeral} in ${keyName} · ${chordDef.name}` },
-    inversion: { title: `${chordName} inversions`, sub: `${picked.numeral} in ${keyName} · ${isFourNote ? DROP_VOICINGS[drop].name : 'close triads'}` },
-    progression: { title: `Progression in ${keyName}`, sub: goodChords.length ? `${goodChords.length} chords` : 'add some chords' },
-    caged: { title: `${pentatonicName} · CAGED`, sub: shapes.caged?.all ? 'every shape, up the neck' : `${shapes.caged?.letter} shape and its box` },
-  }[view]
-  const tabNote = {
-    scale: shapes.all ? 'every position, up the neck' : layout === 'across' ? 'up the neck & back' : 'ascending & descending',
-    chord: 'voicings up the neck',
-    inversion: `${INVERSION_NAMES.slice(0, intervals.length).join(' → ')} moving up the neck`,
-    progression: 'one chord per bar, voiced close together',
-    caged: shapes.caged?.all ? 'each shape up the neck: its chord, then its box' : 'the chord, then its box up & back',
-  }[view]
+  const heading =
+    view === 'scale'
+      ? { title: `${scaleSpelling.root} ${scale.name}`, sub: shapes.all ? 'whole neck' : `${layout === 'across' ? 'diagonal from ' : ''}position ${shapes.optionIndex + 1}` }
+      : { title: chordName, sub: `${picked.numeral} in ${keyName} · ${chordDef.name}` }
+  const tabNote =
+    view === 'scale'
+      ? shapes.all
+        ? 'every position, up the neck'
+        : layout === 'across'
+          ? 'up the neck & back'
+          : 'ascending & descending'
+      : voicingType === 'caged'
+        ? 'the chord, then its pentatonic box up & back'
+        : ''
 
-  // "Practise it": the drill on the Rhythm page that matches what the neck shows.
-  const drill =
-    view === 'caged'
-      ? { name: 'Chord arpeggio shapes', settings: { exercise: 'chordArpeggio', chord: quality === 'minor' ? 'min' : 'maj', layout: 'position', position: 0 } }
-      : view === 'scale'
-      ? { name: 'Scale sequences', settings: { exercise: 'scaleSequence', position: shapes.all ? 0 : shapes.optionIndex, layout } }
-      : view === 'progression'
-        ? { name: 'Strum this progression', settings: { exercise: 'progression', progression: goodChords.map((c) => c.token).join(' ') || 'I V vi IV', sevenths: false } }
-        : view === 'inversion' && !isFourNote
-          ? { name: 'Triads on a string set', settings: { exercise: 'triadSets', stringSet: shapes.optionIndex, scale7: modeId } }
-          : { name: 'Arpeggios through the key', settings: { exercise: 'diatonicArpeggios', arpSize: isFourNote ? 'sevenths' : 'triads', scale7: modeId } }
+  // What Pin adds to the practice tab: the frets themselves, so changing the key later never changes it.
+  const strip = (cols) => cols.map((c) => ({ notes: c.notes.map((n) => ({ string: n.string, fret: n.fret })) }))
+  const pin =
+    view === 'scale'
+      ? {
+          kind: 'run',
+          name: `${scaleSpelling.root} ${scale.name}`,
+          detail: shapes.all ? 'Whole neck' : `${layout === 'across' ? 'Diagonal from position' : 'Position'} ${shapes.optionIndex + 1} · ${shapes.options[shapes.optionIndex].hint}`,
+          key: keyName,
+          tuningId,
+          columns: strip(shapes.columns),
+        }
+      : voicing && {
+          kind: voicingType === 'caged' ? 'run' : 'chord',
+          name: chordName,
+          detail: `${typeName === 'Shapes' ? 'Shape' : typeName} · ${voicingType === 'shapes' ? voicing.hint : `${voicing.label} · ${voicing.hint}`}`,
+          key: keyName,
+          tuningId,
+          columns: strip(voicing.columns),
+        }
 
   return {
     view,
@@ -229,8 +269,6 @@ export function fretboardView(s) {
     chordType,
     chordName,
     isFourNote,
-    badTokens,
-    goodChords,
     formula,
     rootPc,
     intervals,
@@ -238,8 +276,12 @@ export function fretboardView(s) {
     selection,
     heading,
     tabNote,
-    drill,
-    typeOptions: Object.entries(CHORDS).filter(([id]) => view !== 'inversion' || INVERSION_TYPES.includes(id)),
+    voicingTypes,
+    voicingType,
+    voicings: voicings.map((v) => ({ label: v.label, hint: v.hint })),
+    voicingIndex,
+    pin: pin || null,
+    typeOptions: Object.entries(CHORDS),
   }
 }
 
@@ -252,58 +294,36 @@ export function noteLabeller(model, labels, tuning) {
   const flats = usesFlats(formula.rootName)
   const nameOfPc = new Map(intervals.map((i, k) => [mod12(rootPc + i), formula.names[k]]))
   return (n) => {
-    // Progression notes carry their own name and degree, read against their own chord.
-    if (n.degree !== undefined) return labels === 'intervals' ? n.degree : (n.name ?? pcName(tuning[n.string] + n.fret, flats))
-    return labels === 'intervals' ? intervalName(n.interval, intervals) : (nameOfPc.get(mod12(tuning[n.string] + n.fret)) ?? pcName(tuning[n.string] + n.fret, flats))
+    const pc = mod12(tuning[n.string] + n.fret)
+    return labels === 'intervals' ? intervalName(n.interval ?? mod12(pc - rootPc), intervals) : (nameOfPc.get(pc) ?? pcName(pc, flats))
   }
 }
 
-/** The notes to draw on the neck, faintest first, each { string, fret, level, interval | degree+name }. */
+/** The notes to draw on the neck, faintest first, each { string, fret, level, interval }. */
 export function neckNotes(model, activeIndex, showAll, tuning) {
-  const { shapes, intervals, rootPc, view } = model
+  const { shapes, intervals, rootPc } = model
   const activeColumn = activeIndex === null ? null : shapes.columns[activeIndex]
-  const progressionChord = view === 'progression' ? (activeColumn?.chord ?? shapes.columns[0]?.chord) : null
   const intervalOfPc = (pc) => intervals.find((i) => mod12(rootPc + i) === mod12(pc))
   const map = new Map()
   const add = (n, level) => {
     const id = `${n.string}-${n.fret}`
     const existing = map.get(id)
     if (existing && LEVELS[level] <= LEVELS[existing.level]) return
-    const note = { string: n.string, fret: n.fret, level }
-    if (n.degree !== undefined) Object.assign(note, { degree: n.degree, name: n.name })
-    else note.interval = n.interval ?? intervalOfPc(tuning[n.string] + n.fret)
-    map.set(id, note)
+    map.set(id, { string: n.string, fret: n.fret, level, interval: n.interval ?? intervalOfPc(tuning[n.string] + n.fret) })
   }
-  // CAGED keeps to its boxes, so the shape you're learning isn't lost among the rest of the neck.
-  if (showAll && !shapes.all && !shapes.caged) {
-    if (progressionChord) {
-      // Every tone of the chord being played, so you can see where else it lives on the neck.
-      findPositions(tuning, progressionChord.intervals.map((i) => progressionChord.rootPc + i)).forEach((n) => {
-        const interval = mod12(tuning[n.string] + n.fret - progressionChord.rootPc)
-        add({ ...n, degree: intervalName(interval, progressionChord.intervals), name: spellInterval(progressionChord.rootName, interval, progressionChord.intervals) }, 'faint')
-      })
-    } else findPositions(tuning, intervals.map((i) => rootPc + i)).forEach((n) => add(n, 'faint'))
-  }
+  // CAGED keeps to its box, so the shape you're learning isn't lost among the rest of the neck.
+  if (showAll && !shapes.all && !shapes.caged) findPositions(tuning, intervals.map((i) => rootPc + i)).forEach((n) => add(n, 'faint'))
   shapes.path.forEach((n) => add(n, 'path'))
   shapes.shape?.forEach((n) => add(n, 'shape'))
-  // CAGED: the boxes stay soft and the chord shapes full; the shape being played lights its whole box.
-  if (shapes.caged) activeColumn?.shape?.forEach((n) => add(n, 'shape'))
   // All positions: until a note plays, every note reads as one full-strength neck.
   if (shapes.all) (activeColumn?.shape ?? shapes.path).forEach((n) => add(n, 'shape'))
-  activeColumn?.notes.forEach((n) => add(n, view === 'scale' || view === 'caged' ? 'active' : 'shape'))
+  // A single note being played lights up; a chord column is the shape itself.
+  activeColumn?.notes.forEach((n) => add(n, activeColumn.notes.length === 1 ? 'active' : 'shape'))
   return [...map.values()].sort((a, b) => LEVELS[a.level] - LEVELS[b.level])
 }
 
-/** The note chips above the neck (or the progression's chords, which can be tapped). */
-export function headingChips(model, activeIndex) {
-  const { view, goodChords, intervals, formula } = model
-  return view === 'progression'
-    ? goodChords.map((c, i) => ({ key: i, name: c.chord.name, sub: c.token, root: false, on: activeIndex === i, index: i }))
-    : intervals.map((i, k) => ({ key: i, name: formula.names[k], sub: intervalName(i, intervals), root: i === 0 }))
-}
-
-/** How long each tab column lasts when the tab plays, in ms. */
-export const columnDuration = (view, bpm) => (60 / Math.max(30, Math.min(300, Number(bpm) || 100))) * 1000 * (view === 'scale' || view === 'caged' ? 1 : view === 'progression' ? 4 : 2)
+/** How long a tab column lasts when the neck's tab plays, in ms: a beat per note, two per chord. */
+export const columnDuration = (column, bpm) => (60 / Math.max(30, Math.min(300, Number(bpm) || 100))) * 1000 * (column.notes.length > 1 ? 2 : 1)
 
 /** The MIDI pitches a tab column sounds. */
 export const columnPitches = (col, tuning) => col.notes.map((n) => tuning[n.string] + n.fret)

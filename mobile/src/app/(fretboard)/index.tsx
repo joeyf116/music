@@ -1,45 +1,28 @@
 import { Stack, router } from 'expo-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native'
 import DiatonicStrip from '@/components/DiatonicStrip'
 import Fretboard, { Legend } from '@/components/Fretboard'
+import PracticeTab from '@/components/PracticeTab'
 import Tab from '@/components/Tab'
-import { Button, ChipRow, ChoiceRow, Field, HeaderButton, Hint, Section, Segmented, Stepper } from '@/components/ui'
-import { choose } from '@/lib/choose'
+import { Button, ChipRow, ChoiceRow, HeaderButton, Hint, Section, Segmented } from '@/components/ui'
 import { impact } from '@/lib/haptics'
 import { useMusic } from '@/lib/music'
-import { chordTypeSections, progressionSections, scaleSections } from '@/lib/pickers'
-import { usePref } from '@/lib/prefs'
-import { colors, space, text } from '@/theme'
-import { playChord, playPitch } from '@music/audio.js'
-import { NECK_AREAS, randomProgression } from '@music/exercises.js'
-import {
-  type Active,
-  type Column,
-  ALL_POSITIONS,
-  ALL_SHAPES,
-  AREA_OPTIONS,
-  DROP_OPTIONS,
-  LAYOUT_OPTIONS,
-  VIEWS,
-  activeColumnIndex,
-  columnDuration,
-  columnPitches,
-  fretboardView,
-  headingChips,
-  neckNotes,
-  noteLabeller,
-  progressionMood,
-  progressionToken,
-  tabStringNames,
-} from '@music/fretboardView.js'
-import { CHORDS, KEYS, SCALES, type DiatonicChord } from '@music/theory.js'
+import { scaleSections } from '@/lib/pickers'
+import { getPref, usePref } from '@/lib/prefs'
+import { colors, space, text, touch } from '@/theme'
+import { playChord, playPitch, startDrone } from '@music/audio.js'
+import { type Active, type Column, ALL_POSITIONS, VIEWS, activeColumnIndex, columnDuration, columnPitches, fretboardView, legacyView, neckNotes, noteLabeller, progressionMood, tabStringNames, type View as ViewId } from '@music/fretboardView.js'
+import { startPlayback } from '@music/player.js'
+import { addItem, createItem, practiceColumns, practiceScore, progressionItems, validItems, type PracticeItem } from '@music/practiceTab.js'
+import { KEYS, SCALES, mod12, type DiatonicChord } from '@music/theory.js'
 
 const KEY_OPTIONS = KEYS.map((k) => ({ value: k, label: k }))
 
 /**
  * The Fretboard page, as on the web (src/components/FretboardPage.jsx) and driven by the same model
- * (src/lib/fretboardView.js): pick a key and scale, what to look at, and which one; the neck and its tab follow.
+ * (src/lib/fretboardView.js, src/lib/practiceTab.js): pick a key, look at its scale or one voicing of a chord at a
+ * time, and pin what you want into the practice tab, which plays everything pinned as one looping tab.
  */
 export default function FretboardScreen() {
   const { keyName, setKey, scaleType, setScaleType, tuning, tuningId, tuningSpec, stringName, bpm, setBpm } = useMusic()
@@ -47,189 +30,186 @@ export default function FretboardScreen() {
   const [chordDegree, setChordDegree] = usePref('music.chordDegree')
   const [chordOverride, setChordOverride] = usePref('music.chordType')
   const [sevenths, setSevenths] = usePref('music.diatonicSevenths')
-  const [drop, setDrop] = usePref('music.dropVoicing')
+  const [voicingType, setVoicingType] = usePref('music.voicingType')
+  const [voicingIndex, setVoicingIndex] = usePref('music.voicingIndex')
   const [labels] = usePref('music.labels')
   const [showAll] = usePref('music.showAll')
-  const [layout, setLayout] = usePref('music.scaleLayout')
+  const [layout] = usePref('music.scaleLayout')
   const [position, setPosition] = usePref('music.fretPosition')
-  const [stringSet, setStringSet] = usePref('music.stringSet')
-  const [progression, setProgression] = usePref('music.fretProgression')
-  const [area, setArea] = usePref('music.progressionNeck')
-  const [cagedShape, setCagedShape] = usePref('music.cagedShape')
+  const [chordStyle] = usePref('music.chordStyle')
+  const [storedItems, setItems] = usePref('music.practiceTab')
+  const [click, setClick] = usePref('music.practiceClick')
+  const [drone, setDrone] = usePref('music.practiceDrone')
+  const items = useMemo(() => validItems(storedItems), [storedItems])
+
+  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, voicingType, voicingIndex, layout, position, tuning, tuningId })
+  const { view, picked, overrideOk, shapes, selection, heading, tabNote, keyPc, voicings, voicingTypes, pin } = model
+
+  // Views saved before Inversions, CAGED and Progressions moved into Chords open where they now live.
+  useEffect(() => {
+    const old = legacyView(storedView, getPref('music.dropVoicing'))
+    if (!old) return
+    setView(old.view)
+    setVoicingType(old.voicingType)
+    setVoicingIndex(0)
+    if (old.progression && !items.length) setItems(progressionItems(getPref('music.fretProgression') || 'I V vi IV', keyName, tuning, tuningId).items)
+    // Only the stored view matters here: this runs once, when an old one is found.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedView])
+
+  // ---- The neck's own tab: tap a column to hear it, Listen plays it through once ----
   const [active, setActive] = useState<Active | null>(null)
-  const [playing, setPlaying] = useState(false)
+  const [listening, setListening] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-
-  const model = fretboardView({ view: storedView, keyName, scaleType, chordDegree, chordOverride, sevenths, drop, layout, position, stringSet, progression, area, cagedShape, tuning, tuningId })
-  const { view, picked, overrideOk, isFourNote, badTokens, intervals, shapes, selection, heading, tabNote } = model
   const activeIndex = activeColumnIndex(model, active)
-
-  const stop = useCallback(() => {
+  const stopListening = useCallback(() => {
     timers.current.forEach(clearTimeout)
     timers.current = []
-    setPlaying(false)
+    setListening(false)
   }, [])
-  useEffect(() => stop, [selection, stop])
-
-  const playColumn = (col: Column) => {
-    const pitches = columnPitches(col, tuning)
+  useEffect(() => stopListening, [selection, stopListening])
+  const playColumn = (col: Pick<Column, 'notes'>) => {
+    const pitches = columnPitches(col, tuning).filter((p) => !Number.isNaN(p))
     if (pitches.length === 1) playPitch(pitches[0])
     else if (pitches.length) playChord(pitches)
   }
-  const selectColumn = (index: number, play = true) => {
+  const selectColumn = (index: number) => {
     setActive({ selection, index })
-    if (play && shapes.columns[index]) playColumn(shapes.columns[index])
-  }
-  const togglePlay = () => {
-    if (playing) {
-      stop()
-      return
-    }
-    const beat = columnDuration(view, bpm)
-    setPlaying(true)
-    timers.current = shapes.columns.map((col, i) =>
-      setTimeout(() => {
-        setActive({ selection, index: i })
-        playColumn(col)
-      }, i * beat),
-    )
-    timers.current.push(setTimeout(() => setPlaying(false), shapes.columns.length * beat))
+    if (shapes.columns[index]) playColumn(shapes.columns[index])
   }
 
-  // Picking a chord in the key plays it the way the neck then shows it (its first voicing or inversion).
+  // ---- The practice tab's playback, shared by the practice tab and the mini bar ----
+  const [playing, setPlaying] = useState(false)
+  const [practiceActive, setPracticeActive] = useState<number | null>(null)
+  const practice = useMemo(() => practiceColumns(items), [items])
+  const score = useMemo(() => practiceScore(items, tuning, chordStyle), [items, tuning, chordStyle])
+  useEffect(() => {
+    if (!playing) return undefined
+    return startPlayback(score, {
+      bpm: Math.max(30, Math.min(300, Number(bpm) || 100)),
+      loop: true,
+      click,
+      onStep: (index) => {
+        if (index >= 0) setPracticeActive(score.events[index]?.column ?? null)
+      },
+      onEnd: () => setPlaying(false),
+    })
+  }, [playing, score, bpm, click])
+  const dronePitch = 40 + mod12(keyPc - 4)
+  useEffect(() => (playing && drone ? startDrone(dronePitch) : undefined), [playing, drone, dronePitch])
+  const togglePractice = () => {
+    if (!playing) stopListening()
+    setPlaying(!playing)
+  }
+  const toggleListen = () => {
+    if (listening) {
+      stopListening()
+      return
+    }
+    setPlaying(false)
+    setListening(true)
+    let at = 0
+    timers.current = shapes.columns.map((col, i) => {
+      const t = setTimeout(() => {
+        setActive({ selection, index: i })
+        playColumn(col)
+      }, at)
+      at += columnDuration(col, bpm)
+      return t
+    })
+    timers.current.push(setTimeout(() => setListening(false), at))
+  }
+
+  // ---- Pinning ----
+  const [justPinned, setJustPinned] = useState(false)
+  useEffect(() => {
+    if (!justPinned) return undefined
+    const t = setTimeout(() => setJustPinned(false), 1500)
+    return () => clearTimeout(t)
+  }, [justPinned])
+  const pinIt = () => {
+    if (!pin) return
+    impact()
+    setItems((list) => addItem(validItems(list), createItem(pin)))
+    setJustPinned(true)
+  }
+  const changeItems = (next: PracticeItem[]) => {
+    if (!next.length) setPlaying(false)
+    setItems(next)
+  }
+  const startFrom = (progression: string) => setItems((list) => [...validItems(list), ...progressionItems(progression, keyName, tuning, tuningId).items])
+
+  // ---- Choosing what the neck shows: stepping to a voicing or picking a chord plays it ----
   const pendingPlay = useRef(false)
   useEffect(() => {
     if (!pendingPlay.current) return
     pendingPlay.current = false
     if (shapes.columns[0]) playColumn(shapes.columns[0])
   })
-  const pickChord = (chord: DiatonicChord) => {
-    if (view === 'progression') {
-      setProgression(`${progression.trim()} ${progressionToken(chord)}`.trim())
-      return
-    }
-    if (chord.degree === picked.degree && !overrideOk) {
-      if (shapes.columns[0]) selectColumn(0)
-      return
-    }
+  const stepVoicing = (delta: number) => {
+    if (!voicings.length) return
     pendingPlay.current = true
+    setVoicingIndex((model.voicingIndex + delta + voicings.length) % voicings.length)
+  }
+  const pickChord = (chord: DiatonicChord) => {
+    pendingPlay.current = true
+    if (view !== 'chord') setView('chord')
+    if (chord.degree !== picked.degree || overrideOk) setVoicingIndex(0)
     setChordDegree(chord.degree)
     setChordOverride('')
   }
 
+  const scroller = useRef<ScrollViewInstance>(null)
+  const practiceY = useRef(0)
   const noteLabel = noteLabeller(model, labels, tuning)
   const notes = neckNotes(model, activeIndex, showAll, tuning)
-  const chips = headingChips(model, activeIndex)
-  const columns = shapes.columns.map((c) => (view === 'scale' || (view === 'caged' && c.notes.length === 1) ? { ...c, label: noteLabel(c.notes[0]) } : c))
-  // For scales and CAGED the key's chords are reference at the end; in the chord views they're the picker.
-  const stripIsReference = view === 'scale' || view === 'caged'
-
-  const strip = (
-    <DiatonicStrip
-      keyName={keyName}
-      scaleId={scaleType}
-      sevenths={sevenths}
-      onSeventhsChange={setSevenths}
-      silent={view === 'chord' || view === 'inversion'}
-      onPick={stripIsReference ? undefined : pickChord}
-      highlight={view === 'chord' || view === 'inversion' ? (c) => c.degree === picked.degree : undefined}
-      title={view === 'progression' ? 'Tap chords to add them' : stripIsReference ? undefined : `Pick a chord in ${keyName}`}
-    />
-  )
+  const columns = shapes.columns.map((c) => (c.notes.length === 1 ? { ...c, label: noteLabel(c.notes[0]) } : c))
+  const tuningNames = tabStringNames(tuning, stringName)
+  const voicing = voicings[model.voicingIndex]
 
   return (
     <>
-      <Stack.Screen options={{ headerRight: () => <HeaderButton ios="slider.horizontal.3" android="tune" label="Neck settings" onPress={() => router.push('/settings')} /> }} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
-        <Text style={styles.summary}>See any scale, chord or inversion on the neck, hear it, then practise it.</Text>
+      <Stack.Screen options={{ headerRight: () => <HeaderButton ios="slider.horizontal.3" android="tune" label="Settings" onPress={() => router.push('/settings')} /> }} />
+      <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.page, items.length > 0 && styles.pageWithBar]}>
+        <Text style={styles.summary}>Find a voicing in any key and pin it to practise.</Text>
 
-        {/* 1. Where you are: key and scale, shared with every tab. */}
-        <Section title="Key">
-          <ChipRow label="Key" options={KEY_OPTIONS} value={keyName} onChange={setKey} wrap style={styles.keys} />
-        </Section>
+        {/* 1. Where you are: the key, its chords, the scale and what to look at. */}
+        <ChipRow label="Key" options={KEY_OPTIONS} value={keyName} onChange={setKey} />
+        <DiatonicStrip keyName={keyName} scaleId={scaleType} sevenths={sevenths} onSeventhsChange={setSevenths} silent onPick={pickChord} highlight={view === 'chord' ? (c) => c.degree === picked.degree : undefined} title={`Chords in ${keyName}`} />
         <View style={styles.group}>
           <ChoiceRow label="Scale" value={SCALES[scaleType] ? scaleType : 'major'} sections={scaleSections()} onChange={setScaleType} sheet="/choose" title="Scale or mode" first last />
         </View>
+        <View style={styles.pad}>
+          <Segmented<ViewId> options={VIEWS} value={view} onChange={setView} />
+        </View>
 
-        {/* 2. What to look at. */}
-        <Segmented options={VIEWS} value={view} onChange={setView} />
-
-        {/* 3. Which one. */}
-        {view === 'scale' && (
-          <Section title="Position">
-            <ChipRow
-              label="Position"
-              options={shapes.options.map((o, i) => ({ value: i === shapes.options.length - 1 ? ALL_POSITIONS : i, label: o.label.replace('Position ', ''), sub: o.hint }))}
-              value={shapes.all ? ALL_POSITIONS : shapes.optionIndex}
-              onChange={setPosition}
-            />
-            {!shapes.all && <Segmented options={LAYOUT_OPTIONS} value={layout === 'across' ? 'across' : 'position'} onChange={setLayout} />}
-          </Section>
-        )}
-
-        {view === 'caged' && (
-          <Section title="Shape">
-            <ChipRow
-              label="CAGED shape"
-              options={shapes.options.map((o, i) => ({ value: i === shapes.options.length - 1 ? ALL_SHAPES : o.label, label: o.label, sub: o.hint }))}
-              value={shapes.caged?.all ? ALL_SHAPES : (shapes.caged?.letter ?? ALL_SHAPES)}
-              onChange={setCagedShape}
-            />
-          </Section>
-        )}
-
-        {!stripIsReference && strip}
-
-        {(view === 'chord' || view === 'inversion') && (
-          <View style={styles.group}>
-            <ChoiceRow
-              label="Chord type"
-              value={overrideOk ? chordOverride : ''}
-              sections={chordTypeSections(CHORDS[picked.type].name, view === 'inversion')}
-              onChange={setChordOverride}
-              sheet="/choose"
-              first
-              last
+        {/* 2. Which one: a scale position, or a voicing type for the chord. */}
+        {view === 'scale' ? (
+          <ChipRow
+            label="Position"
+            options={shapes.options.map((o, i) => ({ value: i === shapes.options.length - 1 ? ALL_POSITIONS : i, label: o.label.replace('Position ', ''), sub: o.hint }))}
+            value={shapes.all ? ALL_POSITIONS : shapes.optionIndex}
+            onChange={setPosition}
+          />
+        ) : (
+          <View style={styles.pad}>
+            <Segmented
+              options={voicingTypes}
+              value={model.voicingType}
+              onChange={(t) => {
+                pendingPlay.current = true
+                setVoicingType(t)
+                setVoicingIndex(0)
+              }}
             />
           </View>
         )}
-        {view === 'inversion' && (
-          <Section title="Strings">
-            {isFourNote && <Segmented options={DROP_OPTIONS} value={drop === 'drop3' ? 'drop3' : 'drop2'} onChange={setDrop} />}
-            <ChipRow label="String set" options={shapes.options.map((o, i) => ({ value: i, label: o.label.replace('Strings ', '') }))} value={shapes.optionIndex} onChange={setStringSet} />
-          </Section>
-        )}
 
-        {view === 'progression' && (
-          <Section title="Progression">
-            <Field value={progression} onChangeText={setProgression} placeholder="I V vi IV" autoCapitalize="none" autoCorrect={false} spellCheck={false} returnKeyType="done" accessibilityLabel="Progression" />
-            {badTokens.length > 0 && (
-              <Text style={styles.error} accessibilityRole="alert">
-                Didn’t understand: {badTokens.join(', ')}. Use Roman numerals (I, ii7, bVII) or chord names (Am, F#m7).
-              </Text>
-            )}
-            <View style={styles.buttons}>
-              <Button title="Common…" onPress={() => choose('/choose', { title: 'Common progressions', sections: progressionSections(), value: progression, onChoose: setProgression })} />
-              <Button title="Random" onPress={() => setProgression(randomProgression(progressionMood(scaleType), 4))} />
-              <Button title="Clear" onPress={() => setProgression('')} disabled={!progression} />
-            </View>
-            <Text style={styles.label}>Neck area</Text>
-            <Segmented options={AREA_OPTIONS} value={NECK_AREAS[area] ? area : 'open'} onChange={setArea} />
-          </Section>
-        )}
-
-        {/* 4. The result: the neck, then its tab. */}
+        {/* 3. The neck, the one voicing or position on it, and Pin. */}
         <Section title={heading.title} sub={heading.sub}>
-          <ChipRow
-            label={view === 'progression' ? 'Chords' : 'Notes'}
-            options={chips.map((c) => ({ value: c.key, label: c.name, sub: c.sub, on: c.on, tonic: c.root, column: c.index }))}
-            onChange={(_, chip) => {
-              if (chip.column !== undefined) selectColumn(chip.column)
-            }}
-          />
           <Fretboard
             tuning={tuning}
-            intervals={intervals}
+            intervals={model.intervals}
             notes={notes}
             label={noteLabel}
             stringName={stringName}
@@ -239,42 +219,113 @@ export default function FretboardScreen() {
             }}
           />
           <Legend />
-          <Text style={styles.small}>
-            {tuningSpec.name} · {labels === 'notes' ? 'note names' : 'intervals'} · swipe the neck for more frets
-          </Text>
+          {view === 'chord' && (
+            <View style={styles.stepper}>
+              <Pressable onPress={() => stepVoicing(-1)} disabled={voicings.length < 2} accessibilityRole="button" accessibilityLabel="Previous voicing" style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]}>
+                <Text style={styles.stepSign}>‹</Text>
+              </Pressable>
+              <View style={styles.stepLabel} accessibilityLiveRegion="polite">
+                <Text style={styles.stepName}>{voicing ? voicing.label : 'No voicings in this tuning'}</Text>
+                {voicing ? <Text style={styles.stepHint}>{`${voicing.hint} · ${model.voicingIndex + 1} of ${voicings.length}`}</Text> : null}
+              </View>
+              <Pressable onPress={() => stepVoicing(1)} disabled={voicings.length < 2} accessibilityRole="button" accessibilityLabel="Next voicing" style={({ pressed }) => [styles.stepButton, pressed && styles.pressed]}>
+                <Text style={styles.stepSign}>›</Text>
+              </Pressable>
+            </View>
+          )}
+          {columns.length > 0 && (
+            <View style={styles.pad}>
+              {tabNote ? <Text style={styles.tabNote}>{tabNote}</Text> : null}
+              <Tab columns={columns} tuningNames={tuningNames} columnWidth={shapes.columnWidth} active={activeIndex} onSelect={(i) => selectColumn(i)} />
+            </View>
+          )}
+          <View style={styles.pinRow}>
+            <Button title={justPinned ? '✓ Pinned' : '＋ Pin to practice tab'} onPress={pinIt} disabled={!pin} style={styles.pin} />
+            <Button title={listening ? 'Stop' : 'Listen'} onPress={toggleListen} disabled={!columns.length} />
+          </View>
+          <Hint>Tap a note on the neck or a tab column to hear it.</Hint>
         </Section>
 
-        <Section title="Tab" sub={tabNote}>
-          <View style={styles.transport}>
-            <Stepper label="BPM" value={bpm} onChange={setBpm} min={30} max={300} step={5} />
-            <Button primary title={playing ? 'Stop' : 'Play'} onPress={togglePlay} disabled={!shapes.columns.length} style={styles.play} />
-          </View>
-          <View style={styles.tab}>
-            {shapes.columns.length ? (
-              <Tab columns={columns} tuningNames={tabStringNames(tuning, stringName)} columnWidth={shapes.columnWidth} active={activeIndex} onSelect={(i) => selectColumn(i)} />
-            ) : (
-              <Text style={styles.small}>Tap chords above, or pick a common progression, to see it on the neck.</Text>
-            )}
-          </View>
-          <Hint>Tap a tab column or a note on the neck to hear it.</Hint>
-        </Section>
-
-        {stripIsReference && strip}
+        {/* 4. Everything pinned, as one looping tab. */}
+        <View
+          onLayout={(e) => {
+            practiceY.current = e.nativeEvent.layout.y
+          }}
+        >
+          <PracticeTab
+            items={items}
+            onItemsChange={changeItems}
+            onStartFrom={startFrom}
+            mood={progressionMood(scaleType)}
+            playing={playing}
+            onTogglePlay={togglePractice}
+            active={practiceActive}
+            onSelectColumn={(i) => {
+              setPracticeActive(i)
+              if (practice.columns[i]) playColumn(practice.columns[i])
+            }}
+            bpm={bpm}
+            onBpmChange={setBpm}
+            click={click}
+            onClickChange={setClick}
+            drone={drone}
+            onDroneChange={setDrone}
+            droneName={keyName}
+            tuningId={tuningId}
+            tuningNames={tuningNames}
+          />
+        </View>
+        <Text style={styles.small}>{tuningSpec.name} · swipe the neck for more frets</Text>
       </ScrollView>
+
+      {/* The practice tab is always one tap away, just above the tab bar. */}
+      {items.length > 0 && (
+        <View style={styles.bar}>
+          <Pressable style={styles.barOpen} onPress={() => scroller.current?.scrollTo({ y: practiceY.current, animated: true })} accessibilityRole="button" accessibilityLabel={`Practice tab, ${items.length} items. Show it`}>
+            <Text style={styles.barText}>
+              <Text style={styles.barStrong}>Practice tab</Text> · {items.length} {items.length === 1 ? 'item' : 'items'}
+            </Text>
+          </Pressable>
+          <Button primary title={playing ? '■' : '▶'} onPress={togglePractice} style={styles.barPlay} />
+        </View>
+      )}
     </>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { paddingTop: space[2], paddingBottom: space[6], gap: space[5] },
+  page: { paddingTop: space[2], paddingBottom: space[6], gap: space[4] },
+  pageWithBar: { paddingBottom: space[6] + 64 },
   summary: { color: colors.muted, fontSize: text.base, lineHeight: 22, paddingHorizontal: space[4] },
   group: { gap: space[2] },
-  label: { color: colors.muted, fontSize: text.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6, paddingHorizontal: space[4] },
-  buttons: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], flexWrap: 'wrap' },
-  error: { color: colors.danger, fontSize: text.sm, paddingHorizontal: space[4] },
+  pad: { paddingHorizontal: space[4], gap: space[1] },
   small: { color: colors.muted, fontSize: text.sm, paddingHorizontal: space[4] },
-  transport: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4] },
-  play: { flex: 1 },
-  tab: { paddingHorizontal: space[4] },
-  keys: { justifyContent: 'space-between' },
+  tabNote: { color: colors.muted, fontSize: text.sm },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },
+  stepButton: { width: touch, height: touch, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.surface },
+  stepSign: { color: colors.text, fontSize: text.xl, fontWeight: '600' },
+  stepLabel: { flex: 1, alignItems: 'center' },
+  stepName: { color: colors.text, fontSize: text.base, fontWeight: '700', textAlign: 'center' },
+  stepHint: { color: colors.muted, fontSize: text.sm },
+  pressed: { opacity: 0.6 },
+  pinRow: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4] },
+  pin: { flex: 1, borderColor: colors.accent, borderWidth: 1 },
+  bar: {
+    position: 'absolute',
+    left: space[4],
+    right: space[4],
+    bottom: space[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[1],
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface2,
+  },
+  barOpen: { flex: 1, minHeight: touch, justifyContent: 'center', paddingHorizontal: space[3] },
+  barText: { color: colors.text, fontSize: text.base },
+  barStrong: { fontWeight: '700' },
+  barPlay: { minWidth: 56 },
 })

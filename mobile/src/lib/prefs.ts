@@ -1,7 +1,7 @@
 // Settings saved on the device, shared live between screens: when the Fretboard changes the key, every tab sees it.
 // Keys and values match the web site's localStorage (music.key, music.scale…), so the shared code reads them too.
 import { useCallback, useRef, useSyncExternalStore } from 'react'
-import type { View } from '@music/fretboardView.js'
+import type { PracticeItem } from '@music/practiceTab.js'
 
 /** Every saved setting, with its type. */
 export interface Prefs {
@@ -9,7 +9,8 @@ export interface Prefs {
   'music.scale': string
   'music.tuning': string
   'music.bpm': number
-  'music.mode': View
+  /** 'scale' or 'chord'; older app versions saved 'inversion', 'caged' or 'progression', which open in Chords. */
+  'music.mode': string
   'music.chordDegree': number
   'music.chordType': string
   'music.diatonicSevenths': boolean
@@ -18,10 +19,14 @@ export interface Prefs {
   'music.showAll': boolean
   'music.scaleLayout': string
   'music.fretPosition': number | 'all'
-  'music.stringSet': number
+  /** Read once, to carry a progression saved by an older version into the practice tab. */
   'music.fretProgression': string
-  'music.progressionNeck': string
-  'music.cagedShape': string
+  'music.voicingType': string
+  'music.voicingIndex': number
+  'music.chordStyle': string
+  'music.practiceTab': PracticeItem[]
+  'music.practiceClick': boolean
+  'music.practiceDrone': boolean
 }
 export type PrefKey = keyof Prefs
 /** Settings that hold a free string, which a picker sheet can set. */
@@ -41,10 +46,13 @@ export const PREF_DEFAULTS: Prefs = {
   'music.showAll': true,
   'music.scaleLayout': 'position',
   'music.fretPosition': 0,
-  'music.stringSet': 0,
   'music.fretProgression': 'I V vi IV',
-  'music.progressionNeck': 'open',
-  'music.cagedShape': 'all',
+  'music.voicingType': 'shapes',
+  'music.voicingIndex': 0,
+  'music.chordStyle': 'strum',
+  'music.practiceTab': [],
+  'music.practiceClick': false,
+  'music.practiceDrone': false,
 }
 
 export type Update<T> = T | ((previous: T) => T)
