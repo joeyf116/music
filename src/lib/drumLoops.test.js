@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { KIT_SAMPLES } from './drumKits.js'
-import { pickLayer } from './drumEngine.js'
-import { DRUM_VOICES, barSeconds, countLabel, hitsAt, isValidLoop, loopTracks, meterLabel, stepOffsets, swingDelay } from './drumLoops.js'
-import { PRESETS, STYLES, presetById } from './drumPresets.js'
+import { KITS, clickAt, pickLayer, resolveSample } from './drumEngine.js'
+import { DRUM_VOICES, voiceById, barSeconds, countLabel, hitsAt, isValidLoop, loopTracks, meterLabel, stepOffsets, swingDelay } from './drumLoops.js'
+import { PRESETS, STYLES, presetById, presetKit } from './drumPresets.js'
 
 const basic = presetById('basic-rock')
 
@@ -17,8 +17,12 @@ describe('presets', () => {
     }
   })
 
-  it('only use drums the rock kit has recorded', () => {
-    for (const p of PRESETS) for (const voice of Object.keys(p.tracks)) expect(KIT_SAMPLES.rock[voice], `${p.id} ${voice}`).toBeDefined()
+  it('only use drums their own kit recorded (or the shared hand percussion)', () => {
+    for (const p of PRESETS) {
+      const kit = presetKit(p)
+      expect(KITS.map((k) => k.id), p.id).toContain(kit)
+      for (const voice of Object.keys(p.tracks)) expect(resolveSample(kit, voice), `${p.id} ${voice}`).toEqual({ kit: voiceById(voice).perc ? 'perc' : kit, voice })
+    }
   })
 
   it('include every groove from the rock collection', () => {
@@ -72,7 +76,7 @@ describe('loops', () => {
 
   it('rejects broken loops', () => {
     expect(isValidLoop({ ...basic, tracks: { kick: 'x...' } })).toBe(false)
-    expect(isValidLoop({ ...basic, tracks: { cowbell: 'x'.repeat(16) } })).toBe(false)
+    expect(isValidLoop({ ...basic, tracks: { gong: 'x'.repeat(16) } })).toBe(false)
     expect(isValidLoop({ ...basic, tracks: { kick: 'q'.repeat(16) } })).toBe(false)
     expect(isValidLoop({ ...basic, bpm: 0 })).toBe(false)
     expect(isValidLoop({ ...basic, steps: 5 })).toBe(false)
@@ -85,11 +89,39 @@ describe('kit samples', () => {
   })
 
   it('records every drum soft to hard', () => {
-    for (const [voice, spec] of Object.entries(KIT_SAMPLES.rock)) {
-      expect(spec.layers.length, voice).toBeGreaterThanOrEqual(3)
-      expect([...spec.layers].sort((a, b) => a - b), voice).toEqual(spec.layers)
-      expect(spec.layers.at(-1)).toBe(1)
+    for (const [kit, voices] of Object.entries(KIT_SAMPLES)) {
+      for (const [voice, spec] of Object.entries(voices)) {
+        // Shakers and tambourines are played one way, so they only have round-robin takes.
+        const shaken = ['tambourine', 'shaker'].includes(voice)
+        expect(spec.layers.length, `${kit} ${voice}`).toBeGreaterThanOrEqual(shaken ? 1 : 3)
+        expect([...spec.layers].sort((a, b) => a - b), `${kit} ${voice}`).toEqual(spec.layers)
+        expect(spec.layers.at(-1)).toBe(1)
+        expect(spec.rr, `${kit} ${voice}`).toBeGreaterThanOrEqual(3)
+      }
     }
+  })
+
+  it('can play every drum on every kit', () => {
+    for (const kit of KITS) {
+      for (const v of DRUM_VOICES) {
+        const at = resolveSample(kit.id, v.id)
+        expect(at, `${kit.id} ${v.id}`).not.toBeNull()
+        expect(KIT_SAMPLES[at.kit][at.voice]).toBeDefined()
+      }
+    }
+  })
+
+  it('fills a missing drum from the same kit first, then a borrowed kit', () => {
+    expect(resolveSample('jazz', 'snare')).toEqual({ kit: 'jazz', voice: 'snare' })
+    expect(resolveSample('jazz', 'tomMid')).toEqual({ kit: 'jazz', voice: 'tomHigh' })
+    expect(resolveSample('lofi', 'crash')).toEqual({ kit: 'jazz', voice: 'crash' })
+    expect(resolveSample('rock', 'conga')).toEqual({ kit: 'perc', voice: 'conga' })
+    expect(resolveSample('rock', 'gong')).toBeNull()
+  })
+
+  it('clicks on every beat with the first beat of each bar accented', () => {
+    const loop = { beats: 3, steps: 4, bars: 2, tracks: {} }
+    expect([0, 1, 4, 8, 12, 16].map((s) => clickAt(loop, s))).toEqual(['accent', null, 'beat', 'beat', 'accent', 'beat'])
   })
 
   it('plays ghost notes from a soft take, not a turned-down loud one', () => {

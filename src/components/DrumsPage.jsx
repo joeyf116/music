@@ -1,12 +1,15 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { audioContext } from '../lib/audio.js'
+import { DEFAULT_SOUND, SOUND_KEY } from '../lib/clickSounds.js'
 import { METERS, clearSteps, historyReducer, sameLoop, setGrid, startHistory } from '../lib/drumEdit.js'
-import { KITS, loadKit, loopVoices, playDrum, startDrumLoop } from '../lib/drumEngine.js'
+import { CLICKS, KITS, PERC_CREDIT, kitById, loadKit, loopVoices, playDrum, startDrumLoop } from '../lib/drumEngine.js'
 import { LEVELS, LEVEL_NAMES, barCount, isValidLoop, loopTracks, meterLabel, voiceName } from '../lib/drumLoops.js'
-import { PRESETS, STYLES, presetById } from '../lib/drumPresets.js'
+import { PRESETS, STYLES, presetById, presetKit } from '../lib/drumPresets.js'
+import { DEFAULT_METRONOME, METRONOME_KEY, metronomeSettings } from '../lib/rhythmView.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Field, Stepper } from './controls.jsx'
 import DrumEditor from './DrumEditor.jsx'
+import Metronome from './Metronome.jsx'
 import './Drums.css'
 import { Disclosure, PageHeader } from './layout.jsx'
 
@@ -49,14 +52,41 @@ function MiniGrid({ loop }) {
 
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName) || el?.isContentEditable
 
-/** Drums: pick a ready-made groove and play it on a recorded kit. */
+/** The plain metronome, for practice without a groove (the same one, and settings, the app has always had). */
+function MetronomeMode() {
+  const [stored, setStored] = usePersistentState(METRONOME_KEY, DEFAULT_METRONOME)
+  const [sound, setSound] = usePersistentState(SOUND_KEY, DEFAULT_SOUND)
+  const update = (patch) => setStored((s) => ({ ...DEFAULT_METRONOME, ...s, ...patch }))
+  return <Metronome settings={metronomeSettings(stored)} update={update} sound={sound} onSoundChange={setSound} />
+}
+
+const MODES = [
+  { value: 'groove', label: 'Groove' },
+  { value: 'metronome', label: 'Metronome' },
+]
+
+/** Drums: play a groove on a recorded kit and edit it, or switch to a plain metronome. */
 export default function DrumsPage() {
+  const [mode, setMode] = usePersistentState('music.drums.mode', 'groove')
+  return (
+    <section className="page drums-page">
+      <PageHeader title="Drums" summary="Play along with a groove on a real recorded kit, change any step, or use a plain metronome." />
+      <Choice label="Play along with" hideLabel options={MODES} value={mode === 'metronome' ? 'metronome' : 'groove'} onChange={setMode} className="drums-mode" />
+      {mode === 'metronome' ? <MetronomeMode /> : <GrooveMode />}
+    </section>
+  )
+}
+
+/** Grooves: pick a ready-made groove, change any step, and play it on a recorded kit. */
+function GrooveMode() {
   const [loopId, setLoopId] = usePersistentState('music.drums.loop', DEFAULT_LOOP)
   const [bpm, setBpm] = usePersistentState('music.drums.bpm', presetById(DEFAULT_LOOP).bpm)
   const [style, setStyle] = usePersistentState('music.drums.style', 'All')
   const [volume, setVolume] = usePersistentState('music.drums.volume', 0.8)
   const [humanize, setHumanize] = usePersistentState('music.drums.humanize', 0)
   const [paint, setPaint] = usePersistentState('music.drums.paint', 'x')
+  const [kitId, setKitId] = usePersistentState('music.drums.kit', presetKit(presetById(loopId)))
+  const [click, setClick] = usePersistentState('music.drums.click', null)
   const [history, dispatch] = useReducer(historyReducer, null, () => startHistory(storedLoop() ?? presetById(loopId) ?? presetById(DEFAULT_LOOP)))
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -68,9 +98,10 @@ export default function DrumsPage() {
   const loop = history.present
   const source = presetById(loopId)
   const edited = !sameLoop(loop, source)
-  const kit = KITS[0]
+  const kit = kitById(kitId)
+  const clickVoice = CLICKS.some((c) => c.value === click) ? click : null
   const tempo = Number(bpm) >= 30 && Number(bpm) <= 300 ? Number(bpm) : loop.bpm
-  const settings = { loop, kit: kit.id, bpm: tempo, volume, humanize }
+  const settings = { loop, kit: kit.id, bpm: tempo, volume, humanize, click: clickVoice }
   const edit = (next) => dispatch({ type: 'set', loop: next })
   const meter = meterOf(loop)
 
@@ -135,6 +166,7 @@ export default function DrumsPage() {
     setLoopId(preset.id)
     edit(preset)
     setBpm(preset.bpm)
+    setKitId(presetKit(preset))
     if (!playing) setAutoplay((n) => n + 1)
   }
   const latest = useRef({})
@@ -165,9 +197,7 @@ export default function DrumsPage() {
   }, [])
 
   return (
-    <section className="page drums-page">
-      <PageHeader title="Drums" summary="Pick a groove, change any step, and play along on a real recorded kit." />
-
+    <>
       <div className="stage drums-stage">
         <div className="drums-now">
           <h2>
@@ -184,6 +214,15 @@ export default function DrumsPage() {
               {playing ? (loading ? 'Loading…' : 'Stop') : 'Play'}
             </button>
             <Stepper label="Tempo (BPM)" value={bpm} onChange={setBpm} min={30} max={300} fallback={loop.bpm} className="tempo-field" />
+            <Field label="Kit" className="drums-kit">
+              <select value={kit.id} onChange={(e) => setKitId(e.target.value)}>
+                {KITS.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
         </div>
         <DrumEditor
@@ -258,7 +297,7 @@ export default function DrumsPage() {
       <Disclosure
         label="Settings"
         summary={[
-          `${kit.name} kit`,
+          clickVoice ? `click: ${CLICKS.find((c) => c.value === clickVoice).label.toLowerCase()}` : null,
           meter?.id.replace('-8', '') ?? meterLabel(loop),
           `${barCount(loop)} bar${barCount(loop) > 1 ? 's' : ''}`,
           loop.swing > 0.5 ? `swing ${Math.round(loop.swing * 100)}%` : 'straight',
@@ -307,23 +346,15 @@ export default function DrumsPage() {
           <Field label={`Humanize ${humanize ? `${Math.round(humanize * 100)}%` : 'off'}`}>
             <input type="range" min="0" max="1" step="0.05" value={humanize} onChange={(e) => setHumanize(Number(e.target.value))} />
           </Field>
-          <Field label="Kit">
-            <select value={kit.id} disabled>
-              {KITS.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name}: {k.detail}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <Choice label="Click on every beat" options={[{ value: null, label: 'Off' }, ...CLICKS]} value={clickVoice} onChange={setClick} />
           <Field label={`Volume ${Math.round(volume * 100)}%`}>
             <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(e) => setVolume(Number(e.target.value))} />
           </Field>
         </div>
-        <p className="hint">Swing pushes every second 16th (or 8th) later, like a hip-hop or shuffle feel. Humanize adds a drummer’s small timing and loudness changes. Recorded from {kit.credit}.</p>
+        <p className="hint">Swing pushes every second 16th (or 8th) later, like a hip-hop or shuffle feel. Humanize adds a drummer’s small timing and loudness changes. The {kit.name.toLowerCase()} kit is {kit.detail}, recorded from {kit.credit}; hand percussion from {PERC_CREDIT}. All free (CC0).</p>
       </Disclosure>
 
       <p className="page-hint">Press a groove to load it, then change any step. Space plays and stops; Ctrl+Z undoes.</p>
-    </section>
+    </>
   )
 }

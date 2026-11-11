@@ -4,14 +4,46 @@
 // takes, so repeated notes sound like a drummer and not a machine.
 import { audioContext } from './audio.js'
 import { KIT_SAMPLES } from './drumKits.js'
-import { CHOKES, hitsAt, stepCount, stepSeconds, swingDelay } from './drumLoops.js'
+import { CHOKES, hitsAt, stepCount, stepSeconds, stepsPerBar, swingDelay } from './drumLoops.js'
 
 const LOOKAHEAD = 0.12
 
 /** Audio-clock time that is reaching the listener's ears right now (for the playhead). */
 const heardNow = (ac) => ac.currentTime - (ac.outputLatency || 0) - (ac.baseLatency || 0)
 
-export const KITS = [{ id: 'rock', name: 'Rock', detail: 'Big, open 1980s kit', credit: 'Big Rusty Drums by Karoryfer Samples (CC0)' }]
+/**
+ * The kits, each recorded from a real drum set. `borrow` is the kit whose cymbals or drums fill in for one
+ * this kit wasn't recorded with (the lo-fi kit has no cymbals, so it uses the jazz kit's softer ones).
+ */
+export const KITS = [
+  { id: 'rock', name: 'Rock', detail: 'big, open 1980s kit', credit: 'Big Rusty Drums by Karoryfer Samples' },
+  { id: 'jazz', name: 'Jazz', detail: 'small club kit, sticks', credit: 'Virtuosity Drums by Versilian Studios', borrow: 'rock' },
+  { id: 'brushes', name: 'Brushes', detail: 'soft kit played with brushes', credit: 'Swirly Drums by Karoryfer Samples', borrow: 'jazz' },
+  { id: 'lofi', name: 'Lo-fi', detail: 'dusty kit through a vintage mic', credit: 'Gogodze Phu Vol II by Karoryfer Samples', borrow: 'jazz' },
+]
+
+export const kitById = (id) => KITS.find((k) => k.id === id) ?? KITS[0]
+
+/** Hand percussion is one shared set, recorded with Virtuosity Drums. */
+const PERC_KIT = 'perc'
+export const PERC_CREDIT = 'Virtuosity Drums by Versilian Studios'
+
+/** The nearest drum on the same kit when a kit has no recording of one (a mid tom becomes the high tom). */
+const STAND_INS = { tomMid: ['tomHigh', 'tomLow'], tomLow: ['tomFloor', 'tomMid'], sidestick: ['rimshot'], rideBell: ['ride'], hihatPedal: ['hihat'] }
+
+/**
+ * Which recording plays a drum on a kit: { kit, voice }. Hand percussion always uses the shared set; a drum
+ * the kit lacks is played by a stand-in on the same kit, then by the borrowed kit, then by the rock kit.
+ * Null when nothing fits.
+ */
+export function resolveSample(kit, voice) {
+  if (KIT_SAMPLES[kit]?.[voice]) return { kit, voice }
+  if (KIT_SAMPLES[PERC_KIT]?.[voice]) return { kit: PERC_KIT, voice }
+  for (const alt of STAND_INS[voice] ?? []) if (KIT_SAMPLES[kit]?.[alt]) return { kit, voice: alt }
+  const borrow = KITS.find((k) => k.id === kit)?.borrow ?? 'rock'
+  for (const other of [borrow, 'rock']) if (other !== kit && KIT_SAMPLES[other]?.[voice]) return { kit: other, voice }
+  return null
+}
 
 const sampleUrl = (kit, voice, layer, take) => `${import.meta.env.BASE_URL}samples/drums/${kit}/${voice}-${layer}-${take}.mp3`
 
@@ -53,7 +85,12 @@ function loadVoice(ac, kit, voice) {
 export function loadKit(kit, voices = Object.keys(KIT_SAMPLES[kit] ?? {})) {
   const ac = audioContext()
   if (!ac) return Promise.resolve()
-  return Promise.all(voices.map((v) => loadVoice(ac, kit, v))).then(() => undefined)
+  return Promise.all(
+    voices.map((v) => {
+      const at = resolveSample(kit, v)
+      return at ? loadVoice(ac, at.kit, at.voice) : undefined
+    }),
+  ).then(() => undefined)
 }
 
 /** The voices a loop uses, for loading just what it needs first. */
@@ -101,11 +138,12 @@ export function humanizeHit(amount, random = Math.random) {
 export function playDrum(kit, voice, velocity, time, volume = 1) {
   const ac = audioContext()
   if (!ac) return false
-  const spec = KIT_SAMPLES[kit]?.[voice]
-  const buffers = cache.get(kit)?.get(voice)?.buffers
+  const at = resolveSample(kit, voice)
+  const spec = at && KIT_SAMPLES[at.kit][at.voice]
+  const buffers = at && cache.get(at.kit)?.get(at.voice)?.buffers
   if (!spec || !buffers) return false
   const { layer, gain } = pickLayer(spec.layers, velocity)
-  const key = `${kit}:${voice}:${layer}`
+  const key = `${at.kit}:${at.voice}:${layer}`
   const take = ((takeCounters.get(key) ?? -1) + 1) % spec.rr
   takeCounters.set(key, take)
 
@@ -140,8 +178,24 @@ export function playDrum(kit, voice, velocity, time, volume = 1) {
   return true
 }
 
+/** Recorded sounds the click over a groove can use (real hand percussion, not a synthesised beep). */
+export const CLICKS = [
+  { value: 'claves', label: 'Claves' },
+  { value: 'cowbell', label: 'Cowbell' },
+  { value: 'sidestick', label: 'Side stick' },
+]
+
+/** The click heard on a step when the click is on: the first beat of each bar accented, other beats plain. */
+export function clickAt(loop, step) {
+  const inBar = step % stepsPerBar(loop)
+  if (inBar % loop.steps) return null
+  return inBar === 0 ? 'accent' : 'beat'
+}
+
 /**
- * Loads what the loop needs, then plays it until stopped. `settings`: { loop, kit, bpm, volume, humanize }.
+ * Loads what the loop needs, then plays it until stopped.
+ * `settings`: { loop, kit, bpm, volume, humanize, click } where click is a recorded drum (CLICKS) played on
+ * every beat over the groove, or null.
  * onStep(step) fires as each step is heard (for the playhead). Settings can change while it plays and take
  * effect from the next step, so tempo changes never jump. Returns { stop, update(settings), loaded }.
  */
@@ -157,7 +211,7 @@ export function startDrumLoop(settings, { onStep } = {}) {
   let gridTime = 0
 
   const schedule = () => {
-    const { loop, kit, bpm, volume = 1, humanize = 0 } = opts
+    const { loop, kit, bpm, volume = 1, humanize = 0, click = null } = opts
     const n = stepCount(loop)
     while (gridTime <= ac.currentTime + LOOKAHEAD) {
       step %= n
@@ -166,6 +220,8 @@ export function startDrumLoop(settings, { onStep } = {}) {
         const feel = humanizeHit(humanize)
         playDrum(kit, hit.voice, Math.min(1, hit.velocity * feel.velocity), time + feel.time, volume * hit.volume)
       }
+      const level = click && clickAt(loop, step)
+      if (level) playDrum(kit, click, level === 'accent' ? 1 : 0.6, gridTime, volume * 0.8)
       visuals.push({ time, step })
       gridTime += stepSeconds(loop, bpm)
       step++
@@ -180,7 +236,8 @@ export function startDrumLoop(settings, { onStep } = {}) {
     frame = requestAnimationFrame(draw)
   }
 
-  const loaded = loadKit(settings.kit, loopVoices(settings.loop)).then(() => {
+  const needs = (o) => [...loopVoices(o.loop), ...(o.click ? [o.click] : [])]
+  const loaded = loadKit(settings.kit, needs(settings)).then(() => {
     if (stopped) return
     gridTime = ac.currentTime + 0.06
     schedule()
@@ -196,10 +253,10 @@ export function startDrumLoop(settings, { onStep } = {}) {
       cancelAnimationFrame(frame)
     },
     update: (next) => {
-      const changedSound = next.kit !== opts.kit || next.loop !== opts.loop
+      const changedSound = next.kit !== opts.kit || next.loop !== opts.loop || next.click !== opts.click
       opts = next
       // New drums load in the background; they join in as soon as they are ready.
-      if (changedSound) loadKit(next.kit, loopVoices(next.loop)).catch(() => {})
+      if (changedSound) loadKit(next.kit, needs(next)).catch(() => {})
     },
   }
 }

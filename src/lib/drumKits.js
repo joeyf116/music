@@ -17,5 +17,55 @@ export const KIT_SAMPLES = {
     ride: {"layers": [0.257, 0.434, 0.81, 1.0], "rr": 3},
     rideBell: {"layers": [0.517, 0.886, 1.0], "rr": 3},
     crash: {"layers": [0.36, 0.879, 1.0], "rr": 3}
+  },
+  "jazz": {
+    kick: {"layers": [0.044, 0.159, 0.539, 1.0], "rr": 3},
+    snare: {"layers": [0.064, 0.139, 0.26, 0.54, 1.0], "rr": 3},
+    rimshot: {"layers": [0.255, 0.701, 1.0], "rr": 3},
+    sidestick: {"layers": [0.085, 0.576, 1.0], "rr": 3},
+    hihat: {"layers": [0.04, 0.124, 0.23, 1.0], "rr": 3},
+    hihatOpen: {"layers": [0.083, 0.164, 1.0], "rr": 3},
+    hihatPedal: {"layers": [0.22, 0.564, 1.0], "rr": 3},
+    tomHigh: {"layers": [0.297, 0.629, 1.0], "rr": 3},
+    tomFloor: {"layers": [0.195, 0.547, 1.0], "rr": 3},
+    ride: {"layers": [0.164, 0.572, 1.0], "rr": 3},
+    rideBell: {"layers": [0.087, 0.332, 1.0], "rr": 3},
+    crash: {"layers": [0.234, 0.498, 1.0], "rr": 3}
+  },
+  "brushes": {
+    kick: {"layers": [0.137, 0.266, 0.546, 1.0], "rr": 3},
+    snare: {"layers": [0.092, 0.174, 0.229, 0.539, 1.0], "rr": 3},
+    rimshot: {"layers": [0.036, 0.174, 1.0], "rr": 3},
+    hihat: {"layers": [0.112, 0.304, 0.508, 1.0], "rr": 3},
+    hihatOpen: {"layers": [0.102, 0.215, 1.0], "rr": 3},
+    hihatPedal: {"layers": [0.475, 0.657, 1.0], "rr": 3},
+    tomHigh: {"layers": [0.281, 0.627, 1.0], "rr": 3},
+    tomMid: {"layers": [0.45, 0.784, 1.0], "rr": 3},
+    tomLow: {"layers": [0.421, 0.772, 1.0], "rr": 3},
+    tomFloor: {"layers": [0.302, 0.572, 1.0], "rr": 3},
+    ride: {"layers": [0.186, 0.275, 0.559, 1.0], "rr": 3},
+    crash: {"layers": [0.389, 0.847, 1.0], "rr": 3}
+  },
+  "lofi": {
+    kick: {"layers": [0.689, 0.895, 0.997, 1.0], "rr": 3},
+    snare: {"layers": [0.365, 0.499, 0.631, 1.0], "rr": 3},
+    rimshot: {"layers": [0.423, 0.893, 1.0], "rr": 3},
+    sidestick: {"layers": [0.355, 0.652, 1.0], "rr": 3},
+    hihat: {"layers": [0.32, 0.519, 0.622, 1.0], "rr": 3},
+    hihatOpen: {"layers": [0.325, 0.889, 1.0], "rr": 3},
+    hihatPedal: {"layers": [0.35, 0.8, 1.0], "rr": 3},
+    tomHigh: {"layers": [0.549, 0.931, 1.0], "rr": 3},
+    tomMid: {"layers": [0.645, 0.794, 1.0], "rr": 3},
+    tomFloor: {"layers": [0.467, 0.729, 1.0], "rr": 3}
+  },
+  "perc": {
+    cowbell: {"layers": [0.046, 0.26, 1.0], "rr": 3},
+    claves: {"layers": [0.091, 0.379, 1.0], "rr": 3},
+    tambourine: {"layers": [1.0], "rr": 4},
+    shaker: {"layers": [1.0], "rr": 4},
+    conga: {"layers": [0.304, 0.817, 1.0], "rr": 3},
+    congaLow: {"layers": [0.077, 0.308, 1.0], "rr": 3},
+    bongoHigh: {"layers": [0.074, 0.301, 1.0], "rr": 3},
+    bongoLow: {"layers": [0.076, 0.359, 1.0], "rr": 3}
   }
 }
