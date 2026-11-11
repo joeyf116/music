@@ -233,7 +233,7 @@ body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .pa
 }
 
 /* Blocks are spaced by the gap of their container, never by their own margins. */
-.app :is(.page, .page-tab-panel, .stage, .quiz, .exercises, .explore-options, .resource-group, .chart-player) > * {
+.app :is(.page, .page-tab-panel, .stage, .quiz, .explore-options, .resource-group) > * {
   margin-block: 0;
 }
 
@@ -1493,99 +1493,6 @@ button.primary {
   }
 }
 
-/* ---- Exercises ----
-   Every setting is the same "field" (label above control) so one grid reflows from phone to desktop
-   and the page reads as a short list of choices rather than a wall of mixed controls. */
-.exercises {
-  display: grid;
-  gap: 1rem;
-}
-
-.exercises .section-head {
-  gap: 0.75rem 1rem;
-}
-
-.exercise-field > select {
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-
-.exercises .keys {
-  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
-  margin: 0;
-}
-
-.exercises .section-head .head-field {
-  flex: 0 1 17rem;
-}
-
-/* Two settings side by side even on a phone; they're short dropdowns. */
-.exercise-fields > * {
-  flex-basis: 9.5rem;
-}
-
-@media (max-width: 640px) {
-  .exercises .section-head .head-field {
-    flex-grow: 1;
-  }
-}
-
-.progression-editor {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.progression-editor input {
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
-}
-
-.progression-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.progression-actions select {
-  flex: 1 1 100%;
-}
-
-.progression-actions button {
-  flex: 1 1 8rem;
-  min-height: var(--control-h);
-}
-
-@media (min-width: 560px) {
-  .progression-actions select {
-    flex: 1 1 14rem;
-  }
-
-  .progression-actions button {
-    flex: 0 0 auto;
-  }
-}
-
-.progression-error {
-  margin: 0;
-  color: #ff8b8e;
-  font-size: var(--text-sm);
-}
-
-.exercises .options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
-  gap: 0.4rem;
-  margin: 0;
-}
-
-.exercises .options button {
-  padding: 0.4rem 0.5rem;
-  font-weight: 600;
-}
-
-.exercises .tab-head {
-  margin: 0.25rem 0 0;
-}
-
 .transport {
   display: flex;
   flex-wrap: wrap;
@@ -1613,19 +1520,6 @@ button.primary {
   color: var(--accent);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-
-.transport-panel {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3) var(--space-5);
-}
-
-.exercises .tab,
-.exercises .fretboard-scroll,
-.exercises .hint {
-  margin: 0;
 }
 
 .tab-heading {

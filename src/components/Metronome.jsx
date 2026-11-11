@@ -7,6 +7,7 @@ import { startClickTrack } from '../lib/rhythmEngine.js'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { SoundChips } from './SoundPicker.jsx'
 import { Disclosure } from './layout.jsx'
+import './Rhythm.css'
 
 const soundLabel = (id) => soundById(id).name
 

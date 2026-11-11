@@ -9,6 +9,7 @@ import { impact, selection } from '@/lib/haptics'
 import { colors, space, text, touch } from '@/theme'
 import { Button, ChipRow, ChoiceRow, Disclosure, Group, Hint, Notice, SliderRow, Stepper, SwitchRow, TempoSlider } from '../ui'
 
+// The Rhythm tab (and its /rhythm/choose sheet) is gone; this screen waits to be placed on a Drums tab, so point this at that tab's sheet then.
 export const RHYTHM_SHEET = '/rhythm/choose'
 const percent = (v: number) => `${Math.round(v * 100)}%`
 const SOUND_SECTIONS = SOUND_FAMILIES.map((family) => ({ title: family, options: CLICK_SOUNDS.filter((s) => s.family === family).map((s) => ({ value: s.id, label: s.name })) }))

@@ -1,4 +1,4 @@
-// The shared catalog (links and charts anyone can add) lives in Supabase, like on the web site. The app is pointed
+// The shared catalog (links anyone can add) lives in Supabase, like on the web site. The app is pointed
 // at the same project with EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (see mobile/README.md); without
 // them sharing is simply off and everything is saved on the device.
 import { randomUUID } from 'expo-crypto'
