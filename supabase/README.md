@@ -29,24 +29,30 @@ links, add a link, remove a link they added themselves (from the same browser) a
   `alter table public.resources alter column approved set default false;`
   in the SQL Editor, then tick **approved** on the ones you want to keep.
 
-## Accounts (log in and sign up)
+## Accounts (log in with Google)
 
-The **Log in** button at the top right opens the Account page (`#account`), which uses
-[Supabase Auth](https://supabase.com/docs/guides/auth) with email and password. Run
-[`accounts.sql`](./accounts.sql) once in the SQL Editor: it adds a `profiles` table (one row per user, made
-when they sign up, readable and editable only by its owner) and `delete_my_account()` for the Delete account
-button. The app loads the Supabase client only when someone opens Account or already has a saved login, so
-other visitors download nothing extra.
+The **Log in** button at the top right opens the Account page (`#account`), which signs people in with
+Google through [Supabase Auth](https://supabase.com/docs/guides/auth/social-login/auth-google). There are no
+passwords and no emails to send. Run [`accounts.sql`](./accounts.sql) once in the SQL Editor (already done
+for `guitar-music`; run it again after it changes, it is safe to re-run): it adds a `profiles` table (one row
+per user, made when they first sign in, named from their Google name, readable and editable only by its
+owner) and `delete_my_account()` for the Delete account button. The app loads the Supabase client only when
+someone opens Account or already has a saved login, so other visitors download nothing extra.
 
-Dashboard settings it relies on (**Authentication** in the Supabase dashboard):
+One-time setup:
 
-- **URL Configuration**: Site URL `https://joeyf116.github.io/music/`, and add
-  `https://joeyf116.github.io/music/**` and `http://localhost:5173/**` to the Redirect URLs, so the confirm and
-  reset-password emails can send people back to the site.
-- **Emails / SMTP**: Supabase's built-in email only reaches the project's own team members and a few emails an
-  hour. For real sign ups, set up custom SMTP (for example Brevo or Resend) under **Authentication → Emails →
-  SMTP Settings**. Until then, people other than the team can't confirm their address.
-- Email links use the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
+1. **Google Cloud Console** (console.cloud.google.com): create a project, set up the **OAuth consent
+   screen** (External, app name, support email, and the site as the home page), then **Credentials → Create
+   credentials → OAuth client ID → Web application** with
+   - Authorized JavaScript origins: `https://joeyf116.github.io`
+   - Authorized redirect URIs: `https://uionwltxpdcuwdbrrtrt.supabase.co/auth/v1/callback`
+2. **Supabase → Authentication → Sign In / Providers → Google**: switch it on and paste the Client ID and
+   Client Secret. Switch **Email** off so nobody can sign up with a password through the API.
+3. **Supabase → Authentication → URL Configuration**: Site URL `https://joeyf116.github.io/music/`, and add
+   `https://joeyf116.github.io/music/**` and `http://localhost:5173/**` to the Redirect URLs.
+
+The Google button reads `/auth/v1/settings` and greys itself out while Google is switched off. Sign-in uses
+the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
 
 ## Shared charts
 

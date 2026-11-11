@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { NAME_MAX, PASSWORD_MIN, displayName, validateAuthForm, validateDisplayName } from '../lib/auth.js'
+import { NAME_MAX, displayName, validateDisplayName } from '../lib/auth.js'
 import { useAuth } from '../lib/useAuth.jsx'
-import { Choice, Field } from './controls.jsx'
+import { Field } from './controls.jsx'
 import { Disclosure, PageHeader, Section } from './layout.jsx'
 
-// #account: log in, sign up, reset a password, and (once in) your name, password and account.
+// #account: log in with Google, then your name, log out and delete account.
 export default function AccountPage() {
   const auth = useAuth()
   const { status, start } = auth
@@ -37,28 +37,6 @@ function Status({ error, done }) {
   )
 }
 
-function PasswordInput({ value, onChange, isNew, label = 'Password' }) {
-  const [shown, setShown] = useState(false)
-  return (
-    <Field label={label} hint={isNew ? `at least ${PASSWORD_MIN} characters` : undefined}>
-      <span className="password-input">
-        <input
-          type={shown ? 'text' : 'password'}
-          value={value}
-          onChange={onChange}
-          autoComplete={isNew ? 'new-password' : 'current-password'}
-          minLength={isNew ? PASSWORD_MIN : undefined}
-          maxLength={72}
-          required
-        />
-        <button type="button" className="link-button" onClick={() => setShown(!shown)} aria-pressed={shown}>
-          {shown ? 'Hide' : 'Show'}
-        </button>
-      </span>
-    </Field>
-  )
-}
-
 /** Runs one form action, tracking busy / error / done for its status line. */
 function useSubmit() {
   const [state, setState] = useState({ busy: false, error: '', done: '' })
@@ -77,133 +55,29 @@ function useSubmit() {
 }
 
 function SignedOut({ auth, loading }) {
-  const [mode, setMode] = useState('login') // login | signup | reset
-  const [draft, setDraft] = useState({ name: '', email: '', password: '' })
-  const [sent, setSent] = useState(null) // { kind: 'confirm' | 'reset', email }
-  const [state, submit, fail] = useSubmit()
-  const set = (field) => (e) => setDraft({ ...draft, [field]: e.target.value })
-  const error = state.error || auth.error
-
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    const { values, error: invalid } = validateAuthForm(mode, draft)
-    if (invalid) return fail(invalid)
-    if (mode === 'login') return submit(() => auth.logIn(values))
-    if (mode === 'reset') {
-      const ok = await submit(() => auth.sendReset(values).then(() => true))
-      if (ok) setSent({ kind: 'reset', email: values.email })
-      return
-    }
-    const result = await submit(() => auth.signUp(values))
-    if (result?.needsConfirmation) setSent({ kind: 'confirm', email: values.email })
-  }
-
-  const switchMode = (next) => {
-    setMode(next)
-    fail('')
-    auth.clearMessages()
-  }
-
-  if (sent) {
-    return (
-      <>
-        <PageHeader title="Check your email" summary={sent.kind === 'confirm' ? 'One more step to finish signing up.' : 'A reset link is on its way.'} />
-        <div className="account-card">
-          <p>
-            {sent.kind === 'confirm' ? 'We sent a link to ' : "If there's an account for "}
-            <strong>{sent.email}</strong>
-            {sent.kind === 'confirm' ? '. Open it on this device to finish signing up.' : ', we sent it a link to choose a new password. Open it on this device.'}
-          </p>
-          <p className="hint">Nothing there? Check your spam folder, or wait a minute and try again.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setSent(null)
-              switchMode('login')
-            }}
-          >
-            Back to log in
-          </button>
-        </div>
-      </>
-    )
-  }
-
-  const titles = {
-    login: ['Log in', 'Welcome back. Log in to your account.'],
-    signup: ['Sign up', 'Create a free account. It takes a few seconds.'],
-    reset: ['Reset your password', "Enter your email and we'll send you a link to choose a new one."],
-  }
-
+  const [state, submit] = useSubmit()
+  // Until the settings answer, assume Google is on; only hide the button once Supabase says it is off.
+  const googleOff = auth.providers.google === false
   return (
     <>
-      <PageHeader title={titles[mode][0]} summary={titles[mode][1]} />
-      <form className="account-card account-form" onSubmit={onSubmit} noValidate>
-        {mode !== 'reset' && (
-          <Choice
-            label="Account"
-            hideLabel
-            options={[
-              { value: 'login', label: 'Log in' },
-              { value: 'signup', label: 'Sign up' },
-            ]}
-            value={mode}
-            onChange={switchMode}
-          />
-        )}
-        {mode === 'signup' && (
-          <Field label="Name" hint="optional, shown on things you share later">
-            <input value={draft.name} onChange={set('name')} maxLength={NAME_MAX} autoComplete="nickname" />
-          </Field>
-        )}
-        <Field label="Email">
-          <input type="email" inputMode="email" value={draft.email} onChange={set('email')} autoComplete="email" autoCapitalize="off" spellCheck={false} required />
-        </Field>
-        {mode !== 'reset' && <PasswordInput value={draft.password} onChange={set('password')} isNew={mode === 'signup'} />}
-        <button type="submit" className="primary" disabled={state.busy || loading}>
-          {state.busy ? 'One moment…' : mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
+      <PageHeader title="Log in" summary="Use your Google account. New here? The same button signs you up." />
+      <div className="account-card">
+        <button type="button" className="google-button" onClick={() => submit(() => auth.logInWithGoogle())} disabled={state.busy || loading || googleOff}>
+          <GoogleMark />
+          {state.busy ? 'Opening Google…' : 'Continue with Google'}
         </button>
-        <Status error={error} done={state.done || auth.notice} />
-        {mode === 'login' && (
-          <button type="button" className="link-button" onClick={() => switchMode('reset')}>
-            Forgot your password?
-          </button>
-        )}
-        {mode === 'reset' && (
-          <button type="button" className="link-button" onClick={() => switchMode('login')}>
-            Back to log in
-          </button>
-        )}
-      </form>
-      <p className="page-hint">An account keeps your name with you. Your practice settings stay saved in this browser as before.</p>
+        {googleOff && <p className="hint">Google sign-in isn't switched on yet. Check back soon.</p>}
+        <Status error={state.error || auth.error} done={auth.notice} />
+      </div>
+      <p className="page-hint">We only get your name and email from Google. Your practice settings stay saved in this browser as before.</p>
     </>
   )
 }
 
 function SignedIn({ auth }) {
   const name = displayName(auth.user, auth.profile)
-  const [password, setPassword] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [passState, submitPass, failPass] = useSubmit()
   const [accountState, submitAccount] = useSubmit()
-
-  const savePassword = async (e) => {
-    e.preventDefault()
-    const { values, error } = validateAuthForm('password', { password })
-    if (error) return failPass(error)
-    await submitPass(() => auth.setPassword(values), 'Password changed.')
-    setPassword('')
-  }
-
-  const passwordForm = (
-    <form className="account-form" onSubmit={savePassword} noValidate>
-      <PasswordInput label="New password" value={password} onChange={(e) => setPassword(e.target.value)} isNew />
-      <button type="submit" className={auth.recovering ? 'primary' : undefined} disabled={passState.busy}>
-        {passState.busy ? 'Saving…' : 'Change password'}
-      </button>
-      <Status error={passState.error} done={passState.done} />
-    </form>
-  )
 
   return (
     <>
@@ -216,36 +90,27 @@ function SignedIn({ auth }) {
           </button>
         }
       />
-      {auth.recovering && (
-        <Section title="Choose a new password" className="account-card">
-          {passwordForm}
-        </Section>
-      )}
       <Section title="Profile" className="account-card">
         {/* The profile arrives just after the session: keyed so the box fills in once it does. */}
         <ProfileForm key={auth.profile ? 'loaded' : 'loading'} auth={auth} placeholder={name} />
       </Section>
-      <Disclosure label="Password and account" summary={auth.user.email} storageKey="music.accountSettingsOpen">
-        <div className="account-settings">
-          {!auth.recovering && passwordForm}
-          <div className="account-danger">
-            <h3>Delete account</h3>
-            <p className="hint">Removes your account and profile for good. Settings saved in this browser stay.</p>
-            {confirmDelete ? (
-              <div className="account-actions">
-                <button type="button" className="danger-button" onClick={() => submitAccount(() => auth.deleteAccount())} disabled={accountState.busy}>
-                  {accountState.busy ? 'Deleting…' : 'Yes, delete my account'}
-                </button>
-                <button type="button" onClick={() => setConfirmDelete(false)} disabled={accountState.busy}>
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)}>
-                Delete account…
+      <Disclosure label="Delete account" storageKey="music.accountSettingsOpen">
+        <div className="account-danger">
+          <p className="hint">Removes your account and profile for good. Settings saved in this browser stay, and your Google account isn't touched.</p>
+          {confirmDelete ? (
+            <div className="account-actions">
+              <button type="button" className="danger-button" onClick={() => submitAccount(() => auth.deleteAccount())} disabled={accountState.busy}>
+                {accountState.busy ? 'Deleting…' : 'Yes, delete my account'}
               </button>
-            )}
-          </div>
+              <button type="button" onClick={() => setConfirmDelete(false)} disabled={accountState.busy}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setConfirmDelete(true)}>
+              Delete account…
+            </button>
+          )}
         </div>
       </Disclosure>
       <Status error={accountState.error || auth.error} done={auth.notice} />
@@ -275,5 +140,17 @@ function ProfileForm({ auth, placeholder }) {
       </button>
       <Status error={state.error} done={state.done} />
     </form>
+  )
+}
+
+/** Google's "G", drawn in its own colours as their sign-in guidelines ask. */
+function GoogleMark() {
+  return (
+    <svg className="google-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
   )
 }

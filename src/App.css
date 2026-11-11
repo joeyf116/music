@@ -2214,35 +2214,13 @@ button.primary {
   gap: var(--space-4);
 }
 
-.account-form .field > input,
-.password-input {
+.account-form .field > input {
   width: 100%;
 }
 
 .account-form button.primary,
 .account-form button[type='submit'] {
   min-height: 44px;
-}
-
-.account-form .link-button {
-  align-self: flex-start;
-  min-height: 32px;
-}
-
-.password-input {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.password-input input {
-  flex: 1;
-  min-width: 0;
-}
-
-.password-input .link-button {
-  min-height: 44px;
-  padding: 0 var(--space-2);
 }
 
 .account-status:empty {
@@ -2283,4 +2261,27 @@ button.danger-button {
   border-color: var(--danger);
   color: var(--danger-text);
   font-weight: 700;
+}
+
+/* Google's button: white with the coloured G, per their sign-in branding guidelines. */
+button.google-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  background: #fff;
+  border-color: #dadce0;
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+button.google-button:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #c6c9cc;
+}
+
+.google-mark {
+  width: 1.15rem;
+  height: 1.15rem;
 }
