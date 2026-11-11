@@ -764,7 +764,7 @@ declare module '@music/chartView.js' {
   export function barTokens(text: string): BarToken[]
   export function sectionStarts(chart: Chart): number[]
   export function transposeText(shift: number, fromKey: string): string
-  export function bandStatus(state: { count: number | null; activeBar: number | null; startBar: number; totalBars: number }): string
+  export function bandStatus(state: { count: number | null; activeBar: number | null; startBar: number; totalBars: number; loading?: boolean }): string
   export function nextSection(sections: { label: string }[]): { label: string; bars: string[] }
   export function spreadBars(bars: string[], b: number, value: string): string[]
   export function moveSection<T>(sections: T[], s: number, by: number): T[]
@@ -785,9 +785,12 @@ declare module '@music/band.js' {
     setTempo: (bpm: number) => void
   }
   export const CHANNELS: Channel[]
+  export function setBandSampleUrl(url: string): void
+  export function loadBand(): Promise<boolean>
+  export function bandLoaded(): boolean
   export function playBand(
     song: Song,
-    options: { bpm: number; style: string; volumes: Partial<Record<Channel, number>>; loop: boolean; countIn: boolean; startBar: number; onBar?: (bar: number | 'count', beat: number) => void; onEnd?: () => void },
+    options: { bpm: number; style: string; volumes: Partial<Record<Channel, number>>; loop: boolean; countIn: boolean; startBar: number; onBar?: (bar: number | 'count', beat: number) => void; onEnd?: () => void; onLoading?: (loading: boolean) => void },
   ): Band
 }
 

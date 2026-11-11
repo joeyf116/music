@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { STYLES, STYLE_IDS } from '@music/arranger.js'
-import { CHANNELS, playBand, type Band } from '@music/band.js'
+import { CHANNELS, loadBand, playBand, type Band } from '@music/band.js'
 import { ALL_KEYS, compileChart, isMinorKey, keyDistance, transposeChart, transposeKey, type Chart } from '@music/chart.js'
 import { CHANNEL_LABELS, DEFAULT_MIX, bandStatus, transposeText, type Channel } from '@music/chartView.js'
 import { barSymbols } from '@music/voicings.js'
@@ -27,6 +27,7 @@ export default function ChartPlayer({ chart }: { chart: Chart }) {
   const [playing, setPlaying] = useState(false)
   const [activeBar, setActiveBar] = useState<number | null>(null)
   const [count, setCount] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
   const [startBar, setStartBar] = useState(0)
   const band = useRef<Band | null>(null)
   const position = useRef(0)
@@ -53,6 +54,7 @@ export default function ChartPlayer({ chart }: { chart: Chart }) {
     setPlaying(false)
     setActiveBar(null)
     setCount(null)
+    setLoading(false)
   }
 
   const start = (from = startBar, withCount = countIn) => {
@@ -71,6 +73,7 @@ export default function ChartPlayer({ chart }: { chart: Chart }) {
         setActiveBar(bar)
       },
       onEnd: () => stop(),
+      onLoading: setLoading,
     })
     setPlaying(true)
   }
@@ -86,6 +89,10 @@ export default function ChartPlayer({ chart }: { chart: Chart }) {
   useEffect(() => band.current?.setVolumes(volumes), [volumes])
   useEffect(() => band.current?.setTempo(bpm), [bpm])
   useEffect(() => () => band.current?.stop(), [])
+  // Start fetching the recorded instruments as soon as a chart is open, so Play is instant.
+  useEffect(() => {
+    loadBand()
+  }, [])
 
   const keySections = [{ options: ALL_KEYS.filter((k) => isMinorKey(k) === isMinorKey(chart.key)).map((k) => ({ value: k, label: k === chart.key ? `${k} (original)` : k })) }]
   const shift = keyDistance(chart.key, shown.key)
@@ -96,7 +103,7 @@ export default function ChartPlayer({ chart }: { chart: Chart }) {
       <View style={styles.transport}>
         <Button primary title={playing ? 'Stop' : 'Play'} onPress={() => (band.current ? stop() : start())} disabled={!totalBars} style={styles.play} />
         <Text style={styles.status} accessibilityLiveRegion="polite">
-          {bandStatus({ count, activeBar, startBar, totalBars })}
+          {bandStatus({ count, activeBar, startBar, totalBars, loading })}
         </Text>
       </View>
 

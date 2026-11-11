@@ -66,8 +66,8 @@ export const CHANNEL_LABELS = { drums: 'Drums', bass: 'Bass', piano: 'Piano' }
 export const DEFAULT_MIX = { drums: 0.8, bass: 0.9, piano: 0.7 }
 
 /** Where the band is: count-in, bar N of M, or where it will start. */
-export const bandStatus = ({ count, activeBar, startBar, totalBars }) =>
-  count ? `Count ${count}` : activeBar !== null ? `Bar ${activeBar + 1} / ${totalBars}` : startBar > 0 ? `Start at bar ${startBar + 1}` : `${totalBars} bars`
+export const bandStatus = ({ count, activeBar, startBar, totalBars, loading = false }) =>
+  loading ? 'Loading the band…' : count ? `Count ${count}` : activeBar !== null ? `Bar ${activeBar + 1} / ${totalBars}` : startBar > 0 ? `Start at bar ${startBar + 1}` : `${totalBars} bars`
 
 // ---- The editor ----
 

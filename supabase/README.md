@@ -29,6 +29,25 @@ links, add a link, remove a link they added themselves (from the same browser) a
   `alter table public.resources alter column approved set default false;`
   in the SQL Editor, then tick **approved** on the ones you want to keep.
 
+## Accounts (log in and sign up)
+
+The **Log in** button at the top right opens the Account page (`#account`), which uses
+[Supabase Auth](https://supabase.com/docs/guides/auth) with email and password. Run
+[`accounts.sql`](./accounts.sql) once in the SQL Editor: it adds a `profiles` table (one row per user, made
+when they sign up, readable and editable only by its owner) and `delete_my_account()` for the Delete account
+button. The app loads the Supabase client only when someone opens Account or already has a saved login, so
+other visitors download nothing extra.
+
+Dashboard settings it relies on (**Authentication** in the Supabase dashboard):
+
+- **URL Configuration**: Site URL `https://joeyf116.github.io/music/`, and add
+  `https://joeyf116.github.io/music/**` and `http://localhost:5173/**` to the Redirect URLs, so the confirm and
+  reset-password emails can send people back to the site.
+- **Emails / SMTP**: Supabase's built-in email only reaches the project's own team members and a few emails an
+  hour. For real sign ups, set up custom SMTP (for example Brevo or Resend) under **Authentication → Emails →
+  SMTP Settings**. Until then, people other than the team can't confirm their address.
+- Email links use the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
+
 ## Shared charts
 
 The Charts page uses the same project for charts anyone can share. Run
