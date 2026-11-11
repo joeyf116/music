@@ -100,6 +100,8 @@ export const linkResources = (links, source = 'repo') =>
       description: link.description ? String(link.description) : '',
       host: hostOf(link.url),
       addedAt: link.created_at || link.addedAt || '',
+      owner: source === 'shared' ? (link.owner ?? null) : null,
+      author: source === 'shared' && link.author_name ? String(link.author_name) : '',
       source,
     }))
     .filter((r) => r.url)

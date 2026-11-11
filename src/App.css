@@ -1276,6 +1276,11 @@ button.primary {
   font-size: var(--text-sm);
 }
 
+.resource-author {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;
