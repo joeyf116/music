@@ -6,7 +6,7 @@ import { Choice, Field } from './controls.jsx'
 const EMPTY = { url: '', title: '', type: 'Tab', level: '', category: '', tags: '', description: '', website: '' }
 
 // Form for adding a link to the catalog, either shared with everyone or kept in this browser.
-export default function AddResource({ canShare, categories, popularTags, onSubmit, onClose }) {
+export default function AddResource({ canShare, needsLogin = false, categories, popularTags, onSubmit, onClose }) {
   const [draft, setDraft] = useState(EMPTY)
   const [shareIt, setShareIt] = useState(canShare)
   const [status, setStatus] = useState({ busy: false, error: '', done: '' })
@@ -99,7 +99,15 @@ export default function AddResource({ canShare, categories, popularTags, onSubmi
             onChange={setShareIt}
           />
         ) : (
-          <small>Shared links aren't switched on yet, so this is saved in this browser only.</small>
+          <small>
+            {needsLogin ? (
+              <>
+                <a href="#account">Log in</a> to share it with everyone. For now it's saved in this browser only.
+              </>
+            ) : (
+              "Shared links aren't switched on yet, so this is saved in this browser only."
+            )}
+          </small>
         )}
         <button type="submit" className="primary" disabled={status.busy}>
           {status.busy ? 'Adding…' : 'Add'}
