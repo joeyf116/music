@@ -1,0 +1,275 @@
+/* ---- Drums page ----
+   Steps are drawn the same way everywhere: a hit is a grey block, an accent a bright block with a ›, a ghost
+   note a faint hatched block. The accent colour is kept for the step being heard and the loaded groove. */
+
+.drums-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.drums-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.drums-now h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.drums-now h2 small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.drums-transport {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.drums-transport .play-button {
+  min-width: 7rem;
+  min-height: var(--control-h);
+}
+
+/* Step colours, shared by the big grid and the gallery. */
+.lv-hit {
+  --step-bg: var(--muted);
+}
+
+.lv-accent {
+  --step-bg: var(--text);
+}
+
+.lv-ghost {
+  --step-bg: repeating-linear-gradient(135deg, rgb(154 164 181 / 0.55) 0 2px, transparent 2px 5px);
+}
+
+.lv-off {
+  --step-bg: transparent;
+}
+
+/* ---- The loaded loop ---- */
+.loop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.loop-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.loop-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loop-steps {
+  display: grid;
+  grid-template-columns: repeat(var(--beats), 1fr);
+  gap: var(--space-2);
+}
+
+.loop-beat {
+  display: grid;
+  grid-template-columns: repeat(var(--steps), 1fr);
+  gap: 3px;
+}
+
+.loop-step {
+  display: grid;
+  place-items: center;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--step-bg);
+  color: var(--bg);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.loop-step.lv-off {
+  background: var(--field-bg);
+}
+
+.loop-step.now {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+.loop-step.lv-off.now {
+  background: var(--accent-soft);
+}
+
+@media (max-width: 479px) {
+  .loop-row {
+    grid-template-columns: 3.75rem 1fr;
+    gap: var(--space-1);
+  }
+
+  .loop-name {
+    font-size: var(--text-xs);
+  }
+
+  .loop-steps {
+    gap: var(--space-1);
+  }
+
+  .loop-beat {
+    gap: 2px;
+  }
+
+  .loop-step {
+    height: 1.9rem;
+    border-radius: 3px;
+    font-size: var(--text-sm);
+  }
+}
+
+/* ---- Groove gallery ---- */
+.drums-presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chips.drum-styles {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.drum-styles .chip {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (min-width: 720px) {
+  .chips.drum-styles {
+    flex-wrap: wrap;
+  }
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preset-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration);
+}
+
+.preset-card:hover {
+  border-color: var(--border-strong);
+}
+
+.preset-card.is-loaded {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.preset-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.preset-head strong {
+  font-size: var(--text-sm);
+}
+
+.preset-head small {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.mini-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mini-row {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mini-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-beats {
+  display: flex;
+  gap: 3px;
+}
+
+.mini-beat {
+  display: flex;
+  flex: 1;
+  gap: 1px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--field-bg);
+}
+
+.mini-step {
+  flex: 1;
+  height: 0.7rem;
+  border-radius: 1px;
+  background: var(--step-bg);
+}

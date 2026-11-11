@@ -163,7 +163,7 @@ body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .pa
 @media (min-width: 720px) {
   .site-header {
     display: flex;
-    /* Five page tabs plus the title don't fit a small laptop or tablet: let them drop to their own row. */
+    /* Six page tabs plus the title don't fit a small laptop or tablet: let them drop to their own row. */
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;

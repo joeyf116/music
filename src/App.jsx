@@ -1,5 +1,6 @@
 import AccountPage from './components/AccountPage.jsx'
 import Charts from './components/Charts.jsx'
+import DrumsPage from './components/DrumsPage.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
 import EarTraining from './components/EarTraining.jsx'
@@ -24,6 +25,11 @@ const PAGES = [
     id: 'exercises',
     label: 'Rhythm',
     icon: <path d="M9 3h6l3.5 18h-13ZM12 15l5-9M7.5 15h9" />,
+  },
+  {
+    id: 'drums',
+    label: 'Drums',
+    icon: <path d="M4 10c0-1.7 3.6-3 8-3s8 1.3 8 3v6c0 1.7-3.6 3-8 3s-8-1.3-8-3Zm0 0c0 1.7 3.6 3 8 3s8-1.3 8-3M8 13v5.5M16 13v5.5M7 3l5 6.5M17 3l-5 6.5" />,
   },
   {
     id: 'quiz',
@@ -109,6 +115,8 @@ export default function App() {
           <AccountPage />
         ) : page === 'resources' ? (
           <Resources />
+        ) : page === 'drums' ? (
+          <DrumsPage />
         ) : page === 'exercises' ? (
           <RhythmPage
             tuning={tuning}
