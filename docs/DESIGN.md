@@ -79,6 +79,7 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right); in the app these are menu rows | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
 | **Drums** `#drums` | Play along with a real drum groove | Style chips over the groove gallery | The loaded groove's grid with **Play** and tempo, the playhead lit on the step being heard; below it the gallery of grooves as mini grids (press one to load and hear it) | Settings: kit, volume | None |
 | **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style; one visible action (Edit, or Copy & edit) and the rest in ⋯ | Band mix | Chord shapes |
+| **Community** `#community` | Share what you're practising or stuck on, and help each other | Post type (Working on · Need help) and the post box when logged in, or **Log in**; then All · Working on · Need help | Posts newest first, each with its replies and **Reply**; ⋯ to delete your own or report someone else's; **Older posts** at the end | None | None |
 | **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
 | **Account** `#account` (not a tab: the **Log in** button, or your initial, at the top right) | Log in with Google, manage your account | None | **Continue with Google** (also signs you up); once in: your name + **Save**, and **Log out** in the header | Delete account | None |
 
@@ -87,7 +88,7 @@ always know where they are.
 
 ### Navigation
 
-- Six top-level pages, no more (the sixth, Drums, was added in November 2026; the phone tab bar still fits six at 360 px). Each has its own URL hash (`#fretboard`, `#exercises`, …) so it can be
+- Six top-level pages, no more (Drums and Community were added in November 2026 as Charts and Rhythm were retired; the phone tab bar fits six at 360 px). Each has its own URL hash (`#fretboard`, `#exercises`, …) so it can be
   bookmarked and shared.
 - **Phones (< 720 px):** a bottom tab bar with icon + label, within thumb reach, hidden while typing. The
   site title scrolls away with the page. **No sticky top bar**, ever: it covers content in mobile browsers.
