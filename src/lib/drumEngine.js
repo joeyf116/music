@@ -5,9 +5,11 @@
 import { audioContext } from './audio.js'
 import { KIT_SAMPLES } from './drumKits.js'
 import { CHOKES, hitsAt, stepCount, stepSeconds, swingDelay } from './drumLoops.js'
-import { heardNow } from './rhythmEngine.js'
 
 const LOOKAHEAD = 0.12
+
+/** Audio-clock time that is reaching the listener's ears right now (for the playhead). */
+const heardNow = (ac) => ac.currentTime - (ac.outputLatency || 0) - (ac.baseLatency || 0)
 
 export const KITS = [{ id: 'rock', name: 'Rock', detail: 'Big, open 1980s kit', credit: 'Big Rusty Drums by Karoryfer Samples (CC0)' }]
 
