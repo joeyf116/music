@@ -35,10 +35,10 @@ describe('loops', () => {
 
   it('finds the hits on a step with their velocity', () => {
     expect(hitsAt(basic, 0)).toEqual([
-      { voice: 'hihat', level: 'x', velocity: 0.72 },
-      { voice: 'kick', level: 'x', velocity: 0.72 },
+      { voice: 'hihat', level: 'x', velocity: 0.72, volume: 1 },
+      { voice: 'kick', level: 'x', velocity: 0.72, volume: 1 },
     ])
-    expect(hitsAt(basic, 4).find((h) => h.voice === 'snare')).toEqual({ voice: 'snare', level: 'X', velocity: 1 })
+    expect(hitsAt(basic, 4).find((h) => h.voice === 'snare')).toEqual({ voice: 'snare', level: 'X', velocity: 1, volume: 1 })
     expect(hitsAt(basic, 1)).toEqual([])
   })
 

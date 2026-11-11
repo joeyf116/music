@@ -77,7 +77,9 @@ Grooves to play along with, on a real recorded drum kit:
 
 - **38 ready-made grooves** across rock, pop, funk, hip-hop, jazz, Latin, country, blues and punk/metal, shown as mini grids. Press one to load it and hear it.
 - **Recorded, not synthesised:** the kit is [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums) by Karoryfer Samples (CC0), mixed from its close and overhead mics. Every drum has several velocity layers and round-robin takes, so accents, normal hits and ghost notes sound different and repeated notes never sound like a machine. A closed hi-hat chokes a ringing open one, as on a real kit.
-- Tempo, swing (hip-hop grooves), and the step being heard lit up on the grid.
+- **Change any step:** pick Hit, Accent or Ghost and press a step to paint it, drag along a row to paint more, press a painted step to clear it. Mute, solo or turn down any drum, add or remove drums, and undo anything (Ctrl+Z). The grid works from the keyboard too: arrow keys move, Space paints or clears, 1 / 2 / 3 paint a hit, accent or ghost.
+- **Settings:** time signature (4/4, 3/4, 5/4, 6/8, 9/8, 12/8), 1, 2 or 4 bars, swing, and humanize for a drummer's small timing and loudness changes. Your groove is kept when you come back.
+- Tempo, and the step being heard lit up on the grid.
 - Rebuild the samples with `python3 scripts/build-drum-kits.py` (needs ffmpeg and numpy).
 
 ## 👂 Training: ear and theory
