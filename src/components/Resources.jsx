@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import links from '../../resources/links.json'
 import { fileResources, filterResources, LEVELS, linkResources, SORTS, sortResources, tagCounts } from '../lib/resources.js'
-import { addSharedLink, COOLDOWN_MS, fetchSharedLinks, newOwnerToken, removeSharedLink, reportSharedLink, sharingEnabled } from '../lib/sharedResources.js'
+import { displayName } from '../lib/auth.js'
+import { COOLDOWN_MS, fetchSharedLinks, removeMyLink, removeSharedLink, reportSharedLink, shareLink, sharingEnabled } from '../lib/sharedResources.js'
+import { getSupabase } from '../lib/supabaseClient.js'
+import { useAuth } from '../lib/useAuth.jsx'
 import usePersistentState from '../lib/usePersistentState.js'
 import AddResource from './AddResource.jsx'
 import { Field } from './controls.jsx'
@@ -24,8 +27,14 @@ const toggle = (list, value) => (list.includes(value) ? list.filter((v) => v !==
 export default function Resources() {
   const [saved, setSaved] = usePersistentState('music.savedLinks', [])
   const [starred, setStarred] = usePersistentState('music.starredResources', [])
-  // Shared links this browser added, { [id]: ownerToken }, so they can be removed again.
+  // Links shared before accounts, { [id]: ownerToken }, so they can still be removed (synced with your account).
   const [mine, setMine] = usePersistentState('music.mySharedLinks', {})
+  // Sharing with everyone needs an account, so every shared link has a name on it.
+  const auth = useAuth()
+  const me = auth.status === 'signedIn' ? auth.user : null
+  const canShare = CAN_SHARE && Boolean(me)
+  const isMine = (r) => r.source === 'shared' && ((me && r.owner === me.id) || Boolean(mine[r.sharedId]))
+  const accessToken = async () => (await (await getSupabase()).auth.getSession()).data.session?.access_token
   const [lastShared, setLastShared] = usePersistentState('music.lastSharedAt', 0)
   const [sort, setSort] = usePersistentState('music.resourceSort', 'category')
   const [shared, setShared] = useState([])
@@ -69,10 +78,10 @@ export default function Resources() {
     if (!share) return setSaved([...saved, link])
     const wait = lastShared + COOLDOWN_MS - Date.now()
     if (wait > 0) throw new Error(`You just shared a link. Try again in ${Math.ceil(wait / 1000)} seconds.`)
-    const token = newOwnerToken()
-    const row = await addSharedLink(link, token)
+    const token = await accessToken()
+    if (!token) throw new Error('Log in to share a link with everyone.')
+    const row = await shareLink(link, token, { id: me.id, name: displayName(me, auth.profile) })
     setLastShared(Date.now())
-    setMine({ ...mine, [row.id]: token })
     setShared((rows) => [row, ...rows])
   }
 
@@ -80,7 +89,8 @@ export default function Resources() {
     if (r.source === 'local') return setSaved(saved.filter((_, i) => i !== r.index))
     if (!window.confirm(`Remove "${r.title}" for everyone?`)) return
     try {
-      await removeSharedLink(r.sharedId, mine[r.sharedId])
+      const removed = me && r.owner === me.id ? await removeMyLink(r.sharedId, await accessToken()) : await removeSharedLink(r.sharedId, mine[r.sharedId])
+      if (removed === false) throw new Error("That link couldn't be removed. Log in with the account that shared it.")
       setShared((rows) => rows.filter((row) => row.id !== r.sharedId))
       const { [r.sharedId]: _gone, ...rest } = mine
       setMine(rest)
@@ -104,7 +114,7 @@ export default function Resources() {
     <section className="page resources" id="resources">
       <PageHeader
         title="Resources"
-        summary="Lessons, tabs, videos and tools to practise with. Anyone can add one for everybody to see."
+        summary="Lessons, tabs, videos and tools to practise with. Log in to share one with everybody."
         actions={
           <button type="button" className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>
             + Add a resource
@@ -112,7 +122,7 @@ export default function Resources() {
         }
       />
 
-      {adding && <AddResource canShare={CAN_SHARE} categories={categories} popularTags={tags} onSubmit={addLink} onClose={() => setAdding(false)} />}
+      {adding && <AddResource canShare={canShare} needsLogin={CAN_SHARE && !me} categories={categories} popularTags={tags} onSubmit={addLink} onClose={() => setAdding(false)} />}
 
       <div className="catalog-controls">
         <div className="search-row">
@@ -240,8 +250,8 @@ export default function Resources() {
                 onStar={star}
                 onTag={tagFilter}
                 activeTags={filters.tags}
-                onRemove={r.source === 'local' || (r.source === 'shared' && mine[r.sharedId]) ? removeLink : undefined}
-                onReport={r.source === 'shared' && !mine[r.sharedId] ? reportLink : undefined}
+                onRemove={r.source === 'local' || isMine(r) ? removeLink : undefined}
+                onReport={r.source === 'shared' && !isMine(r) ? reportLink : undefined}
               />
             ))}
           </ul>

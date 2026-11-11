@@ -111,43 +111,6 @@ declare module '@music/exercises.js' {
   export function buildExercise(settings: ExerciseSettings, tuning: number[]): ExerciseScore
 }
 
-declare module '@music/exerciseView.js' {
-  import type { ExerciseScore, ScoreNote } from '@music/exercises.js'
-  import type { Column, Level } from '@music/fretboardView.js'
-
-  export type FieldValue = string | number | boolean
-  export interface FieldOption {
-    value: FieldValue
-    label: string
-    title?: string
-    disabled?: boolean
-  }
-  /** One exercise setting: a list to pick from, a few buttons, or a number. */
-  export interface ExerciseField {
-    id: string
-    label: string
-    kind: 'select' | 'choice' | 'stepper'
-    value: FieldValue
-    options?: FieldOption[]
-    min?: number
-    max?: number
-    fallback?: number
-    resetsPosition?: boolean
-  }
-  export const EXERCISE_GROUPS: string[]
-  export const SPEED_UPS: number[]
-  export function exerciseMenu(): { group: string; options: { value: string; label: string }[] }[]
-  export function exerciseFields(score: ExerciseScore, tuning: number[], stringName: (string: number) => string): ExerciseField[]
-  export function exerciseLayoutField(score: ExerciseScore): ExerciseField | null
-  export function exercisePositions(score: ExerciseScore, tuning: number[]): { label: string; hint: string }[]
-  export function exerciseTitle(score: ExerciseScore): string
-  export function isMelodic(score: ExerciseScore): boolean
-  export function exerciseColumns(score: ExerciseScore, labels: 'notes' | 'degrees'): Column[]
-  export function exerciseColumnWidth(score: ExerciseScore): number
-  export function exerciseNeckNotes(score: ExerciseScore, activeIndex: number | null): (ScoreNote & { level: Level })[]
-  export function exerciseNeckLabel(score: ExerciseScore, labels: 'notes' | 'degrees', note: ScoreNote): string
-}
-
 declare module '@music/audio.js' {
   /** The app's one audio context (null where audio isn't available). */
   export function audioContext(): { currentTime: number } | null
@@ -315,8 +278,6 @@ declare module '@music/clickSounds.js' {
 }
 
 declare module '@music/rhythm.js' {
-  import type { Score } from '@music/exercises.js'
-
   export type Accent = 'accent' | 'beat' | 'mute'
   export interface Subdivision {
     id: string
@@ -336,63 +297,14 @@ declare module '@music/rhythm.js' {
     every?: number
     max?: number
   }
-  export interface Grade {
-    id: 'perfect' | 'good' | 'off'
-    limit: number
-    label: string
-  }
-  export interface TapResult {
-    target: number
-    ms: number
-    grade: Grade['id']
-    label: string
-  }
-  export interface TapSummary {
-    count: number
-    mean: number
-    spread: number
-    tight: number
-    verdict: string
-  }
-  export interface RhythmLevel {
-    id: number
-    name: string
-    about: string
-  }
-  export interface RhythmPreset {
-    id: string
-    level: number
-    name: string
-    beats: string
-  }
-  export interface RhythmCell {
-    beat: number
-    cell: number
-    cells: number
-    tick: number
-    hit: boolean
-    count: string
-    strum: 'down' | 'up' | null
-  }
   export const METRONOME_METERS: string[]
   export const SUBDIVISIONS: Subdivision[]
-  export const RHYTHM_LEVELS: RhythmLevel[]
-  export const RHYTHMS: RhythmPreset[]
-  export const PLAY_ON: { value: string; label: string; title: string }[]
   export function subdivisionById(id: string): Subdivision
   export function fitAccents(accents: unknown, meterId: string): Accent[]
   export function nextAccent(level: Accent): Accent
   export function clampBpm(bpm: unknown, min?: number, max?: number): number
   export function tapTempo(times: number[]): number | null
   export function tempoName(bpm: number): string
-  export function judgeTap(tap: number, targets: number[], window?: number): TapResult | null
-  export function summarizeTaps(offsets: number[]): TapSummary | null
-  export function rhythmById(id: string): RhythmPreset | undefined
-  export function parseBeats(beats: string): string[]
-  export function rhythmCells(beats: string): RhythmCell[]
-  export function toggleCell(beats: string, beat: number, cell: number): string
-  export function regridBeat(beats: string, beat: number, size: number): string
-  export function rhythmScore(beats: string, options: { bars?: number; tuning: number[]; playOn?: string; rootPc?: number; minor?: boolean }): Score & { events: (Score['events'][number] & { count: string })[] }
 }
 
 declare module '@music/rhythmView.js' {
@@ -411,39 +323,12 @@ declare module '@music/rhythmView.js' {
     speed: Required<Speed>
     tapCorrection: number
   }
-  export interface RhythmDrill {
-    level: number
-    rhythm: string
-    beats: string
-    playOn: string
-    mode: 'listen' | 'along'
-    countIn: boolean
-    clickGrid: boolean
-    showTab: boolean
-  }
-  export type RhythmTab = 'metronome' | 'rhythms' | 'timing' | 'drills'
-  export type ClickMode = 'full' | 'one' | 'backbeat' | 'gap'
 
-  export const RHYTHM_TAB_KEY: string
-  export const RHYTHM_TABS: { id: RhythmTab; label: string }[]
-  export const RHYTHM_ABOUT: Partial<Record<RhythmTab, string>>
   export const METRONOME_KEY: string
   export const DEFAULT_METRONOME: Omit<MetronomeSettings, 'accents'> & { accents: Accent[] | null }
   export const ACCENT_NAMES: Record<Accent, string>
-  export const CLICK_MODES: { value: ClickMode; label: string; title: string }[]
-  export const RHYTHM_DRILL_KEY: string
-  export const RHYTHM_DRILL_DEFAULTS: RhythmDrill
-  export const DRILL_MODES: { value: RhythmDrill['mode']; label: string; title: string }[]
-  export const BEAT_GRIDS: { value: number; label: string }[]
-  export const RHYTHM_STEPS: [string, string][]
   export function metronomeSettings(stored: unknown): MetronomeSettings
   export function metronomeStatus(pulse: Pulse | null, settings: MetronomeSettings): string
-  export function clickModeAccents(mode: ClickMode, accents: Accent[]): Accent[]
-  export function clickModeGap(mode: ClickMode): Gap
-  export function timingStatus(pulse: Pulse | null, gap: Gap): string
-  export function tapVerdict(last: { miss?: boolean; label?: string; grade?: string; ms?: number } | null, idle: string): string
-  export function tapPosition(ms: number): number
-  export function rhythmColumnWidth(finest: number): number
 }
 
 declare module '@music/rhythmEngine.js' {
@@ -683,131 +568,6 @@ declare module '@music/theoryDrill.js' {
   export function keyPatternText(question: DrillQuestion): { stack: string; pattern: string } | null
 }
 
-declare module '@music/chart.js' {
-  export interface ChartSection {
-    label: string
-    bars: string[]
-  }
-  export interface Chart {
-    title: string
-    composer: string
-    style: string
-    key: string
-    time: string
-    tempo: number
-    sections: ChartSection[]
-  }
-  export interface ParsedChartChord {
-    root: number
-    quality: string
-    intervals: number[]
-    bass: number | null
-  }
-  export interface Song {
-    beats: number
-    bars: { section: number; bar: number; events: { beat: number; beats: number; chord: ParsedChartChord | null; symbol?: string }[] }[]
-  }
-  export const TIME_SIGNATURES: string[]
-  export const CHART_LIMITS: { title: number; composer: number; label: number; bar: number; sections: number; barsPerSection: number; totalBars: number }
-  export const ALL_KEYS: string[]
-  export function badTokens(text: string): string[]
-  export function isMinorKey(key: string): boolean
-  export function transposeKey(key: string, semitones: number): string
-  export function keyDistance(from: string, to: string): number
-  export function chordParts(symbol: string): { root: string; quality: string; bass: string }
-  export function transposeChart<C extends Chart>(chart: C, toKey: string): C
-  export function compileChart(chart: Chart): Song
-  export function blankChart(): Chart
-  export function validateChart(draft: Chart, styles: Record<string, unknown>): { chart: Chart; error?: undefined } | { error: string; chart?: undefined }
-}
-
-declare module '@music/chartView.js' {
-  import type { Chart } from '@music/chart.js'
-
-  export type ChartSource = 'library' | 'shared' | 'local'
-  /** A chart in the catalog, with where it came from. */
-  export interface CatalogChart extends Chart {
-    id: string
-    source: ChartSource
-    collection: string
-    mine?: boolean
-    sharedId?: string
-  }
-  export interface SharedChartRow extends Chart {
-    id: string
-    collection: string
-  }
-  export interface LocalChart extends Chart {
-    id: string
-  }
-  export type BarToken = { kind: 'chord'; root: string; quality: string; bass: string } | { kind: 'slash' } | { kind: 'nc' } | { kind: 'repeat' }
-  export type Channel = 'drums' | 'bass' | 'piano'
-
-  export const ALL_SHELF: string
-  export const SHARED_SHELF: string
-  export const MINE_SHELF: string
-  export const SHARE_COOLDOWN_MS: number
-  export const REPORT_REASONS: string[]
-  export const BUILT_IN_CHARTS: CatalogChart[]
-  export const BARS_PER_ROW: number
-  export const CHANNEL_LABELS: Record<Channel, string>
-  export const DEFAULT_MIX: Record<Channel, number>
-  export const CHART_HELP: string[]
-  export function barCount(chart: Chart): number
-  export function keyLabel(key: string): string
-  export function editableChart(chart: Chart): Chart
-  export function chartSummary(chart: Chart): string
-  export function catalogCharts(shared: SharedChartRow[], local: LocalChart[], mine: Record<string, string>): CatalogChart[]
-  export function chartShelves(shared: SharedChartRow[], local: LocalChart[], mine: Record<string, string>): string[]
-  export function filterCharts(all: CatalogChart[], filters: { collection?: string; style?: string; query?: string }): CatalogChart[]
-  export function chartCountText(shown: number, total: number): string
-  export function barTokens(text: string): BarToken[]
-  export function sectionStarts(chart: Chart): number[]
-  export function transposeText(shift: number, fromKey: string): string
-  export function bandStatus(state: { count: number | null; activeBar: number | null; startBar: number; totalBars: number; loading?: boolean }): string
-  export function nextSection(sections: { label: string }[]): { label: string; bars: string[] }
-  export function spreadBars(bars: string[], b: number, value: string): string[]
-  export function moveSection<T>(sections: T[], s: number, by: number): T[]
-}
-
-declare module '@music/arranger.js' {
-  export const STYLES: Record<string, { name: string; tempo: number }>
-  export const STYLE_IDS: string[]
-}
-
-declare module '@music/band.js' {
-  import type { Song } from '@music/chart.js'
-  import type { Channel } from '@music/chartView.js'
-
-  export interface Band {
-    stop: () => void
-    setVolumes: (volumes: Partial<Record<Channel, number>>) => void
-    setTempo: (bpm: number) => void
-  }
-  export const CHANNELS: Channel[]
-  export function setBandSampleUrl(url: string): void
-  export function loadBand(): Promise<boolean>
-  export function bandLoaded(): boolean
-  export function playBand(
-    song: Song,
-    options: { bpm: number; style: string; volumes: Partial<Record<Channel, number>>; loop: boolean; countIn: boolean; startBar: number; onBar?: (bar: number | 'count', beat: number) => void; onEnd?: () => void; onLoading?: (loading: boolean) => void },
-  ): Band
-}
-
-declare module '@music/voicings.js' {
-  import type { Chart, ParsedChartChord, Song } from '@music/chart.js'
-
-  export interface Voicing {
-    frets: (number | null)[]
-    partial: boolean
-    notes: { string: number; fret: number; pitch: number; role: 'root' | 'bass' | number }[]
-  }
-  export function chartChords(chart: Chart): { symbol: string; chord: ParsedChartChord }[]
-  export function voicingsFor(chord: ParsedChartChord, tuning: number[], limit?: number): Voicing[]
-  export function fretText(frets: (number | null)[]): string
-  export function barSymbols(song: Song): string[][]
-}
-
 declare module '@music/sharedResources.js' {
   import type { Link } from '@music/resources.js'
 
@@ -823,18 +583,6 @@ declare module '@music/sharedResources.js' {
   export function addSharedLink(link: Link, ownerToken: string, config?: SharedConfig): Promise<Link & { id: string; created_at: string }>
   export function removeSharedLink(id: string, ownerToken: string, config?: SharedConfig): Promise<boolean>
   export function reportSharedLink(id: string, reason: string, config?: SharedConfig): Promise<unknown>
-}
-
-declare module '@music/sharedCharts.js' {
-  import type { Chart } from '@music/chart.js'
-  import type { SharedChartRow } from '@music/chartView.js'
-  import type { SharedConfig } from '@music/sharedResources.js'
-
-  export function fetchSharedCharts(config?: SharedConfig): Promise<SharedChartRow[]>
-  export function addSharedChart(chart: Chart, ownerToken: string, config?: SharedConfig): Promise<SharedChartRow>
-  export function updateSharedChart(id: string, chart: Chart, ownerToken: string, config?: SharedConfig): Promise<boolean>
-  export function removeSharedChart(id: string, ownerToken: string, config?: SharedConfig): Promise<boolean>
-  export function reportSharedChart(id: string, reason: string, config?: SharedConfig): Promise<unknown>
 }
 
 declare module '@music/resources.js' {

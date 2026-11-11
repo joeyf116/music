@@ -10,12 +10,6 @@ const LOOKAHEAD = 0.12
 /** Audio-clock time that is reaching the listener's ears right now. */
 export const heardNow = (ac) => ac.currentTime - (ac.outputLatency || 0) - (ac.baseLatency || 0)
 
-/** Audio-clock time (as heard) of a pointer or key event, using the event's own timestamp when it has one. */
-export const eventTime = (ac, event) => {
-  const age = event?.timeStamp ? Math.max(0, (performance.now() - event.timeStamp) / 1000) : 0
-  return heardNow(ac) - Math.min(age, 0.2)
-}
-
 /**
  * Start clicking. `settings`: { bpm, accents, subdivision, sound, volume, subVolume, gap, speed, countIn }.
  * Callbacks: onPulse({ bar, beat, sub, level, audible }) as each click is heard (bar -1 during the count-in),

@@ -54,6 +54,14 @@ One-time setup:
 The Google button reads `/auth/v1/settings` and greys itself out while Google is switched off. Sign-in uses
 the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
 
+## Shared links belong to accounts
+
+[`resources-accounts.sql`](./resources-accounts.sql) makes sharing a link on the Resources page need a login:
+`share_resource()` stores the sharer's account (`owner`) and name (`author_name`, shown as "Shared by …"), and
+`remove_my_resource()` lets them remove it from any device. Anonymous `add_resource` is switched off. Links
+shared before this keep their secret token, which now syncs with your account, so you can still remove them.
+Until the file has run, the page reads links without names and sharing uses the old path.
+
 ## Settings that follow your account
 
 [`settings.sql`](./settings.sql) adds `user_settings`: one row per user holding every practice setting the app
@@ -63,23 +71,6 @@ readable and writable only by its owner and deleted with the account. Run it onc
 for conflicts: the newest save wins, judged by the server's clock. Logging in on a new device brings the
 account's settings in; changes are saved two seconds after you make them, and again when you leave the tab.
 Until the table exists the app quietly keeps settings in the browser only.
-
-## Shared charts
-
-The Charts page uses the same project for charts anyone can share. Run
-[`charts.sql`](./charts.sql) once in the SQL Editor (already done for `guitar-music`). Visitors can read
-approved charts, add a chart, edit or remove a chart they shared themselves (from the same browser) and
-report a chart; after 3 reports it's hidden. Review or delete rows in **Table Editor → charts**.
-
-### Seeding 50 popular charts
-
-[`seed/popular-charts.sql`](./seed/popular-charts.sql) adds 50 widely played tunes (jazz standards, blues, latin,
-pop & rock, folk & country) to the shared catalog, sorted onto genre shelves. Run it once in the SQL Editor
-after `charts.sql`; running it again skips titles that are already there. To change the list, edit
-[`seed/popular-charts.js`](./seed/popular-charts.js) and run `npm run seed:charts` to regenerate the SQL.
-
-If the catalog was seeded before a chord fix to `popular-charts.js`, run the matching fix file once as well
-(for example [`seed/accuracy-fixes.sql`](./seed/accuracy-fixes.sql)); it only updates the seeded copies.
 
 ## Community board
 

@@ -31,10 +31,10 @@ npx eas-cli@latest init      # adds extra.eas.projectId to app.json: commit it
 Text you can paste (edit to taste):
 
 - **Name:** Fretboard Practice
-- **Subtitle / short description (≤ 30 / 80 chars):** Scales, chords, rhythm and ear training for guitar
-- **Description:** See any scale, chord or inversion on the neck in any key and tuning, practise with a
-  metronome and strumming rhythms, test your timing, train your ear on chords and intervals, and play along with
-  a drums, bass and piano band from chord charts. Find lessons, tabs and tools others have shared.
+- **Subtitle / short description (≤ 30 / 80 chars):** Scales, chords and ear training for guitar
+- **Description:** See any scale, chord or inversion on the neck in any key and tuning, pin it to a
+  practice tab that plays along with a click, train your ear on chords and intervals, and learn to build the chords
+  of any key. Find lessons, tabs and tools others have shared.
 - **Category:** Music (secondary: Education)
 - **Privacy policy URL:** both stores require one. A short page on the GitHub Pages site is enough (see 5).
 
@@ -42,22 +42,21 @@ Text you can paste (edit to taste):
 
 Apple needs a 6.9" iPhone set (1320 × 2868) and, because the app supports iPad, a 13" iPad set (2064 × 2752).
 Google needs at least 2 phone screenshots plus a 1024 × 500 feature graphic. Take them from a simulator or
-device build: one per tab works well (Fretboard, Rhythm, Training, a chart playing, Resources).
+device build: one per tab works well (Fretboard, Training, Resources).
 
 ## 5. Privacy and content answers
 
 The app has no accounts, ads, analytics or tracking. What it stores and sends:
 
-- Settings, saved charts and saved links stay on the device.
-- Charts and links someone chooses to **share** are sent to the shared catalog (Supabase), with a random owner
+- Settings and saved links stay on the device.
+- Links someone chooses to **share** are sent to the shared catalog (Supabase), with a random owner
   token so the sharer can remove them later. Nothing identifies the person.
 
 So: App Store **App Privacy** → "Data not collected" except **User Content → Other user content** (not linked to
 the user, not used for tracking). Play **Data safety** → collects "Other user-generated content", optional,
 not shared with third parties, encrypted in transit, deletion via the in-app Remove action.
 
-Both stores ask about **user-generated content**: shared items can be **reported** from the app (chart ⋯ menu,
-link ⋯ menu) and are hidden automatically after three reports (see `../supabase`). Mention this in the review
+Both stores ask about **user-generated content**: shared items can be **reported** from the app (link ⋯ menu) and are hidden automatically after three reports (see `../supabase`). Mention this in the review
 notes. Content rating questionnaires: no violence, no gambling, user content present.
 
 Export compliance (iOS) is already answered in `app.json` (`usesNonExemptEncryption: false`).

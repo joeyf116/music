@@ -6,11 +6,12 @@ import { linkResources, type Link, type Resource } from '@music/resources.js'
 import { COOLDOWN_MS, addSharedLink, fetchSharedLinks, removeSharedLink, reportSharedLink } from '@music/sharedResources.js'
 import { useStored } from './prefs'
 import { CAN_SHARE, SHARED, newToken } from './sharing'
-import type { SharedStatus } from './charts'
 
 // Files dropped into /resources are bundled by the web site only; the app lists the links.
 const REPO_RESOURCES = linkResources(links)
 const REPO_URLS = new Set(REPO_RESOURCES.map((r) => r.url))
+
+export type SharedStatus = 'off' | 'loading' | 'ok' | 'error'
 
 type SharedLink = Link & { id: string; created_at: string }
 let rows: SharedLink[] = []

@@ -8,8 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run",
-    "seed:charts": "node scripts/build-chart-seed.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

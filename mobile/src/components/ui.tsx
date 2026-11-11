@@ -284,7 +284,7 @@ interface ChoiceRowProps<V extends ChoiceValue> extends RowProps {
   /** The list, as sections (or one section of options). */
   sections: ChooseSection<V>[]
   onChange: (value: V) => void
-  /** The tab stack's choose sheet, e.g. '/rhythm/choose', for lists too long or too wordy for a menu. */
+  /** The tab stack's choose sheet, e.g. '/training/choose', for lists too long or too wordy for a menu. */
   sheet: Href
   /** Title of the sheet; the row label by default. */
   title?: string
