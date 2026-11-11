@@ -18,6 +18,23 @@ describe('drumHits', () => {
     expect(rim(0)).toEqual(rim(2))
   })
 
+  it('plays a fill into a new section and a crash at the top of one', () => {
+    const plain = drumHits('rock', 4, 0)
+    const fill = drumHits('rock', 4, 0, { fill: true })
+    expect(plain.some((h) => h.voice.startsWith('tom'))).toBe(false)
+    expect(fill.filter((h) => h.voice.startsWith('tom')).every((h) => h.time >= 2)).toBe(true)
+    expect(fill.some((h) => h.voice === 'hat' && h.time >= 2)).toBe(false)
+    const crash = drumHits('rock', 4, 0, { crash: true })
+    expect(crash.filter((h) => h.time === 0).map((h) => h.voice).sort()).toEqual(['crash', 'kick'])
+    expect(drumHits('bossa', 4, 0, { crash: true }).some((h) => h.voice === 'crash')).toBe(false)
+  })
+
+  it('adds the odd soft snare comp in swing, but not always the same', () => {
+    const ghosts = (r) => drumHits('swing', 4, 0, {}, () => r).filter((h) => h.voice === 'ghost')
+    expect(ghosts(0.05).length).toBeGreaterThan(0)
+    expect(ghosts(0.9)).toEqual([])
+  })
+
   it('fits any meter', () => {
     for (const style of STYLE_IDS)
       for (const beats of [2, 3, 4, 5, 6]) {
@@ -69,6 +86,16 @@ describe('bassNotes', () => {
 })
 
 describe('compHits', () => {
+  it('can push the next chord onto the last offbeat, then lets it ring', () => {
+    const song = compileChart({ time: '4/4', sections: [{ label: 'A', bars: ['Dm7', 'G7'] }] })
+    const state = {}
+    const first = compHits('swing', song.bars[0].events, 4, 0, () => 0.01, song.bars[1].events[0].chord, state)
+    expect(first.at(-1)).toMatchObject({ time: 3.5, chord: { root: 7 } })
+    expect(state.pushed).toBe(true)
+    const second = compHits('swing', song.bars[1].events, 4, 1, () => 0.01, null, state)
+    expect(second.every((h) => h.time >= 1)).toBe(true)
+  })
+
   it('hits every chord at least once', () => {
     const [bar] = compileChart({ time: '4/4', sections: [{ label: 'A', bars: ['C F G7 C'] }] }).bars
     for (const style of STYLE_IDS) {
@@ -91,6 +118,21 @@ describe('voiceChord', () => {
     const g = voiceChord(parseChord('G7'), dm)
     const centre = (v) => v.reduce((a, b) => a + b, 0) / v.length
     expect(Math.abs(centre(g) - centre(dm))).toBeLessThan(4)
+  })
+
+  it('gives jazz styles rootless voicings with 9ths and 13ths', () => {
+    const g7 = voiceChord(parseChord('G7'), null, 'rootless').map(mod12).sort((a, b) => a - b)
+    expect(g7).toEqual([4, 5, 9, 11]) // E (13), F (b7), A (9), B (3)
+    const cmaj = voiceChord(parseChord('Cmaj7'), null, 'rootless').map(mod12).sort((a, b) => a - b)
+    expect(cmaj).toEqual([2, 4, 7, 11]) // 9, 3, 5, 7
+    expect(voiceChord(parseChord('G7b9'), null, 'rootless').map(mod12)).toContain(8) // alterations kept
+  })
+
+  it('puts the root under a full chord for pop and rock', () => {
+    const [left, ...right] = voiceChord(parseChord('Am'), null, 'spread')
+    expect(mod12(left)).toBe(9)
+    expect(right.map(mod12).sort((a, b) => a - b)).toEqual([0, 4, 9])
+    expect(Math.min(...right)).toBeGreaterThan(left)
   })
 
   it('keeps triads whole', () => {

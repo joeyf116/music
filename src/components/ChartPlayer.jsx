@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { STYLE_IDS, STYLES } from '../lib/arranger.js'
-import { CHANNELS, playBand } from '../lib/band.js'
+import { CHANNELS, loadBand, playBand } from '../lib/band.js'
 import { ALL_KEYS, compileChart, isMinorKey, keyDistance, transposeChart, transposeKey } from '../lib/chart.js'
 import { CHANNEL_LABELS, DEFAULT_MIX, bandStatus, transposeText } from '../lib/chartView.js'
 import usePersistentState from '../lib/usePersistentState.js'
@@ -24,6 +24,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
   const [playing, setPlaying] = useState(false)
   const [activeBar, setActiveBar] = useState(null)
   const [count, setCount] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [startBar, setStartBar] = useState(0)
   const id = useId()
   const band = useRef(null)
@@ -51,6 +52,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
     setPlaying(false)
     setActiveBar(null)
     setCount(null)
+    setLoading(false)
   }
 
   const start = (from = startBar, withCount = countIn) => {
@@ -69,6 +71,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
         setActiveBar(bar)
       },
       onEnd: () => stop(),
+      onLoading: setLoading,
     })
     setPlaying(true)
   }
@@ -84,6 +87,10 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
   useEffect(() => band.current?.setVolumes(volumes), [volumes])
   useEffect(() => band.current?.setTempo(bpm), [bpm])
   useEffect(() => () => band.current?.stop(), [])
+  // Start fetching the recorded instruments as soon as a chart is open, so Play is instant.
+  useEffect(() => {
+    loadBand()
+  }, [])
 
   const toggle = () => (band.current ? stop() : start())
   const toggleRef = useRef(toggle)
@@ -112,7 +119,7 @@ export default function ChartPlayer({ chart, keyboard = true, tuning, tuningId, 
           {playing ? '■ Stop' : '▶ Play'}
         </button>
         <span className="band-status" aria-live="polite">
-          {bandStatus({ count, activeBar, startBar, totalBars })}
+          {bandStatus({ count, activeBar, startBar, totalBars, loading })}
         </span>
         <div className="toggles">
           <Toggle checked={loop} onChange={setLoop}>
