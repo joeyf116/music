@@ -1,4 +1,5 @@
 import AccountPage from './components/AccountPage.jsx'
+import CommunityPage from './components/CommunityPage.jsx'
 import DrumsPage from './components/DrumsPage.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
@@ -30,6 +31,12 @@ const PAGES = [
     label: 'Training',
     short: 'Train',
     icon: <path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8.5 20 8 18M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5" />,
+  },
+  {
+    id: 'community',
+    label: 'Community',
+    short: 'Board',
+    icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 4v-4h0A1.5 1.5 0 0 1 4 14.5ZM8 9h8M8 12h5" />,
   },
   {
     id: 'resources',
@@ -104,6 +111,8 @@ export default function App() {
       <main>
         {page === 'account' ? (
           <AccountPage />
+        ) : page === 'community' ? (
+          <CommunityPage />
         ) : page === 'resources' ? (
           <Resources />
         ) : page === 'drums' ? (

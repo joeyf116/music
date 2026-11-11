@@ -5,9 +5,11 @@
 import { audioContext } from './audio.js'
 import { KIT_SAMPLES } from './drumKits.js'
 import { CHOKES, hitsAt, stepCount, stepSeconds, swingDelay } from './drumLoops.js'
-import { heardNow } from './rhythmEngine.js'
 
 const LOOKAHEAD = 0.12
+
+/** Audio-clock time that is reaching the listener's ears right now (for the playhead). */
+const heardNow = (ac) => ac.currentTime - (ac.outputLatency || 0) - (ac.baseLatency || 0)
 
 export const KITS = [{ id: 'rock', name: 'Rock', detail: 'Big, open 1980s kit', credit: 'Big Rusty Drums by Karoryfer Samples (CC0)' }]
 
@@ -86,6 +88,15 @@ function outputBus(ac) {
 const takeCounters = new Map()
 const ringing = [] // open hats that a closed hat can choke: { voice, gain, source, start }
 
+/**
+ * A drummer's small variations: up to 10 ms late and ±12% in loudness at full humanize (0-1). Hits are
+ * only ever pushed later, never earlier than the grid, so nothing is scheduled in the past.
+ */
+export function humanizeHit(amount, random = Math.random) {
+  if (!amount) return { time: 0, velocity: 1 }
+  return { time: random() * 0.01 * amount, velocity: 1 + (random() * 2 - 1) * 0.12 * amount }
+}
+
 /** Plays one drum hit at an audio-clock time. Returns false if that drum isn't loaded yet. */
 export function playDrum(kit, voice, velocity, time, volume = 1) {
   const ac = audioContext()
@@ -130,7 +141,7 @@ export function playDrum(kit, voice, velocity, time, volume = 1) {
 }
 
 /**
- * Loads what the loop needs, then plays it until stopped. `settings`: { loop, kit, bpm, volume }.
+ * Loads what the loop needs, then plays it until stopped. `settings`: { loop, kit, bpm, volume, humanize }.
  * onStep(step) fires as each step is heard (for the playhead). Settings can change while it plays and take
  * effect from the next step, so tempo changes never jump. Returns { stop, update(settings), loaded }.
  */
@@ -146,12 +157,15 @@ export function startDrumLoop(settings, { onStep } = {}) {
   let gridTime = 0
 
   const schedule = () => {
-    const { loop, kit, bpm, volume = 1 } = opts
+    const { loop, kit, bpm, volume = 1, humanize = 0 } = opts
     const n = stepCount(loop)
     while (gridTime <= ac.currentTime + LOOKAHEAD) {
       step %= n
       const time = gridTime + swingDelay(loop, bpm, loop.swing, step)
-      for (const hit of hitsAt(loop, step)) playDrum(kit, hit.voice, hit.velocity, time, volume)
+      for (const hit of hitsAt(loop, step)) {
+        const feel = humanizeHit(humanize)
+        playDrum(kit, hit.voice, Math.min(1, hit.velocity * feel.velocity), time + feel.time, volume * hit.volume)
+      }
       visuals.push({ time, step })
       gridTime += stepSeconds(loop, bpm)
       step++

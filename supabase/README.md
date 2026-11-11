@@ -64,3 +64,16 @@ for conflicts: the newest save wins, judged by the server's clock. Logging in on
 account's settings in; changes are saved two seconds after you make them, and again when you leave the tab.
 Until the table exists the app quietly keeps settings in the browser only.
 
+## Community board
+
+The Community page (`#community`) is a simple board: logged-in people post what they're working on or need
+help with, and reply to each other. Anyone can read it. Run [`community.sql`](./community.sql) once in the
+SQL Editor, after `accounts.sql` (safe to re-run). It adds `board_posts` (posts and one level of replies)
+and `board_reports`.
+
+- The database fills in the author and their name (profile name, then Google name), so nobody can post as
+  someone else. Renaming yourself on the Account page renames your posts. Emails are never shown.
+- People can delete their own posts; Delete account removes all of them.
+- Each person can post 10 times in 10 minutes. Logged-in people can report a post once; after 3 reports
+  it's hidden. To bring one back, untick **hidden** and set **reports** to 0 in **Table Editor → board_posts**,
+  or delete the row.

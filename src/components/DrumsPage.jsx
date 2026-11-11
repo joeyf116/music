@@ -1,16 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
-import { KITS, loadKit, loopVoices, startDrumLoop } from '../lib/drumEngine.js'
-import { LEVEL_NAMES, countLabel, loopTracks, meterLabel, voiceById } from '../lib/drumLoops.js'
+import { useEffect, useReducer, useRef, useState } from 'react'
+import { audioContext } from '../lib/audio.js'
+import { METERS, clearSteps, historyReducer, sameLoop, setGrid, startHistory } from '../lib/drumEdit.js'
+import { KITS, loadKit, loopVoices, playDrum, startDrumLoop } from '../lib/drumEngine.js'
+import { LEVELS, LEVEL_NAMES, barCount, isValidLoop, loopTracks, meterLabel, voiceName } from '../lib/drumLoops.js'
 import { PRESETS, STYLES, presetById } from '../lib/drumPresets.js'
 import usePersistentState from '../lib/usePersistentState.js'
-import { Field, Stepper } from './controls.jsx'
+import { Choice, Field, Stepper } from './controls.jsx'
+import DrumEditor from './DrumEditor.jsx'
 import './Drums.css'
 import { Disclosure, PageHeader } from './layout.jsx'
 
 const DEFAULT_LOOP = 'basic-rock'
-const voiceName = (id, short) => {
-  const v = voiceById(id)
-  return (short && v.short) || v.name
+const CURRENT_KEY = 'music.drums.current'
+
+const meterOf = (loop) => METERS.find((m) => m.beats === loop.beats && m.steps === loop.steps)
+
+function storedLoop() {
+  try {
+    const loop = JSON.parse(window.localStorage.getItem(CURRENT_KEY))
+    if (isValidLoop(loop)) return loop
+  } catch {
+    // Nothing saved, or storage is off.
+  }
+  return null
 }
 
 /** One loop drawn small, a box per beat with a cell per step (the preset gallery). */
@@ -35,41 +47,6 @@ function MiniGrid({ loop }) {
   )
 }
 
-/** The loaded loop, big, with the step being heard lit up. */
-function LoopGrid({ loop, playing, current }) {
-  return (
-    <div className="loop-grid" role="table" aria-label={`${loop.name}, drum by drum`}>
-      {loopTracks(loop).map((t) => (
-        <div className="loop-row" role="row" key={t.voice}>
-          <span className="loop-name" role="rowheader">
-            {voiceName(t.voice, true)}
-          </span>
-          <span className="loop-steps" style={{ '--beats': loop.beats }}>
-            {Array.from({ length: loop.beats }, (_, b) => (
-              <span className="loop-beat" key={b} style={{ '--steps': loop.steps }}>
-                {Array.from(t.steps.slice(b * loop.steps, (b + 1) * loop.steps)).map((c, i) => {
-                  const step = b * loop.steps + i
-                  const level = c === '.' ? null : LEVEL_NAMES[c]
-                  return (
-                    <span
-                      role="cell"
-                      key={i}
-                      className={`loop-step lv-${level ?? 'off'}${playing && current === step ? ' now' : ''}`}
-                      aria-label={level ? `${countLabel(loop, step)}: ${level}` : undefined}
-                    >
-                      {level === 'accent' && <span aria-hidden="true">›</span>}
-                    </span>
-                  )
-                })}
-              </span>
-            ))}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName) || el?.isContentEditable
 
 /** Drums: pick a ready-made groove and play it on a recorded kit. */
@@ -78,16 +55,42 @@ export default function DrumsPage() {
   const [bpm, setBpm] = usePersistentState('music.drums.bpm', presetById(DEFAULT_LOOP).bpm)
   const [style, setStyle] = usePersistentState('music.drums.style', 'All')
   const [volume, setVolume] = usePersistentState('music.drums.volume', 0.8)
+  const [humanize, setHumanize] = usePersistentState('music.drums.humanize', 0)
+  const [paint, setPaint] = usePersistentState('music.drums.paint', 'x')
+  const [history, dispatch] = useReducer(historyReducer, null, () => startHistory(storedLoop() ?? presetById(loopId) ?? presetById(DEFAULT_LOOP)))
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
   const [step, setStep] = useState(-1)
   const engine = useRef(null)
+  const swingDrag = useRef(false)
 
-  const loop = presetById(loopId) ?? presetById(DEFAULT_LOOP)
+  const loop = history.present
+  const source = presetById(loopId)
+  const edited = !sameLoop(loop, source)
   const kit = KITS[0]
   const tempo = Number(bpm) >= 30 && Number(bpm) <= 300 ? Number(bpm) : loop.bpm
-  const settings = { loop, kit: kit.id, bpm: tempo, volume }
+  const settings = { loop, kit: kit.id, bpm: tempo, volume, humanize }
+  const edit = (next) => dispatch({ type: 'set', loop: next })
+  const meter = meterOf(loop)
+
+  // The groove being edited survives a reload.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CURRENT_KEY, JSON.stringify(loop))
+    } catch {
+      // Storage may be off; the groove just won't come back after a reload.
+    }
+  }, [loop])
+
+  // Hear a step as you paint it (only while stopped, so it doesn't double up on the groove).
+  const audition = (voice, level) => {
+    if (playing) return
+    loadKit(kit.id, [voice]).then(() => {
+      const ac = audioContext()
+      if (ac) playDrum(kit.id, voice, LEVELS[level], ac.currentTime, volume)
+    }, () => {})
+  }
   const shown = style === 'All' ? PRESETS : PRESETS.filter((p) => p.style === style)
 
   // Warm up the drums of the loaded groove so the first Play starts at once.
@@ -130,6 +133,7 @@ export default function DrumsPage() {
   const [autoplay, setAutoplay] = useState(0)
   const pick = (preset) => {
     setLoopId(preset.id)
+    edit(preset)
     setBpm(preset.bpm)
     if (!playing) setAutoplay((n) => n + 1)
   }
@@ -145,7 +149,14 @@ export default function DrumsPage() {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.code !== 'Space' || e.repeat || isTyping(document.activeElement) || e.target.closest?.('button, a, summary, [role="radio"]')) return
+      if (isTyping(document.activeElement)) return
+      const mod = e.ctrlKey || e.metaKey
+      if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) {
+        e.preventDefault()
+        dispatch({ type: e.key === 'y' || e.shiftKey ? 'redo' : 'undo' })
+        return
+      }
+      if (e.code !== 'Space' || e.repeat || e.target.closest?.('button, a, summary, [role="radio"]')) return
       e.preventDefault()
       latest.current.toggle()
     }
@@ -155,14 +166,16 @@ export default function DrumsPage() {
 
   return (
     <section className="page drums-page">
-      <PageHeader title="Drums" summary="Pick a groove and play along on a real recorded drum kit." />
+      <PageHeader title="Drums" summary="Pick a groove, change any step, and play along on a real recorded kit." />
 
       <div className="stage drums-stage">
         <div className="drums-now">
           <h2>
-            {loop.name}
+            {source?.name ?? 'Groove'}
+            {edited && <span className="edited-tag"> (edited)</span>}
             <small>
-              {loop.style} · {meterLabel(loop)}
+              {meterLabel(loop)}
+              {barCount(loop) > 1 ? ` · ${barCount(loop)} bars` : ''}
               {loop.swing > 0.5 ? ` · swing ${Math.round(loop.swing * 100)}%` : ''}
             </small>
           </h2>
@@ -173,7 +186,34 @@ export default function DrumsPage() {
             <Stepper label="Tempo (BPM)" value={bpm} onChange={setBpm} min={30} max={300} fallback={loop.bpm} className="tempo-field" />
           </div>
         </div>
-        <LoopGrid loop={loop} playing={playing && !loading} current={step} />
+        <DrumEditor
+          loop={loop}
+          paint={paint}
+          onPaintChange={setPaint}
+          onEdit={edit}
+          onContinue={(next) => dispatch({ type: 'continue', loop: next })}
+          onAudition={audition}
+          playing={playing && !loading}
+          current={step}
+          toolbar={
+            <span className="edit-actions">
+              <button type="button" onClick={() => dispatch({ type: 'undo' })} disabled={!history.past.length} title="Undo (Ctrl+Z)">
+                Undo
+              </button>
+              <button type="button" onClick={() => dispatch({ type: 'redo' })} disabled={!history.future.length} title="Redo (Ctrl+Shift+Z)">
+                Redo
+              </button>
+              <button type="button" onClick={() => edit(clearSteps(loop))}>
+                Clear
+              </button>
+              {edited && source && (
+                <button type="button" onClick={() => edit(source)}>
+                  Reset
+                </button>
+              )}
+            </span>
+          }
+        />
         {failed && (
           <p className="error" role="alert">
             The drum sounds didn’t load. Check your connection and press Play again.
@@ -197,8 +237,8 @@ export default function DrumsPage() {
             <li key={p.id}>
               <button
                 type="button"
-                className={`preset-card${p.id === loop.id ? ' is-loaded' : ''}`}
-                aria-pressed={p.id === loop.id}
+                className={`preset-card${p.id === loopId ? ' is-loaded' : ''}`}
+                aria-pressed={p.id === loopId}
                 aria-label={`${p.name}, ${meterLabel(p)}, ${p.bpm} BPM`}
                 onClick={() => pick(p)}
               >
@@ -215,8 +255,58 @@ export default function DrumsPage() {
         </ul>
       </section>
 
-      <Disclosure label="Settings" summary={`${kit.name} kit · volume ${Math.round(volume * 100)}%`} storageKey="music.drums.settingsOpen">
+      <Disclosure
+        label="Settings"
+        summary={[
+          `${kit.name} kit`,
+          meter?.id.replace('-8', '') ?? meterLabel(loop),
+          `${barCount(loop)} bar${barCount(loop) > 1 ? 's' : ''}`,
+          loop.swing > 0.5 ? `swing ${Math.round(loop.swing * 100)}%` : 'straight',
+          humanize ? `humanize ${Math.round(humanize * 100)}%` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        storageKey="music.drums.settingsOpen"
+      >
         <div className="field-grid">
+          <Field label="Time signature">
+            <select
+              value={meter?.id ?? ''}
+              onChange={(e) => {
+                const m = METERS.find((x) => x.id === e.target.value)
+                if (m) edit(setGrid(loop, m))
+              }}
+            >
+              {!meter && <option value="">{meterLabel(loop)}</option>}
+              {METERS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Choice label="Bars" options={[1, 2, 4].map((b) => ({ value: b, label: String(b) }))} value={barCount(loop)} onChange={(bars) => edit(setGrid(loop, { bars }))} />
+          <Field label={loop.steps === 3 ? 'Swing (already in the triplet grid)' : `Swing ${loop.swing > 0.5 ? `${Math.round(loop.swing * 100)}%` : 'off'}`}>
+            <input
+              type="range"
+              min="0.5"
+              max="0.75"
+              step="0.01"
+              value={loop.swing > 0.5 ? loop.swing : 0.5}
+              disabled={loop.steps === 3}
+              onChange={(e) => {
+                // One drag of the slider is one undo step.
+                dispatch({ type: swingDrag.current ? 'continue' : 'set', loop: { ...loop, swing: Number(e.target.value) > 0.505 ? Number(e.target.value) : 0 } })
+                swingDrag.current = true
+              }}
+              onPointerUp={() => (swingDrag.current = false)}
+              onKeyUp={() => (swingDrag.current = false)}
+              onBlur={() => (swingDrag.current = false)}
+            />
+          </Field>
+          <Field label={`Humanize ${humanize ? `${Math.round(humanize * 100)}%` : 'off'}`}>
+            <input type="range" min="0" max="1" step="0.05" value={humanize} onChange={(e) => setHumanize(Number(e.target.value))} />
+          </Field>
           <Field label="Kit">
             <select value={kit.id} disabled>
               {KITS.map((k) => (
@@ -230,10 +320,10 @@ export default function DrumsPage() {
             <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(e) => setVolume(Number(e.target.value))} />
           </Field>
         </div>
-        <p className="hint">Recorded from {kit.credit}. More kits for other styles are on the way.</p>
+        <p className="hint">Swing pushes every second 16th (or 8th) later, like a hip-hop or shuffle feel. Humanize adds a drummer’s small timing and loudness changes. Recorded from {kit.credit}.</p>
       </Disclosure>
 
-      <p className="page-hint">Press a groove to hear it. Space plays and stops.</p>
+      <p className="page-hint">Press a groove to load it, then change any step. Space plays and stops; Ctrl+Z undoes.</p>
     </section>
   )
 }
