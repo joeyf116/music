@@ -69,7 +69,7 @@ function SignedOut({ auth, loading }) {
         {googleOff && <p className="hint">Google sign-in isn't switched on yet. Check back soon.</p>}
         <Status error={state.error || auth.error} done={auth.notice} />
       </div>
-      <p className="page-hint">We only get your name and email from Google. Your practice settings stay saved in this browser as before.</p>
+      <p className="page-hint">Log in to keep your key, tuning, practice tab and other settings on every device. We only get your name and email from Google.</p>
     </>
   )
 }
@@ -96,7 +96,7 @@ function SignedIn({ auth }) {
       </Section>
       <Disclosure label="Delete account" storageKey="music.accountSettingsOpen">
         <div className="account-danger">
-          <p className="hint">Removes your account and profile for good. Settings saved in this browser stay, and your Google account isn't touched.</p>
+          <p className="hint">Removes your account, profile and saved settings for good. Settings in this browser stay, and your Google account isn't touched.</p>
           {confirmDelete ? (
             <div className="account-actions">
               <button type="button" className="danger-button" onClick={() => submitAccount(() => auth.deleteAccount())} disabled={accountState.busy}>
@@ -114,6 +114,7 @@ function SignedIn({ auth }) {
         </div>
       </Disclosure>
       <Status error={accountState.error || auth.error} done={auth.notice} />
+      <p className="page-hint">Your settings save to your account as you go, and come with you when you log in on another device.</p>
     </>
   )
 }
