@@ -54,6 +54,14 @@ One-time setup:
 The Google button reads `/auth/v1/settings` and greys itself out while Google is switched off. Sign-in uses
 the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
 
+## Shared links belong to accounts
+
+[`resources-accounts.sql`](./resources-accounts.sql) makes sharing a link on the Resources page need a login:
+`share_resource()` stores the sharer's account (`owner`) and name (`author_name`, shown as "Shared by …"), and
+`remove_my_resource()` lets them remove it from any device. Anonymous `add_resource` is switched off. Links
+shared before this keep their secret token, which now syncs with your account, so you can still remove them.
+Until the file has run, the page reads links without names and sharing uses the old path.
+
 ## Settings that follow your account
 
 [`settings.sql`](./settings.sql) adds `user_settings`: one row per user holding every practice setting the app

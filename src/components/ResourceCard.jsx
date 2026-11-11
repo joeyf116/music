@@ -16,6 +16,7 @@ export default function ResourceCard({ resource: r, starred, onStar, onTag, acti
         {r.host && <span className="resource-host">{r.host}</span>}
         {r.description && <span className="resource-desc">{r.description}</span>}
       </a>
+      {r.author && <span className="resource-author">Shared by {r.author}</span>}
       {r.tags.length > 0 && (
         <ul className="tag-list" aria-label="Tags">
           {r.tags.map((t) => (
