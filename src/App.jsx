@@ -1,11 +1,9 @@
 import AccountPage from './components/AccountPage.jsx'
-import Charts from './components/Charts.jsx'
 import DrumsPage from './components/DrumsPage.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
 import EarTraining from './components/EarTraining.jsx'
 import Resources from './components/Resources.jsx'
-import RhythmPage from './components/RhythmPage.jsx'
 import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import { useAuth } from './lib/useAuth.jsx'
@@ -23,11 +21,6 @@ const PAGES = [
     icon: <path d="M4 6h16M4 10h16M4 14h16M4 18h16M8 4v16M14 4v16" />,
   },
   {
-    id: 'exercises',
-    label: 'Rhythm',
-    icon: <path d="M9 3h6l3.5 18h-13ZM12 15l5-9M7.5 15h9" />,
-  },
-  {
     id: 'drums',
     label: 'Drums',
     icon: <path d="M4 10c0-1.7 3.6-3 8-3s8 1.3 8 3v6c0 1.7-3.6 3-8 3s-8-1.3-8-3Zm0 0c0 1.7 3.6 3 8 3s8-1.3 8-3M8 13v5.5M16 13v5.5M7 3l5 6.5M17 3l-5 6.5" />,
@@ -39,11 +32,6 @@ const PAGES = [
     icon: <path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8.5 20 8 18M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5" />,
   },
   {
-    id: 'charts',
-    label: 'Charts',
-    icon: <path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm11-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM9 9l11-2" />,
-  },
-  {
     id: 'resources',
     label: 'Resources',
     icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5ZM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z" />,
@@ -52,6 +40,8 @@ const PAGES = [
 
 // Account isn't one of the tabs: it opens from the button at the top right.
 const PAGE_IDS = [...PAGES.map((p) => p.id), 'account']
+// The Rhythm page (#exercises) is gone; its metronome lives on the Drums page now. Charts (#charts) is gone too and falls back to the Fretboard.
+const MOVED_PAGES = { exercises: 'drums' }
 
 /** Top right of the header: "Log in", or the first letter of your name once you are. */
 function AccountButton({ current }) {
@@ -73,10 +63,9 @@ function AccountButton({ current }) {
 }
 
 export default function App() {
-  const page = useHashPage(PAGE_IDS, 'fretboard')
+  const page = useHashPage(PAGE_IDS, 'fretboard', MOVED_PAGES)
   useSettingsSync()
-  // One key and one scale/mode for the whole app: changing the key never changes the mode, and the
-  // Exercises page picks up where the Fretboard left off (and back).
+  // One key and one scale/mode for the whole app: changing the key never changes the mode.
   const [key, setKey] = usePersistentState('music.key', 'A')
   const [scaleType, setScaleType] = usePersistentState('music.scale', 'minorPentatonic')
   const [tuningId, setTuningId] = usePersistentState('music.tuning', 'standard')
@@ -119,19 +108,6 @@ export default function App() {
           <Resources />
         ) : page === 'drums' ? (
           <DrumsPage />
-        ) : page === 'exercises' ? (
-          <RhythmPage
-            tuning={tuning}
-            tuningId={tuningId}
-            onTuningChange={setTuningId}
-            stringName={stringName}
-            keyName={safeKey}
-            onKeyChange={setKey}
-            scaleType={scaleType}
-            onScaleChange={setScaleType}
-          />
-        ) : page === 'charts' ? (
-          <Charts tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} />
         ) : page === 'quiz' ? (
           <EarTraining tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} keyName={safeKey} />
         ) : (

@@ -152,7 +152,7 @@ export const SOUND_FAMILIES = [...new Set(CLICK_SOUNDS.map((s) => s.family))]
 export const DEFAULT_SOUND = 'woodblock'
 export const soundById = (id) => CLICK_SOUNDS.find((s) => s.id === id) ?? CLICK_SOUNDS.find((s) => s.id === DEFAULT_SOUND)
 
-// The sound picked on the Rhythm page is the app's click everywhere (fretboard metronome, drill playback).
+// The sound picked in the metronome's settings is the app's click everywhere (fretboard metronome, tab playback).
 export const SOUND_KEY = 'music.clickSound'
 export const storedSound = () => {
   try {

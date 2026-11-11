@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 
 /**
  * A menu button (WAI-ARIA menu button pattern): a button that opens a short list of actions for one thing, such as
- * ⋯ on a chart or a link, or a list of presets to start from. The web version of the app's native pull-down menus.
+ * ⋯ on a link, or a list of presets to start from. The web version of the app's native pull-down menus.
  *
  * items: [{ label, onSelect, destructive?, disabled? }], with `{ heading }` for a group title and `{ separator: true }`
  * between groups. Destructive items go last, in red; anything that can't be undone still asks before it happens.

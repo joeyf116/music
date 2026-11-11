@@ -15,7 +15,7 @@ with in the first screen, give it one obvious main button, and fold everything e
 1. **One page, one job.** Each page answers one question ("what does this scale look like?", "can I hear a
    major 3rd?"). Anything that does not serve that job lives on another page or behind a disclosure.
 2. **Play first, configure later.** Every page works the moment it opens with sensible defaults. The main
-   action (Play, Start, pick a chart) is never more than one tap away, and no setting has to be touched first.
+   action (Play, Start, pick a groove) is never more than one tap away, and no setting has to be touched first.
 3. **Fewest taps to the goal.** Common choices are visible as buttons (one tap), not hidden in menus (two
    taps). Rare or advanced choices go behind one disclosure, never behind two. How to pick the right selector
    or menu for a choice is in [section 7](#7-menus-and-selectors).
@@ -46,7 +46,7 @@ reorder them.
 │ Setup         the 1-4 choices that change     │  key, scale, exercise…
 │               what you see (big, visible)     │
 ├───────────────────────────────────────────────┤
-│ Stage         the thing you practise with:    │  neck, tab, quiz, chart
+│ Stage         the thing you practise with:    │  neck, tab, quiz, groove
 │               neck / tab / player + main      │
 │               button                          │
 ├───────────────────────────────────────────────┤
@@ -61,7 +61,7 @@ reorder them.
 
 | Block | Rules |
 | --- | --- |
-| **Page header** (`PageHeader`) | Exactly one `h1` per page. The purpose line is one sentence, under 90 characters, written as what *you* can do ("Hear two notes and name the interval"). At most one primary action on the right (e.g. **+ New chart**) and an optional live status (score). |
+| **Page header** (`PageHeader`) | Exactly one `h1` per page. The purpose line is one sentence, under 90 characters, written as what *you* can do ("Hear two notes and name the interval"). At most one primary action on the right (e.g. **+ Add a resource**) and an optional live status (score). |
 | **Setup** | No more than four controls. These are the choices people change most, shown as segmented buttons or key buttons so each change is one tap. |
 | **Stage** | Reaches the first screen on a phone wherever possible. Holds the page's single primary button. Wide content (the neck, long tab) scrolls inside its own box, never the page. |
 | **Settings** (`Disclosure`) | One per page or per stage, labelled **Settings** (or a specific name such as **Neck settings** when a page has more than one). Shows a value summary when closed. Remembers whether it was open. Never nest a disclosure inside another. |
@@ -75,19 +75,17 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | Page | Job | Setup (always visible) | Stage | Settings (folded) | Reference |
 | --- | --- | --- | --- | --- | --- |
 | **Fretboard** `#fretboard` | Find a scale position or chord voicing in a key and pin it to practise | Key (one sideways row on phones), chords in the key (the chord picker), scale/mode + Scale · Chords, then position or voicing type (Shapes · CAGED · Triads · Drop 2 · Drop 3) | Neck with one position or voicing (‹ › steps through voicings), its tab, **Pin to practice tab** + Listen; then the practice tab with BPM, **Play**, click, drone, the pinned items and their tab. Phones keep a practice bar above the tab bar | Settings: tuning, note labels, show every note, fingering or chord type, practice tab chords (strum · arpeggio · block) | None: the key's chords are part of setup |
-| **Rhythm** `#exercises` | Play in time | Tab: Metronome · Rhythms · Timing · Drills | Tempo + Start / the rhythm grid / the tap pad / the drill tab | Sound & volume, Trainers, Playback | How to practise a rhythm |
 | **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right); in the app these are menu rows | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
 | **Drums** `#drums` | Play along with a real drum groove | Style chips over the groove gallery | The loaded groove's grid with **Play** and tempo, the playhead lit on the step being heard; below it the gallery of grooves as mini grids (press one to load and hear it) | Settings: kit, volume | None |
-| **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style; one visible action (Edit, or Copy & edit) and the rest in ⋯ | Band mix | Chord shapes |
 | **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
 | **Account** `#account` (not a tab: the **Log in** button, or your initial, at the top right) | Log in with Google, manage your account | None | **Continue with Google** (also signs you up); once in: your name + **Save**, and **Log out** in the header | Delete account | None |
 
-The page title in the header names the page; the tab bar uses the same word (Rhythm, Training…), so people
+The page title in the header names the page; the tab bar uses the same word (Drums, Training…), so people
 always know where they are.
 
 ### Navigation
 
-- Six top-level pages, no more (the sixth, Drums, was added in November 2026; the phone tab bar still fits six at 360 px). Each has its own URL hash (`#fretboard`, `#exercises`, …) so it can be
+- Six top-level pages at most (Rhythm and Charts were removed in November 2026, leaving four; the phone tab bar fits six at 360 px). Each has its own URL hash (`#fretboard`, `#drums`, …) so it can be
   bookmarked and shared.
 - **Phones (< 720 px):** a bottom tab bar with icon + label, within thumb reach, hidden while typing. The
   site title scrolls away with the page. **No sticky top bar**, ever: it covers content in mobile browsers.
@@ -100,7 +98,7 @@ always know where they are.
 
 - Content sits on the page background in a centred column up to `--page-max` (1280 px, wide enough for 22 frets) wide, with
   `--page-gutter` side padding (16 px on phones, 24 px from 720 px). **No full-page card.** Cards are only for
-  repeated items (a chart, a resource) and for a clearly separate group (the Add form).
+  repeated items (a groove, a resource) and for a clearly separate group (the Add form).
 - **Never put a card inside a card.** Group with spacing and a heading first, a hairline divider second and a
   box last.
 - Spacing comes only from the scale below. Bigger gaps separate blocks, smaller gaps bind related things
@@ -183,7 +181,7 @@ All shared controls live in `src/components/controls.jsx` (form controls) and `s
 | Page title + purpose + main action | `PageHeader` | one per page |
 | 2-5 short options | `Choice` (segmented) | labels ≤ 10 characters so they fit a phone |
 | 6+ options or long names | native `<select>` inside `Field` | grouped with `<optgroup>` when it helps |
-| Actions for one thing (a chart, a link, a section) | `Menu` (⋯) | see [section 7](#7-menus-and-selectors); never a `<select>` used as a launcher |
+| Actions for one thing (a link, a section) | `Menu` (⋯) | see [section 7](#7-menus-and-selectors); never a `<select>` used as a launcher |
 | A list of presets to start from | `Menu` with a text label (**Common ▾**) | each item can show a second line (`detail`) |
 | A number with small steps (BPM) | `Stepper` | type or tap − / + |
 | Setting that applies instantly | `Toggle` | not for actions |
@@ -198,7 +196,7 @@ Buttons:
 - Verb first, short: **Play**, **Show answer**, **+ Add a resource**. Not "Click here" or "Submit".
 - Every button has a visible pressed/hover/focus/disabled state; touch targets are at least 44 × 44 px on
   touch screens.
-- Destructive actions (delete a shared chart) ask for confirmation; everything else is instant and undoable.
+- Destructive actions (delete your account) ask for confirmation; everything else is instant and undoable.
 
 ---
 
@@ -226,7 +224,7 @@ there is room, short choices in Settings stay as `Choice`.
 
 **Action menus (⋯):**
 
-- Keep the main action visible next to the ⋯ (Edit your own chart, Copy & edit someone else's). Don't put every
+- Keep the main action visible next to the ⋯ (Remove your own link, Report someone else's). Don't put every
   action in the menu. When the only action is the main one, show it as a button and leave out the ⋯. A ⋯ holding
   just a rare action (Report on someone else's link) is fine: it keeps that action out of the way.
 - Order: the common actions first, then any group (Report → Spam · Wrong chords · Offensive), then a separator and
@@ -256,7 +254,7 @@ screen, and long lists scroll inside it. Items are at least 44 px tall.
 - Sentence case everywhere. British spelling in UI copy ("practise" as a verb, "colour").
 - Say what something does for the player: "Hear two notes and name the interval", not "Interval quiz module".
 - Hints are one line. If something needs a paragraph, put it behind a "Why practise this?" disclosure.
-- Empty and error states say what happened and what to do next: "No charts match 'blues'. Clear the search".
+- Empty and error states say what happened and what to do next: "No links match 'blues'. Clear the search".
 
 ---
 
@@ -301,7 +299,7 @@ platform's own, so it feels like an iOS or Android app rather than a web page in
 | --- | --- | --- |
 | Header tabs / bottom tab bar | `NativeTabs` (UITabBar, Material navigation bar) | the same five pages, same names |
 | `PageHeader` | stack screen with a large title, plus `Page`'s one-line summary | the main action goes in the navigation bar (**+**, **⋯**) |
-| Search input | the navigation bar's search field (`headerSearchBarOptions`) | Charts, Resources |
+| Search input | the navigation bar's search field (`headerSearchBarOptions`) | Resources |
 | `Choice` (2-5 options) | `Segmented` (UISegmentedControl / Material segmented buttons) | labels ≤ 10 characters |
 | `<select>` (6+ options) | `ChoiceRow`: a pop-up menu for ≤ 8 one-line options, otherwise the stack's `choose` sheet | sections stand in for `<optgroup>` |
 | `Toggle` | `SwitchRow` (the platform switch) | inside a `Group` |
@@ -310,15 +308,15 @@ platform's own, so it feels like an iOS or Android app rather than a web page in
 | `Disclosure` | `Disclosure` | value summary when closed, as on the web |
 | `Menu` (⋯ actions, presets) | `MoreMenu` / `Menu` (SwiftUI `Menu` on iOS, Material dropdown menu on Android, from `@expo/ui`) | destructive items last and red |
 | `window.confirm` | `confirm` (an alert) | asks before anything that can't be undone |
-| A form (new chart, add a link) | a modal or sheet with **Cancel** and **Save** / **Add** in its bar | |
+| A form (add a link) | a modal or sheet with **Cancel** and **Save** / **Add** in its bar | |
 | A link | the in-app browser (`expo-web-browser`: Safari view / Custom Tabs) | |
 
-Custom drawing is kept to the things that have no system control: the neck, tab, the chart sheet, chord boxes
+Custom drawing is kept to the things that have no system control: the neck, tab, drum grids, chord boxes
 and the answer grids. Taps that change something give a light haptic.
 
-**One source of truth.** What a page shows and decides (exercise fields, quiz feedback text, chart filtering,
-metronome settings, tap verdicts) lives in shared modules in `src/lib` (`exerciseView.js`, `rhythmView.js`,
-`chartView.js`, `chordQuiz.js`, `intervalQuiz.js`, `theoryDrill.js`, `resources.js`). The web components and
+**One source of truth.** What a page shows and decides (quiz feedback text, practice tab items,
+metronome settings) lives in shared modules in `src/lib` (`fretboardView.js`, `rhythmView.js`,
+`chordQuiz.js`, `intervalQuiz.js`, `theoryDrill.js`, `resources.js`). The web components and
 the app screens only lay it out, so a wording or rule change made there shows up on both. Both save settings
 under the same keys (`music.*`).
 

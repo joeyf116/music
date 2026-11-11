@@ -82,7 +82,7 @@ export function playPitch(pitch, delay = 0, duration = 1.4, volume = 0.18) {
 export const playChord = (pitches, delay = 0) =>
   [...pitches].sort((a, b) => a - b).forEach((p, i) => playPitch(p, delay + i * 0.035, 2))
 
-// Metronome tick in the sound picked on the Rhythm page; accented beats are higher and louder.
+// Metronome tick in the sound picked in the metronome's settings; accented beats are higher and louder.
 export function playClick(time, accent = false) {
   playClickSound(storedSound(), time, accent ? 'accent' : 'beat')
 }

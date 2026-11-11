@@ -1,4 +1,4 @@
-// A list sheet any screen can open to pick one value (a sound, a rhythm level, a chart's key…). The screen hands
+// A list sheet any screen can open to pick one value (a sound, a tuning, a key…). The screen hands
 // over the options and what to do with the choice; the sheet (components/ChooseSheet.tsx, a `choose` route in each
 // tab's stack) shows them as a native grouped list and closes when one is tapped.
 import { router, type Href } from 'expo-router'
@@ -26,7 +26,7 @@ export interface ChooseRequest<V extends ChoiceValue = ChoiceValue> {
 
 let pending: ChooseRequest | null = null
 
-/** Opens the `choose` sheet of the stack at `path` (e.g. '/rhythm/choose') with these options. */
+/** Opens the `choose` sheet of the stack at `path` (e.g. '/training/choose') with these options. */
 export function choose<V extends ChoiceValue>(path: Href, request: ChooseRequest<V>): void {
   pending = request as unknown as ChooseRequest
   router.push(path)

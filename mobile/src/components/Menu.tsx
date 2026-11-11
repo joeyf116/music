@@ -1,6 +1,6 @@
 // The platform's own pop-up menu, anchored to whatever opens it: a SwiftUI Menu on iOS, a Material dropdown menu on
 // Android (via @expo/ui). Used two ways (see docs/DESIGN.md, "Menus and selectors"):
-// - as a pull-down of actions for one thing (⋯ on a chart, a link, a section), destructive items last and in red;
+// - as a pull-down of actions for one thing (⋯ on a link, a section), destructive items last and in red;
 // - as a pop-up for picking one of a short list (ChoiceRow), with a checkmark on the current value.
 import { MenuView, type MenuAction } from '@expo/ui/community/menu'
 import { SymbolView } from 'expo-symbols'

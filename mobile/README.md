@@ -5,18 +5,16 @@ scales, chords, voicings, rhythms and the sound engine all come from [`../src/li
 both. The screens are native: the system tab bar, navigation bars with large titles, sheets that slide up, the
 platform's own segmented controls, menus and switches, and haptic taps.
 
-Every page of the web site is here, rebuilt with native controls:
+The Fretboard, Training and Resources pages of the web site are here, rebuilt with native controls (Drums is web only for now):
 
 | Tab | What's native |
 |---|---|
 | Fretboard | large title, settings as a sheet, scale / tuning / chord type lists as sheets, pop-up menus, segmented controls, switches |
-| Rhythm | segmented tabs, tempo stepper and slider, sound picker sheet, switches, haptic tap pad |
 | Training | segmented tabs, answer grids, settings as menu rows in a fold-away section, tuning picker sheet |
-| Charts | search in the navigation bar, chart list, chart screen with a ⋯ pull-down menu, editor as a modal |
 | Resources | search in the navigation bar, sectioned list, ⋯ menu per link, links open in the in-app browser, Add as a sheet |
 
 The table of web controls and their native counterparts is in [`docs/DESIGN.md`](../docs/DESIGN.md#12-the-native-app).
-Settings are saved on the device under the same names as the web site's, and the shared charts and links come
+Settings are saved on the device under the same names as the web site's, and the shared links come
 from the same database (see [Shared catalogs](#shared-catalogs)).
 
 ## Try it on a phone
@@ -46,13 +44,12 @@ src/
 │   │                       choose.tsx the shared list sheet, plus the tab's own screens
 │   ├── _layout.tsx         the native tab bar
 │   ├── (fretboard)/        Fretboard and its settings sheet
-│   ├── rhythm/  training/  Rhythm and Training
-│   ├── charts/             catalog, [id] (a chart with its band), edit (the editor modal)
+│   ├── training/           Training
 │   └── resources/          catalog and add (the Add a resource sheet)
 ├── components/             ui.tsx (Segmented, ChoiceRow, SwitchRow, SliderRow, Stepper, Disclosure, …), Menu
 │                           (native menus via @expo/ui), Fretboard, Page, TabStack, and one folder per tab
 ├── lib/                    prefs (saved settings), choose (sheet requests, menu-or-sheet rule), pickers (the
-│                           long lists), charts / resources (catalogs), sharing (Supabase config), actions
+│                           long lists), resources (the catalog), sharing (Supabase config), actions
 │                           (confirm), haptics, music (key, tuning…)
 └── types/shared-music.d.ts types for the shared JavaScript in ../src/lib
 ```
@@ -62,7 +59,7 @@ so both stay the same. See "One source of truth" in the design doc.
 
 ## Shared catalogs
 
-Shared charts and links use the web site's Supabase project. [`.env`](.env) sets `EXPO_PUBLIC_SUPABASE_URL` and
+Shared links use the web site's Supabase project. [`.env`](.env) sets `EXPO_PUBLIC_SUPABASE_URL` and
 `EXPO_PUBLIC_SUPABASE_ANON_KEY` (the public anon key, the same as `../.env.production`); Expo builds them into the
 app. Remove them and sharing turns off: everything is then saved on the device only. Things shared from the app
 are owned by a secret token kept on the device, exactly like the web site's browser token.
