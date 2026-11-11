@@ -77,6 +77,7 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | **Fretboard** `#fretboard` | Find a scale position or chord voicing in a key and pin it to practise | Key (one sideways row on phones), chords in the key (the chord picker), scale/mode + Scale · Chords, then position or voicing type (Shapes · CAGED · Triads · Drop 2 · Drop 3) | Neck with one position or voicing (‹ › steps through voicings), its tab, **Pin to practice tab** + Listen; then the practice tab with BPM, **Play**, click, drone, the pinned items and their tab. Phones keep a practice bar above the tab bar | Settings: tuning, note labels, show every note, fingering or chord type, practice tab chords (strum · arpeggio · block) | None: the key's chords are part of setup |
 | **Rhythm** `#exercises` | Play in time | Tab: Metronome · Rhythms · Timing · Drills | Tempo + Start / the rhythm grid / the tap pad / the drill tab | Sound & volume, Trainers, Playback | How to practise a rhythm |
 | **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right); in the app these are menu rows | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
+| **Drums** `#drums` | Play along with a real drum groove | Style chips over the groove gallery | The loaded groove's grid with **Play** and tempo, the playhead lit on the step being heard; below it the gallery of grooves as mini grids (press one to load and hear it) | Settings: kit, volume | None |
 | **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style; one visible action (Edit, or Copy & edit) and the rest in ⋯ | Band mix | Chord shapes |
 | **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
 
@@ -85,7 +86,7 @@ always know where they are.
 
 ### Navigation
 
-- Five top-level pages, no more. Each has its own URL hash (`#fretboard`, `#exercises`, …) so it can be
+- Six top-level pages, no more (the sixth, Drums, was added in November 2026; the phone tab bar still fits six at 360 px). Each has its own URL hash (`#fretboard`, `#exercises`, …) so it can be
   bookmarked and shared.
 - **Phones (< 720 px):** a bottom tab bar with icon + label, within thumb reach, hidden while typing. The
   site title scrolls away with the page. **No sticky top bar**, ever: it covers content in mobile browsers.

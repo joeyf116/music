@@ -71,6 +71,15 @@ A rhythm trainer in four tabs:
 - **Timing:** tap along with the click and see how early or late each tap is, and whether you rush or drag.
 - **Drills:** scale sequences, arpeggios, triads on string sets, strummed progressions, technique and fingerstyle patterns, with tab and a fretboard that follow the audio.
 
+## 🪘 Drums
+
+Grooves to play along with, on a real recorded drum kit:
+
+- **38 ready-made grooves** across rock, pop, funk, hip-hop, jazz, Latin, country, blues and punk/metal, shown as mini grids. Press one to load it and hear it.
+- **Recorded, not synthesised:** the kit is [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums) by Karoryfer Samples (CC0), mixed from its close and overhead mics. Every drum has several velocity layers and round-robin takes, so accents, normal hits and ghost notes sound different and repeated notes never sound like a machine. A closed hi-hat chokes a ringing open one, as on a real kit.
+- Tempo, swing (hip-hop grooves), and the step being heard lit up on the grid.
+- Rebuild the samples with `python3 scripts/build-drum-kits.py` (needs ffmpeg and numpy).
+
 ## 👂 Training: ear and theory
 
 <img src="docs/screenshots/quiz.png" alt="The Ear training page asking you to name a chord" width="900">
@@ -158,7 +167,7 @@ before adding a page or a control.
 
 ## 📱 iPhone, iPad and Android app
 
-[`mobile/`](mobile) is the native app (Expo / React Native) with all five pages rebuilt from the platform's own
+[`mobile/`](mobile) is the native app (Expo / React Native) with the first five pages rebuilt from the platform's own
 controls. It shares the music logic and the page logic in `src/lib` with this site, so a fix there fixes both.
 How to run it is in [`mobile/README.md`](mobile/README.md); getting it into the stores is in
 [`mobile/PUBLISHING.md`](mobile/PUBLISHING.md).
