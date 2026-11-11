@@ -35,12 +35,12 @@ drop trigger if exists profiles_touch on public.profiles;
 create trigger profiles_touch before update on public.profiles
   for each row execute function public.profiles_touch();
 
--- Make the profile when someone signs up, using the name they typed (if any). Never blocks a sign up.
+-- Make the profile when someone signs up, using the name they typed or the one Google gives. Never blocks a sign up.
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, nullif(left(btrim(regexp_replace(coalesce(new.raw_user_meta_data ->> 'display_name', ''), '\s+', ' ', 'g')), 40), ''))
+  values (new.id, nullif(left(btrim(regexp_replace(coalesce(new.raw_user_meta_data ->> 'display_name', new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', ''), '\s+', ' ', 'g')), 40), ''))
   on conflict (id) do nothing;
   return new;
 exception when others then

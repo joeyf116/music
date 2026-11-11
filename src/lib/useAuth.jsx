@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { friendlyAuthError, hasStoredSession, readAuthRedirect, redirectUrl } from './auth.js'
+import { fetchProviders, friendlyAuthError, hasStoredSession, readAuthRedirect, redirectUrl } from './auth.js'
+import { sharedConfig } from './sharedResources.js'
 import { authEnabled, getSupabase } from './supabaseClient.js'
 
 // Who is logged in, shared by the whole app. `status` is 'off' (no Supabase configured), 'idle' (client not
@@ -20,9 +21,9 @@ export function AuthProvider({ children }) {
       status: !enabled ? 'off' : hasStoredSession() || fromLink ? 'loading' : 'idle',
       user: null,
       profile: null,
-      recovering: false,
-      notice: '',
+        notice: '',
       error: enabled ? redirect.error : '',
+      providers: {},
     }
   })
   const started = useRef(false)
@@ -38,6 +39,7 @@ export function AuthProvider({ children }) {
     if (!enabled || started.current) return getSupabase()
     started.current = true
     setState((s) => (s.status === 'idle' ? { ...s, status: 'loading' } : s))
+    fetchProviders(sharedConfig).then((providers) => setState((s) => ({ ...s, providers })))
     const redirect = readAuthRedirect()
     const supabase = await getSupabase()
     supabase.auth.onAuthStateChange((event, session) => {
@@ -47,7 +49,6 @@ export function AuthProvider({ children }) {
         status: user ? 'signedIn' : 'signedOut',
         user,
         profile: user && user.id === s.user?.id ? s.profile : null,
-        recovering: event === 'PASSWORD_RECOVERY' ? true : event === 'SIGNED_OUT' ? false : s.recovering,
       }))
       // Supabase calls this while holding its lock; fetch the profile afterwards, not inside it.
       if (user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED')) {
@@ -80,22 +81,9 @@ export function AuthProvider({ children }) {
     return {
       start,
       clearMessages: () => setState((s) => ({ ...s, error: '', notice: '' })),
-      logIn: ({ email, password }) => run(async (sb) => unwrap(await sb.auth.signInWithPassword({ email, password }))),
-      signUp: ({ email, password, name }) =>
-        run(async (sb) => {
-          const data = unwrap(
-            await sb.auth.signUp({ email, password, options: { data: name ? { display_name: name } : {}, emailRedirectTo: redirectUrl('account') } }),
-          )
-          // With email confirmation on there is no session yet; Supabase also returns a user with no identities
-          // when the address is already registered, so the same message covers both without leaking which.
-          return { needsConfirmation: !data.session }
-        }),
-      sendReset: ({ email }) => run(async (sb) => unwrap(await sb.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl('account') }))),
-      setPassword: ({ password }) =>
-        run(async (sb) => {
-          unwrap(await sb.auth.updateUser({ password }))
-          setState((s) => ({ ...s, recovering: false, notice: 'Password changed.' }))
-        }),
+      // Leaves the site for Google, which sends people back to #account with ?code= (finished in start()).
+      logInWithGoogle: () =>
+        run(async (sb) => unwrap(await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl('account') } }))),
       saveName: (name) =>
         run(async (sb) => {
           const { data: { user } } = await sb.auth.getUser()

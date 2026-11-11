@@ -80,7 +80,7 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 | **Drums** `#drums` | Play along with a real drum groove | Style chips over the groove gallery | The loaded groove's grid with **Play** and tempo, the playhead lit on the step being heard; below it the gallery of grooves as mini grids (press one to load and hear it) | Settings: kit, volume | None |
 | **Charts** `#charts` | Play along with a band | Search, style, collection | Chart list → chart with Play, key, tempo, style; one visible action (Edit, or Copy & edit) and the rest in ⋯ | Band mix | Chord shapes |
 | **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
-| **Account** `#account` (not a tab: the **Log in** button, or your initial, at the top right) | Log in, sign up, manage your account | Log in · Sign up | The form and one main button (Log in, Create account, Send reset link); once in: your name + **Save**, and **Log out** in the header | Password and account: change password, delete account | None |
+| **Account** `#account` (not a tab: the **Log in** button, or your initial, at the top right) | Log in with Google, manage your account | None | **Continue with Google** (also signs you up); once in: your name + **Save**, and **Log out** in the header | Delete account | None |
 
 The page title in the header names the page; the tab bar uses the same word (Rhythm, Training…), so people
 always know where they are.
