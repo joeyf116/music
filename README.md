@@ -60,12 +60,12 @@ practise with, and a folded **Settings** panel for everything else (see [Design 
 
 ## 🪘 Drums
 
-Grooves to play along with, on a real recorded drum kit:
+Grooves to play along with on real recorded drum kits, or a plain metronome (the **Groove · Metronome** switch at the top):
 
-- **38 ready-made grooves** across rock, pop, funk, hip-hop, jazz, Latin, country, blues and punk/metal, shown as mini grids. Press one to load it and hear it.
-- **Recorded, not synthesised:** the kit is [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums) by Karoryfer Samples (CC0), mixed from its close and overhead mics. Every drum has several velocity layers and round-robin takes, so accents, normal hits and ghost notes sound different and repeated notes never sound like a machine. A closed hi-hat chokes a ringing open one, as on a real kit.
+- **60 ready-made grooves** across rock, pop, funk, R&B & soul (gospel too), hip-hop, lo-fi, jazz, Latin (samba, salsa, cha-cha-chá, bossa nova, reggaeton), Afro & Caribbean (afrobeat, afrobeats, reggae, soca), electronic (house, techno, drum & bass, breakbeat), country, blues and punk/metal, shown as mini grids. Press one to load it and hear it.
+- **Four recorded kits, not synthesised:** Rock ([Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums)), Jazz ([Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums)), Brushes ([Swirly Drums](https://github.com/sfzinstruments/karoryfer.swirly-drums)) and Lo-fi ([Gogodze Phu Vol II](https://github.com/sfzinstruments/karoryfer.gogodze-phu-vol-ii)), plus hand percussion (cowbell, claves, tambourine, shaker, congas, bongos) from Virtuosity Drums. All CC0. Picking a groove picks the kit it suits; change it with **Kit** next to the tempo. A drum a kit wasn't recorded with is played by the nearest one (the lo-fi kit borrows the jazz kit's cymbals). Every drum has several velocity layers and round-robin takes, so accents, normal hits and ghost notes sound different and repeated notes never sound like a machine. A closed hi-hat chokes a ringing open one, as on a real kit.
 - **Change any step:** pick Hit, Accent or Ghost and press a step to paint it, drag along a row to paint more, press a painted step to clear it. Mute, solo or turn down any drum, add or remove drums, and undo anything (Ctrl+Z). The grid works from the keyboard too: arrow keys move, Space paints or clears, 1 / 2 / 3 paint a hit, accent or ghost.
-- **Settings:** time signature (4/4, 3/4, 5/4, 6/8, 9/8, 12/8), 1, 2 or 4 bars, swing, and humanize for a drummer's small timing and loudness changes. Your groove is kept when you come back.
+- **Settings:** time signature (4/4, 3/4, 5/4, 6/8, 9/8, 12/8), 1, 2 or 4 bars, swing, humanize for a drummer's small timing and loudness changes, and a recorded click (claves, cowbell or side stick) on every beat over the groove. Your groove is kept when you come back.
 - Tempo, and the step being heard lit up on the grid.
 - Rebuild the samples with `python3 scripts/build-drum-kits.py` (needs ffmpeg and numpy).
 

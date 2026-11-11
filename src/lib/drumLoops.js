@@ -5,7 +5,8 @@
 //   '.' rest   'x' hit   'X' accent (harder)   'g' ghost note (very soft)
 // Strings keep presets readable: 'x.x.x.x.x.x.x.x.' is eight 8th notes on a 16-step bar.
 
-/** Every drum the editor knows, top to bottom as they are drawn (cymbals, hats, toms, snare, kick). */
+/** Every drum the editor knows, top to bottom as they are drawn (cymbals, hats, toms, snare, kick, then hand
+ * percussion). `perc` marks hand percussion, which sounds the same whatever kit is picked. */
 export const DRUM_VOICES = [
   { id: 'crash', name: 'Crash', gm: 49 },
   { id: 'ride', name: 'Ride', gm: 51 },
@@ -21,6 +22,14 @@ export const DRUM_VOICES = [
   { id: 'rimshot', name: 'Rimshot', gm: 40 },
   { id: 'snare', name: 'Snare', gm: 38 },
   { id: 'kick', name: 'Kick', gm: 36 },
+  { id: 'cowbell', name: 'Cowbell', gm: 56, perc: true },
+  { id: 'claves', name: 'Claves', gm: 75, perc: true },
+  { id: 'tambourine', name: 'Tambourine', short: 'Tamb', gm: 54, perc: true },
+  { id: 'shaker', name: 'Shaker', gm: 70, perc: true },
+  { id: 'bongoHigh', name: 'Bongo (high)', short: 'Bongo hi', gm: 60, perc: true },
+  { id: 'bongoLow', name: 'Bongo (low)', short: 'Bongo lo', gm: 61, perc: true },
+  { id: 'conga', name: 'Conga (high)', short: 'Conga hi', gm: 63, perc: true },
+  { id: 'congaLow', name: 'Conga (low)', short: 'Conga lo', gm: 64, perc: true },
 ]
 
 export const voiceById = (id) => DRUM_VOICES.find((v) => v.id === id)
