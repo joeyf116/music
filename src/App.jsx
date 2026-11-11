@@ -1,10 +1,13 @@
+import AccountPage from './components/AccountPage.jsx'
 import Charts from './components/Charts.jsx'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
 import EarTraining from './components/EarTraining.jsx'
 import Resources from './components/Resources.jsx'
 import RhythmPage from './components/RhythmPage.jsx'
+import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
+import { useAuth } from './lib/useAuth.jsx'
 import useHashPage from './lib/useHashPage.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
@@ -40,8 +43,30 @@ const PAGES = [
   },
 ]
 
+// Account isn't one of the tabs: it opens from the button at the top right.
+const PAGE_IDS = [...PAGES.map((p) => p.id), 'account']
+
+/** Top right of the header: "Log in", or the first letter of your name once you are. */
+function AccountButton({ current }) {
+  const auth = useAuth()
+  if (auth.status === 'off') return null
+  const signedIn = auth.status === 'signedIn'
+  const name = signedIn ? displayName(auth.user, auth.profile) : ''
+  return (
+    <a
+      className={`account-button${signedIn ? ' signed-in' : ''}`}
+      href="#account"
+      aria-current={current ? 'page' : undefined}
+      aria-label={signedIn ? `Account: ${name}` : undefined}
+      title={signedIn ? name : undefined}
+    >
+      {signedIn ? <span className="account-initial" aria-hidden="true">{initialOf(name)}</span> : 'Log in'}
+    </a>
+  )
+}
+
 export default function App() {
-  const page = useHashPage(PAGES.map((p) => p.id), 'fretboard')
+  const page = useHashPage(PAGE_IDS, 'fretboard')
   // One key and one scale/mode for the whole app: changing the key never changes the mode, and the
   // Exercises page picks up where the Fretboard left off (and back).
   const [key, setKey] = usePersistentState('music.key', 'A')
@@ -76,10 +101,13 @@ export default function App() {
             </a>
           ))}
         </nav>
+        <AccountButton current={page === 'account'} />
       </header>
 
       <main>
-        {page === 'resources' ? (
+        {page === 'account' ? (
+          <AccountPage />
+        ) : page === 'resources' ? (
           <Resources />
         ) : page === 'exercises' ? (
           <RhythmPage
