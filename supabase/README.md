@@ -54,6 +54,16 @@ One-time setup:
 The Google button reads `/auth/v1/settings` and greys itself out while Google is switched off. Sign-in uses
 the PKCE flow (`?code=` in the query), because the site's pages live in the `#hash`.
 
+## Settings that follow your account
+
+[`settings.sql`](./settings.sql) adds `user_settings`: one row per user holding every practice setting the app
+saves under `music.*` (key, scale, tuning, tempo, practice tab, starred links, quiz scores, drum loop…) as JSON,
+readable and writable only by its owner and deleted with the account. Run it once in the SQL Editor.
+`src/lib/settingsSync.js` decides what syncs (drawer open/closed states and anti-spam timers don't) and the rule
+for conflicts: the newest save wins, judged by the server's clock. Logging in on a new device brings the
+account's settings in; changes are saved two seconds after you make them, and again when you leave the tab.
+Until the table exists the app quietly keeps settings in the browser only.
+
 ## Shared charts
 
 The Charts page uses the same project for charts anyone can share. Run

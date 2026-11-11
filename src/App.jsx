@@ -10,6 +10,7 @@ import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import { useAuth } from './lib/useAuth.jsx'
 import useHashPage from './lib/useHashPage.js'
+import useSettingsSync from './lib/useSettingsSync.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
 
@@ -73,6 +74,7 @@ function AccountButton({ current }) {
 
 export default function App() {
   const page = useHashPage(PAGE_IDS, 'fretboard')
+  useSettingsSync()
   // One key and one scale/mode for the whole app: changing the key never changes the mode, and the
   // Exercises page picks up where the Fretboard left off (and back).
   const [key, setKey] = usePersistentState('music.key', 'A')
