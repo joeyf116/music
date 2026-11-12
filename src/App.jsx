@@ -8,6 +8,8 @@ import useHashPage from './lib/useHashPage.js'
 import useSettingsSync from './lib/useSettingsSync.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
+// Shared with lazy pages, but also holds the phone tab bar's short labels, so it loads up front.
+import './components/Rhythm.css'
 
 // Pages other than the Fretboard load their code the first time you open them.
 const AccountPage = lazy(() => import('./components/AccountPage.jsx'))
