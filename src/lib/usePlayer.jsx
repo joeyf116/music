@@ -3,27 +3,49 @@ import { audioContext, startDrone } from './audio.js'
 import { loadKit, loopVoices, startDrumLoop } from './drumEngine.js'
 import { BACKINGS, clampBpm, currentGroove } from './practiceBacking.js'
 import { startPlayback } from './player.js'
-import { practiceScore, validItems } from './practiceTab.js'
+import { practiceSession, starterText, stepsFromPinned, stepsFromText, validSteps } from './progression.js'
+import { progressionMood } from './fretboardView.js'
 import { mod12, noteToPc } from './theory.js'
 import usePersistentState from './usePersistentState.js'
 import useWakeLock from './useWakeLock.js'
 
-// One player for the whole app, so music keeps going when you change pages: the practice tab (with an optional
+// One player for the whole app, so music keeps going when you change pages: the Practice page's progression (with an optional
 // click or drum groove behind it) and the Drums page's groove share one tempo and one Play / Stop. Only one thing
 // plays at a time; starting one stops the other. The metronome keeps its own engine but stops these when it starts.
 
 const PlayerContext = createContext(null)
 
-export function PlayerProvider({ tuning, keyName, children }) {
+// The first time the Practice page opens: the chords pinned to the old practice tab, or a common progression.
+function firstSteps(keyName, scaleType, tuning) {
+  let pinned = []
+  try {
+    pinned = JSON.parse(window.localStorage.getItem('music.practiceTab') ?? '[]')
+  } catch {
+    // Nothing usable stored.
+  }
+  const kept = stepsFromPinned(pinned, keyName)
+  return kept.length ? kept : stepsFromText(starterText(progressionMood(scaleType)), { keyName, tuning }).steps
+}
+
+export function PlayerProvider({ tuning, keyName, scaleType, children }) {
   const [bpm, setBpm] = usePersistentState('music.bpm', 100)
-  const [storedItems, setItems] = usePersistentState('music.practiceTab', [])
+  // The Practice page's progression: chords relative to the key, each with its own voicing and length.
+  const [storedSteps, setSteps] = usePersistentState('music.progression', null)
+  const [mode, setMode] = usePersistentState('music.practiceMode', 'chords')
+  const [position, setPosition] = usePersistentState('music.practicePosition', 0)
+  const [line, setLine] = usePersistentState('music.practiceLine', 'scale')
+  const [playLine, setPlayLine] = usePersistentState('music.practicePlayLine', true)
   const [chordStyle, setChordStyle] = usePersistentState('music.chordStyle', 'strum')
   const [backing, setBacking] = usePersistentState('music.practiceBacking', 'off')
   const [drone, setDrone] = usePersistentState('music.practiceDrone', false)
-  const items = useMemo(() => validItems(storedItems), [storedItems])
+  useEffect(() => {
+    if (storedSteps === null) setSteps(firstSteps(keyName, scaleType, tuning))
+    // Only once, when nothing has been stored yet.
+  }, [storedSteps]) // eslint-disable-line react-hooks/exhaustive-deps
+  const steps = useMemo(() => validSteps(storedSteps), [storedSteps])
   const tempo = clampBpm(bpm)
 
-  // ---- The groove engine: the Drums page's groove, or the practice tab's backing ----
+  // ---- The groove engine: the Drums page's groove, or the progression's backing ----
   const engine = useRef(null)
   const [groove, setGroove] = useState({ playing: false, loading: false, failed: false, step: -1, name: '', source: null })
 
@@ -54,12 +76,16 @@ export function PlayerProvider({ tuning, keyName, children }) {
     if (name) setGroove((g) => (g.name === name ? g : { ...g, name }))
   }, [])
 
-  // ---- The practice tab ----
+  // ---- The Practice page's progression ----
   const [practiceWanted, setPracticePlaying] = useState(false)
-  // Clearing the practice tab stops it.
-  const practicePlaying = practiceWanted && items.length > 0
+  // Clearing the progression stops it.
+  const practicePlaying = practiceWanted && steps.length > 0
   const [practiceActive, setPracticeActive] = useState(null)
-  const score = useMemo(() => practiceScore(items, tuning, chordStyle), [items, tuning, chordStyle])
+  const session = useMemo(
+    () => practiceSession({ steps, keyName, scaleType, tuning, mode: mode === 'scales' ? 'scales' : 'chords', position, line, style: chordStyle, playLine }),
+    [steps, keyName, scaleType, tuning, mode, position, line, chordStyle, playLine],
+  )
+  const { score } = session
   const withGroove = backing === 'groove'
 
   useEffect(() => {
@@ -131,9 +157,18 @@ export function PlayerProvider({ tuning, keyName, children }) {
   const value = {
     bpm: tempo,
     setBpm,
-    // Practice tab
-    items,
-    setItems,
+    // Practice page
+    steps,
+    setSteps,
+    session,
+    mode: mode === 'scales' ? 'scales' : 'chords',
+    setMode,
+    position: session.position,
+    setPosition,
+    line: line === 'arpeggio' ? 'arpeggio' : 'scale',
+    setLine,
+    playLine,
+    setPlayLine,
     chordStyle,
     setChordStyle,
     backing: BACKINGS.some((b) => b.value === backing) ? backing : 'off',

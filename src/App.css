@@ -1854,99 +1854,256 @@ button.primary {
   flex: 0 1 18rem;
 }
 
-/* ---- Practice tab ---- */
-.practice-tab .tab-head {
+.pin-status {
   margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 
-.practice-empty {
+/* ---- Practice page: key → progression chart + Play → the chord on the neck → the tab ---- */
+.prog {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
 }
 
-.practice-empty p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.practice-cleared {
-  margin: 0;
-  color: var(--muted);
-}
-
-.practice-items {
+.prog-head {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.prog-head h2,
+.prog-tab h2 {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.prog-head h2 small,
+.prog-tab h2 small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
+.prog-head .menu > button {
+  min-height: 2.75rem;
+}
+
+.prog-undo {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* The chart: one card per chord, four to a row like bars on a lead sheet. */
+.prog-chart {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.practice-item {
+.prog-chord,
+.prog-add {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-}
-
-.practice-item.is-playing {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.practice-item-name {
-  display: flex;
-  flex: 1 1 12rem;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 0;
-  border: 0;
-  background: none;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.75rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
   text-align: left;
 }
 
-.practice-item-name span {
+.prog-chord strong {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: var(--text-lg);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prog-chord span {
   color: var(--muted);
   font-size: var(--text-sm);
 }
 
-.practice-item-tools {
-  display: flex;
-  gap: var(--space-1);
+.prog-chord.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
-.practice-item-tools button {
+.prog-chord.is-playing {
+  position: relative;
+}
+
+.prog-chord.is-playing::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--space-3) 0.3rem;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.prog-add {
+  align-items: center;
+  border-style: dashed;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.prog-add.on {
+  border-style: solid;
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.prog-add-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.prog-type {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.prog-type .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.prog-type button {
+  min-height: var(--control-h);
+}
+
+.prog-add-panel .field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.prog-transport .primary {
+  flex: 1 1 7rem;
+  max-width: 16rem;
+  min-height: var(--control-h);
+}
+
+@media (max-width: 640px) {
+  .prog-transport .primary {
+    max-width: none;
+  }
+
+  /* The scale menu gives way so Chords · Scales always fits, even at 360 px. */
+  .practice-page .explore-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.prog-stage-tools {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.prog-stage-tools .neck-zoom-button {
+  margin-left: 0;
+}
+
+.prog-stage-tools .menu > button {
   min-width: 2.75rem;
   min-height: 2.75rem;
 }
 
-.beat-options {
-  display: flex;
-  flex-basis: 100%;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+.prog-stage .title-row {
+  flex-wrap: nowrap;
+  align-items: flex-start;
 }
 
-.practice-foot {
+.prog-scale-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.prog-scale-row .position-options {
+  margin-top: 0;
+}
+
+.prog-step-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-3);
 }
 
-.practice-foot .hint {
+.beats-choice .choice label {
+  min-width: 2.75rem;
+}
+
+.prog-stage .hint,
+.prog-stage .legend {
   margin: 0;
+}
+
+.prog-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .prog-chord,
+  .prog-add {
+    padding-inline: var(--space-2);
+  }
+
+  .prog-chord strong {
+    font-size: var(--text-base);
+  }
+
+  .prog-scale-row .position-field > .field-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .prog-scale-row .line-choice {
+    flex: 1 1 100%;
+  }
+
+  .prog-scale-row .line-choice .choice label,
+  .practice-page .voicing-choice .choice label,
+  .beats-choice .choice label {
+    flex: 1 1 0;
+  }
+
+  .prog-step-row .beats-choice {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 720px) {
+  .prog-chart {
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  }
 }
 
 /* Phones: a slim bar above the tab bar, so the practice tab is always one tap away. Not a sticky top bar. */

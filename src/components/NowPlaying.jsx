@@ -1,30 +1,30 @@
 import { usePlayer } from '../lib/usePlayer.jsx'
 
-const scrollToPracticeTab = () => document.getElementById('practice-tab')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
 /**
  * The bar above the phone's tab bar: what's playing, with Stop, on every page, so music keeps going while you look
- * something up. On the Fretboard it is also the practice tab's Play button. Wider screens show it only while
+ * something up. On the Practice page it is also the progression's Play button. Wider screens show it only while
  * something plays away from its own page.
  */
 export default function NowPlaying({ page }) {
   const player = usePlayer()
-  const { groove, practicePlaying, items, bpm } = player
-  const practiceLabel = `${items.length} ${items.length === 1 ? 'item' : 'items'}`
+  const { groove, practicePlaying, steps, session, bpm } = player
+  const practiceLabel = session.voiced.map((v) => v.chord.name).join(' ')
 
   let bar = null
   if (practicePlaying) {
     bar = {
-      title: 'Practice tab',
-      detail: `${practiceLabel} · ${bpm} BPM${player.backing === 'groove' && groove.name ? ` · ${groove.name}` : ''}`,
-      open: page === 'fretboard' ? scrollToPracticeTab : () => (window.location.hash = 'fretboard'),
+      title: practiceLabel,
+      detail: `${player.mode === 'scales' ? 'Scales' : 'Chords'} · ${bpm} BPM${player.backing === 'groove' && groove.name ? ` · ${groove.name}` : ''}`,
+      open: page === 'practice' ? scrollToTop : () => (window.location.hash = 'practice'),
       playing: true,
-      away: page !== 'fretboard',
+      away: page !== 'practice',
     }
   } else if (groove.playing) {
     bar = { title: groove.name || 'Groove', detail: `Drums · ${bpm} BPM`, open: () => (window.location.hash = 'drums'), playing: true, away: page !== 'drums' }
-  } else if (page === 'fretboard' && items.length) {
-    bar = { title: 'Practice tab', detail: practiceLabel, open: scrollToPracticeTab, playing: false, away: false }
+  } else if (page === 'practice' && steps.length) {
+    bar = { title: practiceLabel, detail: `${player.mode === 'scales' ? 'Scales' : 'Chords'} · ${bpm} BPM`, open: scrollToTop, playing: false, away: false }
   }
   if (!bar) return null
 

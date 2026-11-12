@@ -53,10 +53,18 @@ practise with, and a folded **Settings** panel for everything else (see [Design 
 - **Two views:**
   - **Scale:** major, minor, pentatonics, blues, harmonic and melodic minor, and every mode, in playable positions (boxes or diagonal 3-notes-per-string runs, set in Settings) or across the whole neck.
   - **Chords:** one voicing at a time, stepped with ‹ › (or ← / →). Pick the voicing type: **Shapes** (open and barre chords), **CAGED** (each shape inside its pentatonic box), **Triads** on every string set, or **Drop 2** / **Drop 3** for 7th chords. Any of 17 chord types can replace the key's own in Settings.
-- **Pin to practice tab** adds whatever is on the neck (a voicing, a CAGED shape and its box, or a scale run) to the **practice tab**. Pinned items keep their own frets and key, so you can mix keys in one session.
-- **The practice tab plays everything pinned as one looping tab**, with the cursor following the sound, at any BPM, with an optional click and a drone on the key. Reorder or remove items, set how many beats a chord rings, choose strum, arpeggio or block chords, or start from a common or random progression. On a phone a small bar above the tab bar keeps it one tap away.
+- **＋ Add to progression** puts the voicing on the neck into your progression on the Practice page; in Scale view, **Practise over a progression** opens Practice in Scales at that position.
 - **Notes are coloured and shaped by role** (root, 3rd, 5th, 7th, other), so the neck reads even without colour. Labels can show note names or intervals.
 - **25 tunings** in five groups: standard down to B, drop tunings, open tunings, math rock (FACGCE, open C6, open F) and more. Tuning, labels and "show every note" live in **Settings**.
+
+## 🔁 Practice
+
+One progression that everything on the page follows:
+
+- **Build it in a few taps.** The chords sit in a chart like a lead sheet. **＋ Add** shows the key's chords (tap one to add it), or type numerals or names (`ii7 V7 Imaj7`, `Am F C G`). **Common ▾** starts from a well-known progression or a random one. Changing the key moves the whole progression.
+- **Shape each chord.** Tap a chord to see its voicing on the neck. Pick Shapes, Triads, Drop 2 or Drop 3, step through voicings with ‹ ›, or change it note by note: tap a dim chord note to move that string to it, tap a played note to mute the string. New chords are voiced close to the one before, and one tap voices every chord close together.
+- **Practise scales through the changes.** Switch to **Scales**, pick a position, and the neck lights the current chord's notes inside the scale while the rest stay grey. The tab is a line of 8th notes (the scale, or arpeggios only) that lands on a chord note at every change, played over the chords or left for you to play.
+- **Play it** at any tempo over a click or the Drums page's groove, with an optional drone; the neck and tab follow the music, and it keeps playing on other pages.
 
 ## 🪘 Drums
 

@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { playChord, playPitch } from '../lib/audio.js'
-import { ALL_POSITIONS, LABEL_OPTIONS, LAYOUT_OPTIONS, LEGEND, VIEWS, activeColumnIndex, columnDuration, columnPitches, fretboardView, legacyView, neckNotes, noteLabeller, progressionMood, tabStringNames } from '../lib/fretboardView.js'
-import { CHORD_STYLES, addItem, createItem, practiceColumns, progressionItems, validItems } from '../lib/practiceTab.js'
+import { ALL_POSITIONS, LABEL_OPTIONS, LAYOUT_OPTIONS, LEGEND, VIEWS, activeColumnIndex, columnDuration, columnPitches, fretboardView, legacyView, neckNotes, noteLabeller, tabStringNames } from '../lib/fretboardView.js'
+import { createStep, resolveKind, stepsFromText, voicingList } from '../lib/progression.js'
 import { CHORDS, SCALES, pcName, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
-import { currentGroove } from '../lib/practiceBacking.js'
 import { usePlayer } from '../lib/usePlayer.jsx'
 import { Choice, Field, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard, { zoomWindow } from './Fretboard.jsx'
 import KeyPicker from './KeyPicker.jsx'
-import PracticeTab from './PracticeTab.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
 import { Disclosure, PageHeader } from './layout.jsx'
@@ -39,13 +37,13 @@ const readStored = (key, fallback) => {
 }
 
 /**
- * The Fretboard page: pick a key, look at its scale or one voicing of a chord in it at a time, and pin what you want
- * to practise into the practice tab, which plays everything pinned as one looping tab.
+ * The Fretboard page: pick a key, look at its scale or one voicing of a chord in it at a time. A voicing can be added
+ * to the progression on the Practice page; a scale position opens there, played through that progression.
  */
 export default function FretboardPage({ keyName, onKeyChange, scaleType, onScaleChange, tuning, tuningSpec, tuningId, onTuningChange }) {
-  // The practice tab and its playback live in the app-wide player, so they keep going on other pages.
+  // The progression lives in the app-wide player, shared with the Practice page.
   const player = usePlayer()
-  const { items, setItems, chordStyle, setChordStyle, bpm, setBpm: onBpmChange, practicePlaying: playing, practiceActive, setPracticeActive } = player
+  const { steps, setSteps, bpm } = player
   const [storedView, setView] = usePersistentState('music.mode', 'scale')
   const [chordDegree, setChordDegree] = usePersistentState('music.chordDegree', 0)
   const [chordOverride, setChordOverride] = usePersistentState('music.chordType', '')
@@ -70,7 +68,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
     setView(old.view)
     setVoicingType(old.voicingType)
     setVoicingIndex(0)
-    if (old.progression && !items.length) setItems(progressionItems(readStored('music.fretProgression', '') || 'I V vi IV', keyName, tuning, tuningId).items)
+    if (old.progression && !steps.length) setSteps(stepsFromText(readStored('music.fretProgression', '') || 'I V vi IV', { keyName, tuning }).steps)
     // Only the stored view matters here: this runs once, when an old one is found.
   }, [storedView]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -95,13 +93,6 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
     if (play && shapes.columns[index]) playColumn(shapes.columns[index])
   }
 
-  const practice = useMemo(() => practiceColumns(items), [items])
-
-  const togglePractice = () => {
-    if (playing) return player.stopPractice()
-    stopListening()
-    player.startPractice()
-  }
   const toggleListen = () => {
     if (listening) return stopListening()
     player.stopAll()
@@ -118,29 +109,31 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
     timers.current.push(setTimeout(() => setListening(false), at))
   }
 
-  // ---- Pinning ----
-  const [justPinned, setJustPinned] = useState(false)
-  const [cleared, setCleared] = useState(null)
+  // ---- Adding to the progression on the Practice page ----
+  const [added, setAdded] = useState(null)
   useEffect(() => {
-    if (!justPinned) return undefined
-    const t = setTimeout(() => setJustPinned(false), 1500)
+    if (!added) return undefined
+    const t = setTimeout(() => setAdded(null), 4000)
     return () => clearTimeout(t)
-  }, [justPinned])
-  const pinIt = () => {
-    if (!pin) return
-    setItems((list) => addItem(validItems(list), createItem(pin)))
-    setCleared(null)
-    setJustPinned(true)
+  }, [added])
+  const addToProgression = () => {
+    if (!pin || view !== 'chord') return
+    const type = model.chordType
+    const notes = pin.columns[0].notes
+    // Keep the voicing as one of the Practice page's own when it is one (so ‹ › still step from it), else as its frets.
+    const kind = resolveKind(model.voicingType, type)
+    const list = voicingList(picked.rootPc, type, kind, tuning)
+    const same = (a) => a.length === notes.length && a.every((n) => notes.some((m) => m.string === n.string && m.fret === n.fret))
+    const index = list.findIndex((v) => same(v.notes))
+    const step = createStep({ rootPc: picked.rootPc, type }, { keyName, tuning, kind })
+    const next = index >= 0 ? { ...step, kind, index } : { ...step, frets: notes, fretsKey: keyName }
+    setSteps([...steps, next])
+    setAdded(steps.length + 1)
   }
-  const changeItems = (next) => {
-    // Clearing a tab of more than one item can be undone.
-    setCleared(!next.length && items.length > 1 ? items : null)
-    setItems(next)
-  }
-  const startFrom = (text) => {
-    const { items: added } = progressionItems(text, keyName, tuning, tuningId)
-    setItems((list) => [...validItems(list), ...added])
-    setCleared(null)
+  const practiseScale = () => {
+    player.setMode('scales')
+    if (!shapes.all) player.setPosition(shapes.optionIndex)
+    window.location.assign('#practice')
   }
 
   // ---- Choosing what the neck shows ----
@@ -201,7 +194,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   const tuningNames = tabStringNames(tuning, stringName)
   const voicing = voicings[model.voicingIndex]
   const showAllApplies = !shapes.all && !shapes.caged
-  const settingsSummary = [tuningSpec.name, labels === 'notes' ? 'note names' : 'intervals', showAllApplies ? (showAll ? 'all notes' : 'shape only') : null, CHORD_STYLES.find((c) => c.value === chordStyle)?.label.toLowerCase() ?? 'strum']
+  const settingsSummary = [tuningSpec.name, labels === 'notes' ? 'note names' : 'intervals', showAllApplies ? (showAll ? 'all notes' : 'shape only') : null]
     .filter(Boolean)
     .join(' · ')
 
@@ -221,7 +214,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
 
   return (
     <section className="page fretboard-page">
-      <PageHeader title="Fretboard" summary="Find a voicing in any key and pin it to practise." />
+      <PageHeader title="Fretboard" summary="Find any scale position or chord voicing in any key." />
 
       {/* 1. Where you are: the key, its chords, the scale and what to look at. */}
       <div className="explore-setup">
@@ -308,13 +301,25 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
           </div>
         )}
         <div className="pin-row">
-          <button type="button" className={`pin-button${justPinned ? ' done' : ''}`} onClick={pinIt} disabled={!pin}>
-            {justPinned ? '✓ Pinned' : '＋ Pin to practice tab'}
-          </button>
+          {view === 'chord' ? (
+            <button type="button" className={`pin-button${added ? ' done' : ''}`} onClick={addToProgression} disabled={!pin}>
+              {added ? '✓ Added' : '＋ Add to progression'}
+            </button>
+          ) : (
+            <button type="button" className="pin-button" onClick={practiseScale}>
+              Practise over a progression
+            </button>
+          )}
           <button type="button" onClick={toggleListen} disabled={!columns.length}>
             {listening ? '■ Stop' : '▶ Listen'}
           </button>
         </div>
+
+        {added && (
+          <p className="pin-status" role="status">
+            {model.chordName} is chord {added} of your progression. <a href="#practice">Open Practice</a>
+          </p>
+        )}
 
         <Disclosure label="Settings" summary={settingsSummary} storageKey="music.fretSettingsOpen" className="neck-settings">
           <div className="field-grid neck-settings-panel">
@@ -339,42 +344,12 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
                 </select>
               </Field>
             )}
-            <Choice label="Practice tab chords" options={CHORD_STYLES} value={chordStyle} onChange={setChordStyle} />
           </div>
         </Disclosure>
       </div>
 
       {view !== 'chord' && <div className="chord-reference">{chordStrip}</div>}
 
-      {/* 4. Everything pinned, as one looping tab. */}
-      <PracticeTab
-        items={items}
-        onItemsChange={changeItems}
-        onStartFrom={startFrom}
-        mood={progressionMood(scaleType)}
-        playing={playing}
-        onTogglePlay={togglePractice}
-        active={practiceActive}
-        onSelectColumn={(i) => {
-          setPracticeActive(i)
-          if (practice.columns[i]) playColumn(practice.columns[i])
-        }}
-        bpm={bpm}
-        onBpmChange={onBpmChange}
-        backing={player.backing}
-        onBackingChange={player.setBacking}
-        grooveName={player.backing === 'groove' ? currentGroove(bpm).name : ''}
-        drone={player.drone}
-        onDroneChange={player.setDrone}
-        droneName={keyName}
-        tuningId={tuningId}
-        tuningNames={tuningNames}
-        cleared={Boolean(cleared)}
-        onUndoClear={() => {
-          setItems(cleared)
-          setCleared(null)
-        }}
-      />
 
     </section>
   )
