@@ -30,6 +30,11 @@ export function migrateSettings(storage = globalThis.localStorage) {
       storage.setItem(PRACTICE_CHORD_STYLE, JSON.stringify('strum'))
       changed.push(PRACTICE_CHORD_STYLE)
     }
+    // The practice tab's Click switch became Backing: Off · Click · Groove.
+    if (read(storage, 'music.practiceClick') === true && read(storage, 'music.practiceBacking') === undefined) {
+      storage.setItem('music.practiceBacking', JSON.stringify('click'))
+      changed.push('music.practiceBacking')
+    }
   } catch {
     // Storage blocked: nothing saved, nothing to fix.
   }

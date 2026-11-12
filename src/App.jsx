@@ -4,6 +4,8 @@ import Logo from './components/Logo.jsx'
 import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import { useAuth } from './lib/useAuth.jsx'
+import { PlayerProvider } from './lib/usePlayer.jsx'
+import NowPlaying from './components/NowPlaying.jsx'
 import useHashPage from './lib/useHashPage.js'
 import useSettingsSync from './lib/useSettingsSync.js'
 import usePersistentState from './lib/usePersistentState.js'
@@ -81,7 +83,6 @@ export default function App() {
   const [key, setKey] = usePersistentState('music.key', 'A')
   const [scaleType, setScaleType] = usePersistentState('music.scale', 'minorPentatonic')
   const [tuningId, setTuningId] = usePersistentState('music.tuning', 'standard')
-  const [bpm, setBpm] = usePersistentState('music.bpm', 100)
 
   const safeKey = KEYS.includes(key) ? key : 'C'
   const tuningSpec = TUNINGS[tuningId] ?? TUNINGS.standard
@@ -90,6 +91,7 @@ export default function App() {
   const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? usesFlats(safeKey))
 
   return (
+    <PlayerProvider tuning={tuning} keyName={safeKey}>
     <div className="app">
       <header className="site-header">
         <a className="brand" href="#fretboard">
@@ -135,12 +137,12 @@ export default function App() {
             tuningSpec={tuningSpec}
             tuningId={tuningId}
             onTuningChange={setTuningId}
-            bpm={bpm}
-            onBpmChange={setBpm}
           />
         )}
         </Suspense>
       </main>
+
+      <NowPlaying page={page} />
 
       <footer className="site-footer">
         <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
@@ -148,5 +150,6 @@ export default function App() {
         </a>
       </footer>
     </div>
+    </PlayerProvider>
   )
 }

@@ -545,3 +545,38 @@
   gap: var(--space-5);
   min-width: 0;
 }
+
+/* Saving a groove: a name and Save, in the editor. */
+.save-groove {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.save-groove .field {
+  flex: 1 1 12rem;
+}
+
+/* Your saved grooves have a ⋯ for deleting, over the card's corner. */
+.preset-grid > li {
+  position: relative;
+}
+
+.preset-grid > li:has(.saved-menu) .preset-card {
+  padding-right: 3.25rem;
+}
+
+.saved-menu {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+}
+
+.saved-menu > button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+}

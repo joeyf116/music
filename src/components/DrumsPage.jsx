@@ -2,14 +2,17 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { audioContext } from '../lib/audio.js'
 import { DEFAULT_SOUND, SOUND_KEY } from '../lib/clickSounds.js'
 import { METERS, clearSteps, historyReducer, sameLoop, setGrid, startHistory } from '../lib/drumEdit.js'
-import { CLICKS, KITS, PERC_CREDIT, kitById, loadKit, loopVoices, playDrum, startDrumLoop } from '../lib/drumEngine.js'
+import { CLICKS, KITS, PERC_CREDIT, kitById, loadKit, loopVoices, playDrum } from '../lib/drumEngine.js'
 import { LEVELS, LEVEL_NAMES, barCount, isValidLoop, loopTracks, meterLabel, voiceName } from '../lib/drumLoops.js'
 import { PRESETS, STYLES, presetById, presetKit } from '../lib/drumPresets.js'
+import { NAME_MAX, SAVED_KEY, SAVED_STYLE, findGroove, removeSaved, saveGroove, updateSaved, validSaved } from '../lib/drumSaved.js'
 import { DEFAULT_METRONOME, METRONOME_KEY, metronomeSettings } from '../lib/rhythmView.js'
 import usePersistentState from '../lib/usePersistentState.js'
-import useWakeLock from '../lib/useWakeLock.js'
+import { CURRENT_GROOVE_KEY as CURRENT_KEY } from '../lib/practiceBacking.js'
+import { usePlayer } from '../lib/usePlayer.jsx'
 import { Choice, Field, Stepper } from './controls.jsx'
 import DrumEditor from './DrumEditor.jsx'
+import Menu from './Menu.jsx'
 import Metronome from './Metronome.jsx'
 import './Drums.css'
 import { Disclosure, PageHeader } from './layout.jsx'
@@ -17,7 +20,6 @@ import { Disclosure, PageHeader } from './layout.jsx'
 const DEFAULT_LOOP = 'basic-rock'
 // The step editor starts open where there's room for it, folded on phones (it remembers what you choose).
 const WIDE = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 720px)').matches
-const CURRENT_KEY = 'music.drums.current'
 
 const meterOf = (loop) => METERS.find((m) => m.beats === loop.beats && m.steps === loop.steps)
 
@@ -59,8 +61,13 @@ const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName) |
 function MetronomeMode() {
   const [stored, setStored] = usePersistentState(METRONOME_KEY, DEFAULT_METRONOME)
   const [sound, setSound] = usePersistentState(SOUND_KEY, DEFAULT_SOUND)
-  const update = (patch) => setStored((s) => ({ ...DEFAULT_METRONOME, ...s, ...patch }))
-  return <Metronome settings={metronomeSettings(stored)} update={update} sound={sound} onSoundChange={setSound} />
+  // The metronome shares the app's one tempo with the grooves and the practice tab.
+  const player = usePlayer()
+  const update = ({ bpm, ...patch }) => {
+    if (bpm !== undefined) player.setBpm(bpm)
+    if (Object.keys(patch).length) setStored((s) => ({ ...DEFAULT_METRONOME, ...s, ...patch }))
+  }
+  return <Metronome settings={{ ...metronomeSettings(stored), bpm: player.bpm }} update={update} sound={sound} onSoundChange={setSound} onStart={player.stopAll} />
 }
 
 const MODES = [
@@ -83,7 +90,12 @@ export default function DrumsPage() {
 /** Grooves: pick a ready-made groove, change any step, and play it on a recorded kit. */
 function GrooveMode() {
   const [loopId, setLoopId] = usePersistentState('music.drums.loop', DEFAULT_LOOP)
-  const [bpm, setBpm] = usePersistentState('music.drums.bpm', presetById(DEFAULT_LOOP).bpm)
+  const [storedSaved, setSaved] = usePersistentState(SAVED_KEY, [])
+  const saved = validSaved(storedSaved)
+  const [naming, setNaming] = useState(null)
+  // One tempo for the whole app: picking a groove sets it to the groove's own tempo.
+  const player = usePlayer()
+  const { bpm, setBpm, groove } = player
   const [storedStyle, setStyle] = usePersistentState('music.drums.style', null)
   const [volume, setVolume] = usePersistentState('music.drums.volume', 0.8)
   const [humanize, setHumanize] = usePersistentState('music.drums.humanize', 0)
@@ -91,17 +103,14 @@ function GrooveMode() {
   const [kitId, setKitId] = usePersistentState('music.drums.kit', presetKit(presetById(loopId)))
   const [click, setClick] = usePersistentState('music.drums.click', null)
   const [history, dispatch] = useReducer(historyReducer, null, () => startHistory(storedLoop() ?? presetById(loopId) ?? presetById(DEFAULT_LOOP)))
-  const [playing, setPlaying] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [step, setStep] = useState(-1)
-  useWakeLock(playing)
-  const engine = useRef(null)
+  // The groove plays in the app-wide player, so it keeps going on other pages.
+  const { playing, loading, failed } = groove
+  const step = groove.step
   const swingDrag = useRef(false)
   const row = useRef(null)
 
   const loop = history.present
-  const source = presetById(loopId)
+  const source = findGroove(loopId, saved)
   const edited = !sameLoop(loop, source)
   const kit = kitById(kitId)
   const clickVoice = CLICKS.some((c) => c.value === click) ? click : null
@@ -128,8 +137,26 @@ function GrooveMode() {
     }, () => {})
   }
   // The style row starts on the loaded groove's style; 'All' (older versions) does too.
-  const style = STYLES.includes(storedStyle) ? storedStyle : (source?.style ?? STYLES[0])
-  const shown = PRESETS.filter((p) => p.style === style)
+  const styles = saved.length ? [SAVED_STYLE, ...STYLES] : STYLES
+  const style = styles.includes(storedStyle) ? storedStyle : styles.includes(source?.style) ? source.style : STYLES[0]
+  const shown = style === SAVED_STYLE ? saved : PRESETS.filter((p) => p.style === style)
+  const mine = source?.style === SAVED_STYLE
+
+  // Save the groove as it is now (steps, kit and tempo) under a name.
+  const saveAs = (e) => {
+    e.preventDefault()
+    const { list, groove: made } = saveGroove(saved, loop, { name: naming, kit: kit.id, bpm: tempo })
+    setSaved(list)
+    setLoopId(made.id)
+    setStyle(SAVED_STYLE)
+    setNaming(null)
+  }
+  const saveChanges = () => setSaved(updateSaved(saved, loopId, loop, { kit: kit.id, bpm: tempo }))
+  const deleteSaved = (g) => {
+    if (!window.confirm(`Delete “${g.name}”? This can’t be undone.`)) return
+    setSaved(removeSaved(saved, g.id))
+    if (g.id === loopId) setLoopId(DEFAULT_LOOP)
+  }
   // On phones the row scrolls sideways: show the loaded groove when the row changes (never scrolls the page).
   useEffect(() => {
     const el = row.current
@@ -142,34 +169,14 @@ function GrooveMode() {
     loadKit(kit.id, loopVoices(loop)).catch(() => {})
   }, [kit.id, loop])
 
+  const grooveName = `${source?.name ?? 'Groove'}${edited ? ' (edited)' : ''}`
+  // Edits, tempo and kit changes reach the playing groove at once (also when it's backing the practice tab).
   useEffect(() => {
-    engine.current?.update(settings)
+    if (playing) player.updateGroove(settings, grooveName)
   })
 
-  const stop = () => {
-    engine.current?.stop()
-    engine.current = null
-    setPlaying(false)
-    setLoading(false)
-    setStep(-1)
-  }
-
-  const start = () => {
-    engine.current?.stop()
-    setFailed(false)
-    setLoading(true)
-    setPlaying(true)
-    const e = startDrumLoop(settings, { onStep: setStep })
-    engine.current = e
-    e.loaded.then(
-      () => engine.current === e && setLoading(false),
-      () => {
-        if (engine.current !== e) return
-        stop()
-        setFailed(true)
-      },
-    )
-  }
+  const stop = () => player.stopGroove()
+  const start = () => player.playGroove(settings, grooveName)
 
   const toggle = () => (playing ? stop() : start())
 
@@ -189,8 +196,6 @@ function GrooveMode() {
   useEffect(() => {
     if (autoplay) latest.current.start()
   }, [autoplay])
-
-  useEffect(() => () => engine.current?.stop(), [])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -214,7 +219,7 @@ function GrooveMode() {
       <div className="drums-main">
         <section className="drums-presets" aria-label="Grooves">
           <div className="chips drum-styles" role="radiogroup" aria-label="Style">
-            {STYLES.map((s) => (
+            {styles.map((s) => (
               <button key={s} type="button" role="radio" aria-checked={style === s} className={`chip${style === s ? ' on' : ''}`} onClick={() => setStyle(s)}>
                 {s}
               </button>
@@ -238,6 +243,11 @@ function GrooveMode() {
                   </span>
                   <MiniGrid loop={p} />
                 </button>
+                {p.style === SAVED_STYLE && (
+                  <Menu label={`${p.name} actions`} className="saved-menu" items={[{ label: 'Delete this groove', destructive: true, onSelect: () => deleteSaved(p) }]}>
+                    ⋯
+                  </Menu>
+                )}
               </li>
             ))}
           </ul>
@@ -278,6 +288,19 @@ function GrooveMode() {
               defaultOpen={WIDE}
               className="drum-edit"
             >
+              {naming !== null && (
+                <form className="save-groove" onSubmit={saveAs}>
+                  <Field label="Name">
+                    <input value={naming} onChange={(e) => setNaming(e.target.value)} maxLength={NAME_MAX} autoFocus enterKeyHint="done" />
+                  </Field>
+                  <button type="submit" className="primary">
+                    Save
+                  </button>
+                  <button type="button" onClick={() => setNaming(null)}>
+                    Cancel
+                  </button>
+                </form>
+              )}
               <DrumEditor
                 loop={loop}
                 paint={paint}
@@ -298,7 +321,15 @@ function GrooveMode() {
                     <button type="button" onClick={() => edit(clearSteps(loop))}>
                       Clear
                     </button>
-                    {edited && source && (
+                    {edited && mine && (
+                    <button type="button" onClick={saveChanges}>
+                      Save changes
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setNaming(naming === null ? (mine ? `${source.name} 2` : `${source?.name ?? 'My'} groove`.replace(' groove groove', ' groove')) : null)} aria-expanded={naming !== null}>
+                    {mine ? 'Save as…' : 'Save…'}
+                  </button>
+                  {edited && source && (
                       <button type="button" onClick={() => edit(source)}>
                         Reset
                       </button>

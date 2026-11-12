@@ -1942,49 +1942,78 @@ button.primary {
 }
 
 /* Phones: a slim bar above the tab bar, so the practice tab is always one tap away. Not a sticky top bar. */
-.practice-bar {
+/* ---- Now playing: what's playing, with Stop, above the phone's tab bar (NowPlaying.jsx) ---- */
+.now-playing {
   display: none;
 }
 
+.now-playing-open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.now-playing-open span {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-playing .primary {
+  min-width: 3rem;
+  min-height: 2.75rem;
+  padding-block: 0;
+}
+
+.now-playing,
+.now-playing.is-away {
+  position: fixed;
+  right: max(var(--page-gutter), env(safe-area-inset-right));
+  bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-2));
+  left: max(var(--page-gutter), env(safe-area-inset-left));
+  z-index: 9;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+}
+
 @media (max-width: 719px) {
-  .practice-bar {
-    position: fixed;
-    right: max(var(--page-gutter), env(safe-area-inset-right));
-    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-2));
-    left: max(var(--page-gutter), env(safe-area-inset-left));
-    z-index: 9;
+  .now-playing {
     display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-1);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: var(--surface-2);
-    box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
-  }
-
-  .practice-bar-open {
-    flex: 1;
-    min-height: 2.5rem;
-    padding-block: 0;
-    border: 0;
-    background: none;
-    text-align: left;
-  }
-
-  .practice-bar .primary {
-    min-width: 3rem;
-    min-height: 2.5rem;
-    padding-block: 0;
   }
 
   /* Hidden while typing, like the tab bar. */
-  body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .practice-bar {
+  body:has(input:not([type='checkbox'], [type='radio']):focus, textarea:focus) .now-playing {
     display: none;
   }
 
-  .fretboard-page.has-practice {
+  .app:has(.now-playing) main {
     padding-bottom: 4rem;
+  }
+}
+
+/* Wider screens: a small card at the bottom right, only while something plays on another page. */
+@media (min-width: 720px) {
+  .now-playing.is-away {
+    display: flex;
+    left: auto;
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    width: min(22rem, calc(100vw - 2 * var(--page-gutter)));
   }
 }
 
