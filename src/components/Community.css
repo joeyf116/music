@@ -167,3 +167,14 @@
   align-self: center;
   min-height: 44px;
 }
+
+/* The Posts view: spaced like a page (it sits under the Posts · Links tabs). */
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.board > * {
+  margin: 0;
+}

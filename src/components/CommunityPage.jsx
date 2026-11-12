@@ -6,13 +6,34 @@ import { useAuth } from '../lib/useAuth.jsx'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice } from './controls.jsx'
 import { PageHeader } from './layout.jsx'
+import PageTabs from './PageTabs.jsx'
+import Resources from './Resources.jsx'
 import Menu from './Menu.jsx'
 import './Community.css'
 
 const FILTERS = [{ value: 'all', label: 'All' }, ...KINDS]
 
-// #community: what everyone is working on or stuck on, newest first. Anyone can read; log in to post and reply.
-export default function CommunityPage() {
+const VIEWS = [
+  { id: 'posts', label: 'Posts', hint: 'Working on, help' },
+  { id: 'links', label: 'Links', hint: 'Lessons, tabs, tools' },
+]
+
+// Community: what everyone is working on or stuck on (#community), and the links people share (#resources).
+// Each view keeps its own address, so old Resources bookmarks still open the links.
+export default function CommunityPage({ view = 'posts' }) {
+  const current = view === 'links' ? 'links' : 'posts'
+  return (
+    <div className="page community-page">
+      <PageHeader title="Community" summary="Share what you’re practising or stuck on, and the lessons and tabs that helped." />
+      <PageTabs label="Community" tabs={VIEWS} value={current} onChange={(id) => (window.location.hash = id === 'links' ? 'resources' : 'community')}>
+        {current === 'links' ? <Resources /> : <Board />}
+      </PageTabs>
+    </div>
+  )
+}
+
+// The board: newest first. Anyone can read; log in to post and reply.
+function Board() {
   const auth = useAuth()
   const [filter, setFilter] = usePersistentState('music.board.filter', 'all')
   const kind = FILTERS.some((f) => f.value === filter) ? filter : 'all'
@@ -45,9 +66,7 @@ export default function CommunityPage() {
 
   if (auth.status === 'off') {
     return (
-      <div className="page community-page">
-        <PageHeader title="Community" summary="The community board isn't switched on for this copy of the site." />
-      </div>
+      <p className="hint">The community board isn’t switched on for this copy of the site.</p>
     )
   }
 
@@ -87,9 +106,7 @@ export default function CommunityPage() {
   const empty = board.status === 'ready' && !board.error && board.posts.length === 0
 
   return (
-    <div className="page community-page">
-      <PageHeader title="Community" summary="Share what you’re practising or stuck on, and help each other out." />
-
+    <div className="board">
       {signedIn ? <Composer name={displayName(auth.user, auth.profile)} onPosted={posted} withSupabase={withSupabase} /> : <LogInPrompt loading={auth.status === 'loading'} />}
 
       <Choice label="Show" hideLabel options={FILTERS} value={kind} onChange={setFilter} />
