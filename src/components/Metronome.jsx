@@ -4,6 +4,7 @@ import { soundById } from '../lib/clickSounds.js'
 import { METRONOME_METERS, SUBDIVISIONS, clampBpm, fitAccents, nextAccent, subdivisionById, tapTempo, tempoName } from '../lib/rhythm.js'
 import { ACCENT_NAMES, metronomeStatus } from '../lib/rhythmView.js'
 import { startClickTrack } from '../lib/rhythmEngine.js'
+import useWakeLock from '../lib/useWakeLock.js'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { SoundChips } from './SoundPicker.jsx'
 import { Disclosure } from './layout.jsx'
@@ -77,9 +78,10 @@ export function Trainers({ settings, update }) {
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 
 /** A metronome built for practice: big tempo, beat lights you can tap to accent or mute, subdivisions, sounds and trainers. */
-export default function Metronome({ settings, update, sound, onSoundChange }) {
+export default function Metronome({ settings, update, sound, onSoundChange, onStart }) {
   const [playing, setPlaying] = useState(false)
   const [pulse, setPulse] = useState(null)
+  useWakeLock(playing)
   const [liveBpm, setLiveBpm] = useState(null)
   const [showSounds, setShowSounds] = useState(false)
   const engine = useRef(null)
@@ -97,6 +99,8 @@ export default function Metronome({ settings, update, sound, onSoundChange }) {
 
   useEffect(() => {
     if (!playing) return
+    // Anything else playing (a groove, the practice tab) stops: one thing at a time.
+    onStart?.()
     engine.current = startClickTrack(engineSettings.current, { onPulse: setPulse, onTempo: setLiveBpm })
     return () => {
       engine.current?.stop()
@@ -105,6 +109,7 @@ export default function Metronome({ settings, update, sound, onSoundChange }) {
       setLiveBpm(null)
     }
     // Only start/stop here; setting changes go to the running engine below so the beat never stumbles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing])
 
   const setBpm = (v) => update({ bpm: v })

@@ -74,19 +74,24 @@ How each page fills the anatomy today. Keep this table up to date when a page ch
 
 | Page | Job | Setup (always visible) | Stage | Settings (folded) | Reference |
 | --- | --- | --- | --- | --- | --- |
-| **Fretboard** `#fretboard` | Find a scale position or chord voicing in a key and pin it to practise | Key (one sideways row on phones), chords in the key (the chord picker), scale/mode + Scale · Chords, then position or voicing type (Shapes · CAGED · Triads · Drop 2 · Drop 3) | Neck with one position or voicing (‹ › steps through voicings), its tab, **Pin to practice tab** + Listen; then the practice tab with BPM, **Play**, click, drone, the pinned items and their tab. Phones keep a practice bar above the tab bar | Settings: tuning, note labels, show every note, fingering or chord type, practice tab chords (strum · arpeggio · block) | None: the key's chords are part of setup |
+| **Fretboard** `#fretboard` | Find a scale position or chord voicing in a key and pin it to practise | Key (one sideways row on phones), scale/mode + Scale · Chords, then position or voicing type (Shapes · CAGED · Triads · Drop 2 · Drop 3); in Chords view the chords in the key sit on top as the chord picker | Neck with one position or voicing (phones zoom in on its frets so it fits without swiping; **Whole neck** turns that off) (‹ › steps through voicings), its tab, **Pin to practice tab** + Listen; then the practice tab with BPM, **Play**, Backing (Off · Click · Groove: the Drums page's loaded groove on the same beat), drone, the pinned items and their tab | Settings: tuning, note labels, show every note, fingering or chord type, practice tab chords (strum · arpeggio · block) | Scale view: the chords in the key, under the neck (tap one to switch to Chords) |
 | **Training** `#quiz` | Name chords and intervals by ear, build the chords of a key | Tab: Chords · Intervals · Theory, then a preset row (Theory: Practise Build · Name · Spell · Mix, Chords Triads · 7ths) | Play, prompt, answers, Show answer / Skip (Theory: the key's scale to tap, or answers) | Settings: individual chords/intervals, play style, root, voicing, tuning (Theory: keys, key, play when right); in the app these are menu rows | What each chord sounds like, accuracy (Theory: how the chord is built, the key's chords, how to build any key) |
-| **Drums** `#drums` | Play along with a real drum groove, and change it to suit the song, or a plain metronome | Groove · Metronome switch; style chips over the groove gallery | The loaded groove with **Play**, tempo and kit, then the editor: Paint (Hit · Accent · Ghost), Undo · Redo · Clear · Reset, the step grid (press to paint, drag along a row, press a painted step to clear; each drum's name opens volume / remove, with M and S beside it), + Add a drum; phones show half a bar per block. Then the gallery of grooves as mini grids | Settings: time signature, bars, swing, humanize, click on every beat, volume | None |
-| **Community** `#community` | Share what you're practising or stuck on, and help each other | Post type (Working on · Need help) and the post box when logged in, or **Log in**; then All · Working on · Need help | Posts newest first, each with its replies and **Reply**; ⋯ to delete your own or report someone else's; **Older posts** at the end | None | None |
-| **Resources** `#resources` | Find something to practise with | Search, sort, type chips | The grouped list; each link has a star and a ⋯ menu (report, remove) | More filters: level, category, tags | Tab finder |
+| **Drums** `#drums` | Play along with a real drum groove, and change it to suit the song, or a plain metronome | Groove · Metronome switch; style chips (starting on the loaded groove's style, with **Saved** first once you've saved one), then that style's grooves as mini grids: one sideways row on phones, a column beside the player from 1024 px. Pressing one plays it | The loaded groove with **Play**, tempo and kit, then **Edit steps** (open from 720 px, folded on phones): Paint (Hit · Accent · Ghost), Undo · Redo · Clear · Reset · Save… (Save changes on your own grooves), the step grid (press to paint, drag along a row, press a painted step to clear; each drum's name opens volume / remove, with M and S beside it), + Add a drum; phones show half a bar per block | Settings, right under the player: time signature, bars, swing, humanize, click on every beat, volume | None |
+| **Community** `#community` (Posts) and `#resources` (Links) | Share what you're practising or stuck on, and the lessons and tabs that helped | Posts · Links tabs. Posts: post type (Working on · Need help) and the post box when logged in, or **Log in**; then All · Working on · Need help. Links: the tab finder, then search, **+ Add a link** and type chips | Posts newest first, each with its replies and **Reply**; ⋯ to delete your own or report someone else's; **Older posts** at the end. Links: the grouped list; each link has a star and a ⋯ menu (report, remove) | Links: More filters (sort, level, category, tags), shown once there are 20 or more links | None |
 | **Account** `#account` (not a tab: the **Log in** button, or your initial, at the top right) | Log in with Google, manage your account | None | **Continue with Google** (also signs you up); once in: your name + **Save**, and **Log out** in the header | Delete account | None |
+
+**One player for the whole app** (`src/lib/usePlayer.jsx`). The practice tab and the Drums groove share one tempo
+(`music.bpm`, which the metronome uses too) and one Play / Stop: starting one stops the other, and leaving the page
+doesn't stop the music. Phones show a **now playing** bar above the tab bar (what's playing, its tempo, ■) on every
+page, which on the Fretboard is also the practice tab's ▶; wider screens show it as a small card, only while
+something plays away from its own page.
 
 The page title in the header names the page; the tab bar uses the same word (Drums, Training…), so people
 always know where they are.
 
 ### Navigation
 
-- Six top-level pages, no more (Drums and Community were added in November 2026 as Charts and Rhythm were retired; the phone tab bar fits six at 360 px). Each has its own URL hash (`#fretboard`, `#drums`, …) so it can be
+- Four top-level pages, no more: Fretboard, Drums, Training and Community (Resources became Community's Links view in November 2026, so everything people share lives in one place). Four tabs fit a 360 px phone with full labels. Each has its own URL hash (`#fretboard`, `#drums`, …) so it can be
   bookmarked and shared.
 - **Phones (< 720 px):** a bottom tab bar with icon + label, within thumb reach, hidden while typing. The
   site title scrolls away with the page. **No sticky top bar**, ever: it covers content in mobile browsers.
@@ -280,6 +285,12 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 - [ ] Segmented choices fit their row (or wrap to a clean 2 × 2).
 - [ ] Safe-area insets respected on notched phones.
 
+**Phones get an app, not just a page.** The site can be added to the home screen (`public/manifest.webmanifest`,
+icons in `public/icons/`) and opens full screen. `public/sw.js` keeps every file of the current build and each drum
+kit once it has played, so it works with no signal; a new version shows the next time it opens online. Anything
+that plays music holds a screen wake lock (`useWakeLock`) so the phone doesn't lock mid-practice. Pages other than
+the Fretboard load their code when first opened.
+
 ## 11. Accessibility checklist
 
 - [ ] One `h1`, headings in order, landmarks (`header`, `nav`, `main`).
@@ -291,6 +302,10 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 ---
 
 ## 12. The native app
+
+> **Paused (November 2026).** Work goes into the web site, which installs to a phone's home screen and works offline.
+> The app still has only Fretboard, Training and Resources, and is not kept level with the site until store publishing
+> is back on the table. The rules below still apply when it resumes.
 
 The iPhone, iPad and Android app in [`mobile/`](../mobile) follows every rule above (one job per screen, play
 first, settings folded with a summary, the same words and the same page map), but each control is the

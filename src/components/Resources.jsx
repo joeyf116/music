@@ -10,7 +10,7 @@ import AddResource from './AddResource.jsx'
 import { Field } from './controls.jsx'
 import ResourceCard from './ResourceCard.jsx'
 import TabFinder from './TabFinder.jsx'
-import { Disclosure, PageHeader } from './layout.jsx'
+import { Disclosure } from './layout.jsx'
 
 // Any file dropped into /resources (sub-folders become categories) is bundled and listed here.
 const files = import.meta.glob(
@@ -21,9 +21,12 @@ const REPO_RESOURCES = [...fileResources(files), ...linkResources(links)]
 const CAN_SHARE = sharingEnabled()
 const NO_FILTERS = { query: '', types: [], tags: [], level: '', category: 'All', starredOnly: false }
 const TAG_CLOUD_SIZE = 18
+// Below this many links, search and the type chips are all the filtering anyone needs.
+const MORE_FILTERS_FROM = 20
 
 const toggle = (list, value) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
 
+/** The Links view of the Community page: lessons, tabs, videos and tools, from the repo and shared by members. */
 export default function Resources() {
   const [saved, setSaved] = usePersistentState('music.savedLinks', [])
   const [starred, setStarred] = usePersistentState('music.starredResources', [])
@@ -65,8 +68,10 @@ export default function Resources() {
   const categories = useMemo(() => [...new Set(all.map((r) => r.category))].sort(), [all])
   const typeCounts = useMemo(() => Object.entries(all.reduce((acc, r) => ((acc[r.type] = (acc[r.type] ?? 0) + 1), acc), {})).sort((a, b) => b[1] - a[1]), [all])
   const tags = useMemo(() => tagCounts(all), [all])
-  const visible = sortResources(filterResources(all, { ...filters, starred }), sort)
-  const grouped = sort === 'category' ? visible.reduce((acc, r) => ((acc[r.category] ??= []).push(r), acc), {}) : { '': visible }
+  // Sorting is one of the folded-away filters: with only a few links, they stay grouped by category.
+  const sortBy = all.length >= MORE_FILTERS_FROM && SORTS[sort] ? sort : 'category'
+  const visible = sortResources(filterResources(all, { ...filters, starred }), sortBy)
+  const grouped = sortBy === 'category' ? visible.reduce((acc, r) => ((acc[r.category] ??= []).push(r), acc), {}) : { '': visible }
   const filtering = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS)
   const extraCount = (filters.level ? 1 : 0) + (filters.category !== 'All' ? 1 : 0) + filters.tags.length
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }))
@@ -101,7 +106,7 @@ export default function Resources() {
 
   const reportLink = async (r) => {
     try {
-      await reportSharedLink(r.sharedId, 'Reported from the Resources page')
+      await reportSharedLink(r.sharedId, 'Reported from the Community links')
       setNotice('Thanks, the link was reported.')
     } catch (err) {
       setNotice(err.message)
@@ -111,15 +116,12 @@ export default function Resources() {
   const star = (r) => setStarred(toggle(starred, r.url))
 
   return (
-    <section className="page resources" id="resources">
-      <PageHeader
-        title="Resources"
-        summary="Lessons, tabs, videos and tools to practise with. Log in to share one with everybody."
-        actions={
-          <button type="button" className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>
-            + Add a resource
-          </button>
-        }
+    <div className="resources">
+      <TabFinder
+        onAdd={() => {
+          setAdding(true)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
       />
 
       {adding && <AddResource canShare={canShare} needsLogin={CAN_SHARE && !me} categories={categories} popularTags={tags} onSubmit={addLink} onClose={() => setAdding(false)} />}
@@ -135,13 +137,9 @@ export default function Resources() {
             aria-label="Search resources"
             enterKeyHint="search"
           />
-          <select className="sort-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort resources">
-            {Object.entries(SORTS).map(([value, label]) => (
-              <option key={value} value={value}>
-                Sort: {label}
-              </option>
-            ))}
-          </select>
+          <button type="button" className="primary" onClick={() => setAdding(!adding)} aria-expanded={adding}>
+            + Add a link
+          </button>
         </div>
         <div className="type-chips" role="group" aria-label="Filter by type">
           {typeCounts.map(([type, count]) => (
@@ -153,52 +151,63 @@ export default function Resources() {
             ★ Starred <span>{all.filter((r) => starred.includes(r.url)).length}</span>
           </button>
         </div>
-        {/* Level, category and tags fold away so the list stays the main thing on screen. */}
-        <Disclosure label="More filters" summary={extraCount > 0 ? `${extraCount} on` : 'Level, category, tags'} open={moreOpen} onToggle={setMoreOpen} className="more-filters">
-          <div className="more-filters-body">
-            <div className="field-grid">
-              <Field label="Level">
-                <select value={filters.level} onChange={(e) => set({ level: e.target.value })}>
-                  <option value="">Any level</option>
-                  {LEVELS.map((l) => (
-                    <option key={l}>{l}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Category">
-                <select value={categories.includes(filters.category) ? filters.category : 'All'} onChange={(e) => set({ category: e.target.value })}>
-                  <option value="All">All categories</option>
-                  {categories.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            {tags.length > 0 && (
-              <div className="field">
-                <span className="field-label" id="resource-tags-label">
-                  Tags
-                </span>
-                <div className="tag-cloud" role="group" aria-labelledby="resource-tags-label">
-                  {cloud.map(([t, count]) => (
-                    <button type="button" key={t} className={`tag${filters.tags.includes(t) ? ' on' : ''}`} aria-pressed={filters.tags.includes(t)} onClick={() => tagFilter(t)}>
-                      #{t} <span>{count}</span>
-                    </button>
-                  ))}
-                  {tags.length > TAG_CLOUD_SIZE && (
-                    <button type="button" className="link-button" onClick={() => setAllTags(!allTags)}>
-                      {allTags ? 'Fewer tags' : `All ${tags.length} tags`}
-                    </button>
-                  )}
-                </div>
+        {/* Sort, level, category and tags fold away, and only appear once there are enough links to need them. */}
+        {all.length >= MORE_FILTERS_FROM && (
+          <Disclosure label="More filters" summary={extraCount > 0 ? `${extraCount} on` : `Sort: ${SORTS[sortBy].toLowerCase()} · level, category, tags`} open={moreOpen} onToggle={setMoreOpen} className="more-filters">
+            <div className="more-filters-body">
+              <div className="field-grid">
+                <Field label="Sort">
+                  <select value={sortBy} onChange={(e) => setSort(e.target.value)}>
+                    {Object.entries(SORTS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Level">
+                  <select value={filters.level} onChange={(e) => set({ level: e.target.value })}>
+                    <option value="">Any level</option>
+                    {LEVELS.map((l) => (
+                      <option key={l}>{l}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Category">
+                  <select value={categories.includes(filters.category) ? filters.category : 'All'} onChange={(e) => set({ category: e.target.value })}>
+                    <option value="All">All categories</option>
+                    {categories.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                </Field>
               </div>
-            )}
-          </div>
-        </Disclosure>
+              {tags.length > 0 && (
+                <div className="field">
+                  <span className="field-label" id="resource-tags-label">
+                    Tags
+                  </span>
+                  <div className="tag-cloud" role="group" aria-labelledby="resource-tags-label">
+                    {cloud.map(([t, count]) => (
+                      <button type="button" key={t} className={`tag${filters.tags.includes(t) ? ' on' : ''}`} aria-pressed={filters.tags.includes(t)} onClick={() => tagFilter(t)}>
+                        #{t} <span>{count}</span>
+                      </button>
+                    ))}
+                    {tags.length > TAG_CLOUD_SIZE && (
+                      <button type="button" className="link-button" onClick={() => setAllTags(!allTags)}>
+                        {allTags ? 'Fewer tags' : `All ${tags.length} tags`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Disclosure>
+        )}
       </div>
 
       <p className="results-count" aria-live="polite">
-        {visible.length === all.length ? `${all.length} resources` : `${visible.length} of ${all.length} resources`}
+        {visible.length === all.length ? `${all.length} links` : `${visible.length} of ${all.length} links`}
         {sharedStatus === 'loading' && ' · loading shared links…'}
         {sharedStatus === 'error' && " · shared links couldn't be loaded right now"}
         {filtering && (
@@ -258,12 +267,7 @@ export default function Resources() {
         </div>
       ))}
 
-      <TabFinder
-        onAdd={() => {
-          setAdding(true)
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-        }}
-      />
-    </section>
+    </div>
+
   )
 }

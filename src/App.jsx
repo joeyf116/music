@@ -1,17 +1,23 @@
-import AccountPage from './components/AccountPage.jsx'
-import CommunityPage from './components/CommunityPage.jsx'
-import DrumsPage from './components/DrumsPage.jsx'
+import { Suspense, lazy } from 'react'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
-import EarTraining from './components/EarTraining.jsx'
-import Resources from './components/Resources.jsx'
 import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import { useAuth } from './lib/useAuth.jsx'
+import { PlayerProvider } from './lib/usePlayer.jsx'
+import NowPlaying from './components/NowPlaying.jsx'
 import useHashPage from './lib/useHashPage.js'
 import useSettingsSync from './lib/useSettingsSync.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
+// Shared with lazy pages, but also holds the phone tab bar's short labels, so it loads up front.
+import './components/Rhythm.css'
+
+// Pages other than the Fretboard load their code the first time you open them.
+const AccountPage = lazy(() => import('./components/AccountPage.jsx'))
+const CommunityPage = lazy(() => import('./components/CommunityPage.jsx'))
+const DrumsPage = lazy(() => import('./components/DrumsPage.jsx'))
+const EarTraining = lazy(() => import('./components/EarTraining.jsx'))
 
 const PRIVACY_URL = 'https://joeyf116.github.io/music/privacy.html'
 
@@ -29,24 +35,18 @@ const PAGES = [
   {
     id: 'quiz',
     label: 'Training',
-    short: 'Train',
     icon: <path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8.5 20 8 18M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5" />,
   },
   {
     id: 'community',
     label: 'Community',
-    short: 'Board',
     icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 4v-4h0A1.5 1.5 0 0 1 4 14.5ZM8 9h8M8 12h5" />,
-  },
-  {
-    id: 'resources',
-    label: 'Resources',
-    icon: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5ZM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5Z" />,
   },
 ]
 
 // Account isn't one of the tabs: it opens from the button at the top right.
-const PAGE_IDS = [...PAGES.map((p) => p.id), 'account']
+// Resources is the Community page's Links view; it keeps its own address so old links still work.
+const PAGE_IDS = [...PAGES.map((p) => p.id), 'resources', 'account']
 // The Rhythm page (#exercises) is gone; its metronome lives on the Drums page now. Charts (#charts) is gone too and falls back to the Fretboard.
 const MOVED_PAGES = { exercises: 'drums' }
 
@@ -76,7 +76,6 @@ export default function App() {
   const [key, setKey] = usePersistentState('music.key', 'A')
   const [scaleType, setScaleType] = usePersistentState('music.scale', 'minorPentatonic')
   const [tuningId, setTuningId] = usePersistentState('music.tuning', 'standard')
-  const [bpm, setBpm] = usePersistentState('music.bpm', 100)
 
   const safeKey = KEYS.includes(key) ? key : 'C'
   const tuningSpec = TUNINGS[tuningId] ?? TUNINGS.standard
@@ -85,6 +84,7 @@ export default function App() {
   const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? usesFlats(safeKey))
 
   return (
+    <PlayerProvider tuning={tuning} keyName={safeKey}>
     <div className="app">
       <header className="site-header">
         <a className="brand" href="#fretboard">
@@ -96,7 +96,7 @@ export default function App() {
         {/* Phones get this as a bottom tab bar (in thumb reach, never over the top of the page); wider screens show it inline. */}
         <nav className="page-nav" aria-label="Pages">
           {PAGES.map((p) => (
-            <a key={p.id} href={`#${p.id}`} aria-current={page === p.id ? 'page' : undefined} onClick={() => page === p.id && window.scrollTo(0, 0)}>
+            <a key={p.id} href={`#${p.id}`} aria-current={page === p.id || (p.id === 'community' && page === 'resources') ? 'page' : undefined} onClick={() => page === p.id && window.scrollTo(0, 0)}>
               <svg className="page-icon" viewBox="0 0 24 24" aria-hidden="true">
                 {p.icon}
               </svg>
@@ -109,12 +109,11 @@ export default function App() {
       </header>
 
       <main>
+        <Suspense fallback={<p className="page-loading" role="status">Loading…</p>}>
         {page === 'account' ? (
           <AccountPage />
-        ) : page === 'community' ? (
-          <CommunityPage />
-        ) : page === 'resources' ? (
-          <Resources />
+        ) : page === 'community' || page === 'resources' ? (
+          <CommunityPage view={page === 'resources' ? 'links' : 'posts'} />
         ) : page === 'drums' ? (
           <DrumsPage />
         ) : page === 'quiz' ? (
@@ -129,11 +128,12 @@ export default function App() {
             tuningSpec={tuningSpec}
             tuningId={tuningId}
             onTuningChange={setTuningId}
-            bpm={bpm}
-            onBpmChange={setBpm}
           />
         )}
+        </Suspense>
       </main>
+
+      <NowPlaying page={page} />
 
       <footer className="site-footer">
         <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
@@ -141,5 +141,6 @@ export default function App() {
         </a>
       </footer>
     </div>
+    </PlayerProvider>
   )
 }
