@@ -480,3 +480,68 @@
     width: 6.25rem;
   }
 }
+
+/* Phones: one sideways row of the chosen style's grooves, so the player sits right under it. */
+@media (max-width: 719px) {
+  .preset-grid {
+    grid-template-columns: none;
+    grid-auto-columns: min(15rem, 78%);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .preset-grid > li {
+    scroll-snap-align: start;
+  }
+
+  .preset-card {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .preset-card .mini-step {
+    height: 0.5rem;
+  }
+}
+
+/* The step editor folds away under the player. */
+.drum-edit > .disclosure-body {
+  padding-top: var(--space-3);
+}
+
+/* Wide screens: the chosen style's grooves in a column beside the player and editor. */
+.drums-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+@media (min-width: 1024px) {
+  .drums-main {
+    display: grid;
+    grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .drums-main .preset-grid {
+    grid-template-columns: 1fr;
+    max-height: calc(100dvh - 12rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .drums-main .chips.drum-styles {
+    flex-wrap: wrap;
+  }
+}
+
+.drums-player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
