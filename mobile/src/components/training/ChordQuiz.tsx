@@ -73,7 +73,7 @@ function useChordSound() {
 /** "Name the chord": hear a chord, pick its quality (major, minor, diminished…), then compare it with the others. */
 export default function ChordQuiz({ tuning, stringName, keyName }: { tuning: number[]; stringName: (s: number) => string; keyName: string }) {
   const [enabled, setEnabled] = useStored('music.chordQualities', CHORD_PRESETS[0].qualities)
-  const [style, setStyle] = useStored<string>('music.chordStyle', 'both')
+  const [style, setStyle] = useStored<string>('music.quizPlayStyle', 'both')
   const [voicing, setVoicing] = useStored<string>('music.chordVoicing', 'close')
   const [rootMode, setRootMode] = useStored<string>('music.chordRoot', 'fixed')
   const [inversions, setInversions] = useStored('music.chordInversions', false)
