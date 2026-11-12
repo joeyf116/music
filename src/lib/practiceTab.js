@@ -70,7 +70,8 @@ export const practiceColumns = (items) => {
  * over those beats, low to high. Every event carries `column`, the tab column it belongs to. Notes on strings the
  * current tuning doesn't have are left out; the rest are played on the same frets in the current tuning.
  */
-export const practiceScore = (items, tuning, style = 'strum') => {
+export const practiceScore = (items, tuning, chosenStyle = 'strum') => {
+  const style = CHORD_STYLES.some((c) => c.value === chosenStyle) ? chosenStyle : 'strum'
   const { beatTicks } = METER
   const events = []
   let tick = 0

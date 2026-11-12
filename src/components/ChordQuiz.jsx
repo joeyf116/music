@@ -18,6 +18,7 @@ import {
   toggleQuality as toggledQualities,
 } from '../lib/chordQuiz.js'
 import { intervalName, noteToPc, pcName, usesFlats } from '../lib/theory.js'
+import { QUIZ_PLAY_STYLE } from '../lib/storageMigrations.js'
 import usePersistentState from '../lib/usePersistentState.js'
 import { Choice, Toggle } from './controls.jsx'
 import Fretboard from './Fretboard.jsx'
@@ -40,7 +41,7 @@ const loadStats = () => {
 /** "Name the chord": hear a chord, pick its quality (major, minor, diminished…), then compare it with the others. */
 export default function ChordQuiz({ tuning, stringName, keyName }) {
   const [enabled, setEnabled] = usePersistentState('music.chordQualities', CHORD_PRESETS[0].qualities)
-  const [style, setStyle] = usePersistentState('music.chordStyle', 'both')
+  const [style, setStyle] = usePersistentState(QUIZ_PLAY_STYLE, 'both')
   const [voicing, setVoicing] = usePersistentState('music.chordVoicing', 'close')
   const [rootMode, setRootMode] = usePersistentState('music.chordRoot', 'fixed')
   const [inversions, setInversions] = usePersistentState('music.chordInversions', false)

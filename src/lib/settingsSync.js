@@ -3,6 +3,8 @@
 // is also kept in one row of `user_settings` in Supabase (see supabase/settings.sql), so logging in on a
 // new device brings them along. One rule decides conflicts: the most recent save wins, as a whole.
 
+import { migrateSettings } from './storageMigrations.js'
+
 const PREFIX = 'music.'
 // Left out: whether a drawer is open (a per-screen habit) and anti-spam timers. Charts are going away.
 const SKIP = [/Open$/, /^music\.last\w*SharedAt$/, /^music\.(openChart|myCharts|mySharedCharts|chart\w*)$/]
@@ -46,6 +48,8 @@ export function applyRemote(data, storage = globalThis.localStorage) {
       return changed
     }
   }
+  // Another device may still be on an older version: fix up what it sent.
+  for (const key of migrateSettings(storage)) if (!changed.includes(key)) changed.push(key)
   return changed
 }
 
