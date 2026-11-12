@@ -1417,9 +1417,17 @@ button.primary {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
+}
+
+/* The Links view: the tab finder first, then the list, spaced like a page. */
+.resources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.resources > * {
+  margin: 0;
 }
 
 .tab-finder input {

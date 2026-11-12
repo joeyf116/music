@@ -1,5 +1,8 @@
 # Fretboard Practice for iPhone, iPad and Android
 
+> **Paused (November 2026).** New features go into the web site, which installs to the home screen and works offline.
+> This app is not kept level with it (no Drums, Community, login or settings sync) until store publishing resumes.
+
 The native app, built with [Expo](https://expo.dev) (React Native). It shares its music logic with the web site:
 scales, chords, voicings, rhythms and the sound engine all come from [`../src/lib`](../src/lib), so a fix there fixes
 both. The screens are native: the system tab bar, navigation bars with large titles, sheets that slide up, the

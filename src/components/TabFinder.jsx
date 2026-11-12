@@ -25,7 +25,7 @@ export default function TabFinder({ onAdd }) {
       <small>
         Found a good one?{' '}
         <button type="button" className="link-button" onClick={onAdd}>
-          Add it to the catalog
+          Add it to the links
         </button>{' '}
         so everyone can find it.
       </small>

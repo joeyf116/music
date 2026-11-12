@@ -26,7 +26,7 @@
 - [Fretboard](#-fretboard)
 - [Drums](#-drums)
 - [Training](#-training-ear-and-theory)
-- [Resources](#-resources)
+- [Community links](#-community-links)
 - [Works everywhere](#-works-everywhere)
 - [Shared catalogs (Supabase)](#-shared-catalogs-supabase)
 - [Design system](#-design-system)
@@ -41,7 +41,7 @@
 | 🎯 **[Fretboard](https://joeyf116.github.io/music/#fretboard)** | See any scale, chord or inversion on a 22-fret neck, with tab you can play back |
 | 🪘 **[Drums](https://joeyf116.github.io/music/#drums)** | Grooves on a recorded drum kit to play along with |
 | 👂 **[Training](https://joeyf116.github.io/music/#quiz)** | Name chord qualities and intervals by ear, and drill building the chords of any key |
-| 📚 **[Resources](https://joeyf116.github.io/music/#resources)** | A shared catalog of lessons, tabs, videos, PDFs and tools anyone can add to |
+| 💬 **[Community](https://joeyf116.github.io/music/#community)** | Posts about what you're practising or stuck on, and a shared list of lessons, tabs, videos and tools anyone can add to |
 
 Each page has its own link, your settings are remembered in the browser, and nothing needs an account. Every page
 is laid out the same way: a title and one line on what it's for, the few choices you change most, the thing you
@@ -80,13 +80,13 @@ Three tabs, each one question at a time. On the ear tabs press **Play**, listen,
 - **Theory:** learn to build chords in a key. *Build* shows a key's scale and you tap the chord's notes (stack every other note), then say whether it's major, minor or diminished. *Name* asks for the 4th chord in E major, or which number Am is in G major. *Spell* asks for the notes of any chord (Spell Bm7♭5) or names a chord from its notes. Triads or 7ths, major, minor or all seven modes, any key or just yours. A wrong tap gets a hint about the method, and every answer shows the working: the formula, the 3rds stacked, and the key's chord pattern (I ii iii IV V vi vii°).
 - Score, streak and accuracy per chord or interval, so you know what to practise next.
 
-## 📚 Resources
+## 📚 Community links
 
-A practice catalog of PDFs, tabs, lessons, videos, backing tracks and tools:
+The Community page's **Links** view (`#resources`) is a practice catalog of PDFs, tabs, lessons, videos, backing tracks and tools:
 
 - Filter by type, tag, level and category, search every field, sort by newest and star your favourites.
 - Look any song up on Songsterr, Ultimate Guitar or YouTube with the tab finder.
-- **+ Add a resource** shares a link with every visitor, or keeps it in your own browser.
+- **+ Add a link** shares a link with every visitor, or keeps it in your own browser.
 - Files dropped into [`resources/`](resources/README.md) (sub-folders become categories) and links in `resources/links.json` are bundled with the site.
 
 ## 📱 Works everywhere
@@ -121,6 +121,8 @@ before adding a page or a control.
 
 ## 📱 iPhone, iPad and Android app
 
+**Paused:** the web site installs to a phone's home screen and works offline, so new work goes there; the app isn't kept level with it for now.
+
 [`mobile/`](mobile) is the native app (Expo / React Native) with the Fretboard, Training and Resources pages rebuilt from the platform's own
 controls. It shares the music logic and the page logic in `src/lib` with this site, so a fix there fixes both.
 How to run it is in [`mobile/README.md`](mobile/README.md); getting it into the stores is in
@@ -149,7 +151,7 @@ src/
 │   ├── controls.jsx        Field, Choice, Stepper, Toggle
 │   ├── FretboardPage.jsx   Fretboard page                   DrumsPage.jsx    Drums page
 │   ├── EarTraining.jsx     Ear training page (ChordQuiz, IntervalQuiz)
-│   ├── Resources.jsx       Resources page                   AccountPage.jsx  Log in with Google
+│   ├── Resources.jsx       Community links                  AccountPage.jsx  Log in with Google
 │   └── …                   widgets: Fretboard, Tab, Metronome, PracticeTab, …
 └── lib/
     ├── theory.js           notes, scales, chords, voicings, inversions, tunings
