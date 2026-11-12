@@ -2219,3 +2219,54 @@ button.google-button:hover:not(:disabled) {
   padding: var(--space-6) 0;
   color: var(--muted);
 }
+
+/* Zoomed in on one shape (phones): its frets fill the width, string names in a strip at the left. */
+.fretboard .string-names-bg {
+  fill: var(--bg);
+}
+
+.neck-zoom-button {
+  flex: none;
+  margin-left: auto;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+}
+
+.title-row:has(.neck-zoom-button) {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+@media (min-width: 720px) {
+  .neck-zoom-button {
+    display: none;
+  }
+}
+
+/* A phone on its side: the page header takes as little height as it can, so the neck and tab fit. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .page-summary,
+  .site-header .brand-name {
+    display: none;
+  }
+
+  .page-head h1 {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 720px) {
+  .site-header {
+    flex-wrap: nowrap;
+    padding-block: max(0.5rem, env(safe-area-inset-top)) 0.5rem;
+  }
+
+  .page-nav a {
+    min-height: 36px;
+    padding: 0 0.7rem;
+  }
+
+  .page-nav .page-icon {
+    display: none;
+  }
+}
