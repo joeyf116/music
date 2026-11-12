@@ -5,6 +5,7 @@ import { startPlayback } from '../lib/player.js'
 import { CHORD_STYLES, addItem, createItem, practiceColumns, practiceScore, progressionItems, validItems } from '../lib/practiceTab.js'
 import { CHORDS, SCALES, mod12, pcName, usesFlats } from '../lib/theory.js'
 import usePersistentState from '../lib/usePersistentState.js'
+import useWakeLock from '../lib/useWakeLock.js'
 import { Choice, Field, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
 import Fretboard from './Fretboard.jsx'
@@ -82,6 +83,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   // ---- The practice tab's playback, shared by the practice tab and the phone's practice bar ----
   const [playing, setPlaying] = useState(false)
   const [practiceActive, setPracticeActive] = useState(null)
+  useWakeLock(playing)
   const practice = useMemo(() => practiceColumns(items), [items])
   const score = useMemo(() => practiceScore(items, tuning, chordStyle), [items, tuning, chordStyle])
   useEffect(() => {

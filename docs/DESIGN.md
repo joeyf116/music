@@ -280,6 +280,12 @@ Run through this on a 360-390 px wide phone before merging any UI change:
 - [ ] Segmented choices fit their row (or wrap to a clean 2 × 2).
 - [ ] Safe-area insets respected on notched phones.
 
+**Phones get an app, not just a page.** The site can be added to the home screen (`public/manifest.webmanifest`,
+icons in `public/icons/`) and opens full screen. `public/sw.js` keeps every file of the current build and each drum
+kit once it has played, so it works with no signal; a new version shows the next time it opens online. Anything
+that plays music holds a screen wake lock (`useWakeLock`) so the phone doesn't lock mid-practice. Pages other than
+the Fretboard load their code when first opened.
+
 ## 11. Accessibility checklist
 
 - [ ] One `h1`, headings in order, landmarks (`header`, `nav`, `main`).

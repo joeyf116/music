@@ -4,6 +4,7 @@ import { soundById } from '../lib/clickSounds.js'
 import { METRONOME_METERS, SUBDIVISIONS, clampBpm, fitAccents, nextAccent, subdivisionById, tapTempo, tempoName } from '../lib/rhythm.js'
 import { ACCENT_NAMES, metronomeStatus } from '../lib/rhythmView.js'
 import { startClickTrack } from '../lib/rhythmEngine.js'
+import useWakeLock from '../lib/useWakeLock.js'
 import { Field, Stepper, Toggle } from './controls.jsx'
 import { SoundChips } from './SoundPicker.jsx'
 import { Disclosure } from './layout.jsx'
@@ -80,6 +81,7 @@ const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 export default function Metronome({ settings, update, sound, onSoundChange }) {
   const [playing, setPlaying] = useState(false)
   const [pulse, setPulse] = useState(null)
+  useWakeLock(playing)
   const [liveBpm, setLiveBpm] = useState(null)
   const [showSounds, setShowSounds] = useState(false)
   const engine = useRef(null)

@@ -2184,3 +2184,9 @@ button.google-button:hover:not(:disabled) {
   width: 1.15rem;
   height: 1.15rem;
 }
+
+/* Shown for a moment while a page's code loads the first time. */
+.page-loading {
+  padding: var(--space-6) 0;
+  color: var(--muted);
+}
