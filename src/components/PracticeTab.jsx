@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { PROGRESSIONS, randomProgression } from '../lib/exercises.js'
 import { BEAT_OPTIONS, moveItem, practiceColumns, removeItem, setItemBeats } from '../lib/practiceTab.js'
 import { TUNINGS } from '../lib/theory.js'
-import { Stepper, Toggle } from './controls.jsx'
+import { BACKINGS } from '../lib/practiceBacking.js'
+import { Choice, Stepper, Toggle } from './controls.jsx'
 import Menu from './Menu.jsx'
 import Tab from './Tab.jsx'
 
@@ -10,7 +11,7 @@ import Tab from './Tab.jsx'
  * The practice tab: everything pinned from the neck, as one tab that loops. Playback state lives in the page
  * (the phone's practice bar shares it); this is the list, the tab and the transport.
  */
-export default function PracticeTab({ items, onItemsChange, onStartFrom, mood, playing, onTogglePlay, active, onSelectColumn, bpm, onBpmChange, click, onClickChange, drone, onDroneChange, droneName, tuningId, tuningNames, cleared, onUndoClear }) {
+export default function PracticeTab({ items, onItemsChange, onStartFrom, mood, playing, onTogglePlay, active, onSelectColumn, bpm, onBpmChange, backing, onBackingChange, grooveName, drone, onDroneChange, droneName, tuningId, tuningNames, cleared, onUndoClear }) {
   const [open, setOpen] = useState(null)
   const { columns, owner } = practiceColumns(items)
   const activeItem = active === null ? null : owner[active]
@@ -67,13 +68,17 @@ export default function PracticeTab({ items, onItemsChange, onStartFrom, mood, p
             <button className="primary" onClick={onTogglePlay}>
               {playing ? '■ Stop' : '▶ Play'}
             </button>
-            <Toggle checked={click} onChange={onClickChange}>
-              Click
-            </Toggle>
+            <Choice label="Backing" options={BACKINGS} value={backing} onChange={onBackingChange} size="small" className="backing-choice" />
             <Toggle checked={drone} onChange={onDroneChange}>
               Drone {droneName}
             </Toggle>
           </div>
+
+          {backing === 'groove' && (
+            <p className="hint backing-note">
+              Drums: <strong>{grooveName}</strong>, on the same beat. <a href="#drums">Change the groove</a>
+            </p>
+          )}
 
           <ol className="practice-items">
             {items.map((item, i) => (

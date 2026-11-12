@@ -36,6 +36,15 @@ describe('migrateSettings', () => {
     expect(migrateSettings(memory())).toEqual([])
   })
 
+  it("turns the old Click switch into the Click backing, once", () => {
+    const s = memory({ 'music.practiceClick': true })
+    expect(migrateSettings(s)).toEqual(['music.practiceBacking'])
+    expect(s.get('music.practiceBacking')).toBe('click')
+    s.setItem('music.practiceBacking', JSON.stringify('groove'))
+    expect(migrateSettings(s)).toEqual([])
+    expect(s.get('music.practiceBacking')).toBe('groove')
+  })
+
   it('survives blocked storage', () => {
     const blocked = { getItem: () => { throw new Error('blocked') }, setItem: () => { throw new Error('blocked') } }
     expect(migrateSettings(blocked)).toEqual([])

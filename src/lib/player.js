@@ -40,8 +40,9 @@ export function playEvent(event, delay = 0, ring = 1.2) {
  * onBpm(bpm) when the speed trainer raises the tempo and onEnd() when a non-looping run finishes. Returns a stop function.
  * `subdivision` adds quieter clicks between beats; `silent` keeps the cursor moving without sounding the notes (you
  * play them); `onHit(time)` reports the audio-clock time of each note as it is scheduled, for judging taps.
+ * `startAt` is the audio-clock time of the first beat, so another loop (a drum groove) can start on the same beat.
  */
-export function startPlayback(score, { bpm, loop = true, countIn = false, click = false, subdivision = [0], clickVolume = 0.8, silent = false, speedUp = 0, maxBpm = 300, onStep, onBpm, onEnd, onHit }) {
+export function startPlayback(score, { bpm, loop = true, countIn = false, click = false, subdivision = [0], clickVolume = 0.8, silent = false, speedUp = 0, maxBpm = 300, startAt, onStep, onBpm, onEnd, onHit }) {
   const ac = audioContext()
   if (!ac || !score.events.length) {
     onEnd?.()
@@ -53,7 +54,7 @@ export function startPlayback(score, { bpm, loop = true, countIn = false, click 
   const { beatTicks, barTicks } = score.meter
   let tempo = bpm
   const tickSeconds = () => 60 / tempo / beatTicks
-  let passStart = ac.currentTime + 0.1
+  let passStart = Math.max(startAt ?? 0, ac.currentTime + 0.1)
   let next = 0
   let endTime = Infinity
   const visuals = []

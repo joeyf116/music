@@ -199,7 +199,8 @@ export function clickAt(loop, step) {
  * onStep(step) fires as each step is heard (for the playhead). Settings can change while it plays and take
  * effect from the next step, so tempo changes never jump. Returns { stop, update(settings), loaded }.
  */
-export function startDrumLoop(settings, { onStep } = {}) {
+// `startAt` (audio-clock time) lines the first step up with another loop, such as the practice tab.
+export function startDrumLoop(settings, { onStep, startAt } = {}) {
   const ac = audioContext()
   if (!ac) return { stop: () => {}, update: () => {}, loaded: Promise.resolve() }
   let opts = settings
@@ -239,7 +240,7 @@ export function startDrumLoop(settings, { onStep } = {}) {
   const needs = (o) => [...loopVoices(o.loop), ...(o.click ? [o.click] : [])]
   const loaded = loadKit(settings.kit, needs(settings)).then(() => {
     if (stopped) return
-    gridTime = ac.currentTime + 0.06
+    gridTime = Math.max(startAt ?? 0, ac.currentTime + 0.06)
     schedule()
     timer = setInterval(schedule, 25)
     frame = requestAnimationFrame(draw)
