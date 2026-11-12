@@ -8,12 +8,26 @@ import { currentGroove } from '../lib/practiceBacking.js'
 import { usePlayer } from '../lib/usePlayer.jsx'
 import { Choice, Field, Toggle } from './controls.jsx'
 import DiatonicChords from './DiatonicChords.jsx'
-import Fretboard from './Fretboard.jsx'
+import Fretboard, { zoomWindow } from './Fretboard.jsx'
 import KeyPicker from './KeyPicker.jsx'
 import PracticeTab from './PracticeTab.jsx'
 import Tab from './Tab.jsx'
 import TuningSelect from './TuningSelect.jsx'
 import { Disclosure, PageHeader } from './layout.jsx'
+
+// True on phone-width screens (under 720 px), following rotation and resizing.
+function useNarrow() {
+  const query = '(max-width: 719px)'
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && Boolean(window.matchMedia?.(query).matches))
+  useEffect(() => {
+    const list = window.matchMedia?.(query)
+    if (!list) return undefined
+    const onChange = () => setNarrow(list.matches)
+    list.addEventListener('change', onChange)
+    return () => list.removeEventListener('change', onChange)
+  }, [])
+  return narrow
+}
 
 const isTyping = (el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el?.tagName)
 const readStored = (key, fallback) => {
@@ -40,6 +54,9 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   const [voicingIndex, setVoicingIndex] = usePersistentState('music.voicingIndex', 0)
   const [labels, setLabels] = usePersistentState('music.labels', 'notes')
   const [showAll, setShowAll] = usePersistentState('music.showAll', true)
+  // Phones zoom the neck in on the shape so it fits without swiping; "Whole neck" turns that off.
+  const [zoomPref, setZoomPref] = usePersistentState('music.neckZoom', true)
+  const narrow = useNarrow()
   const [layout, setLayout] = usePersistentState('music.scaleLayout', 'position')
   const [position, setPosition] = usePersistentState('music.fretPosition', 0)
 
@@ -175,6 +192,8 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
   // ---- What the neck shows ----
   const noteLabel = noteLabeller(model, labels, tuning)
   const fretboardNotes = neckNotes(model, activeIndex, showAll, tuning)
+  const canZoom = Boolean(zoomWindow(fretboardNotes.filter((n) => n.level === 'shape' || n.level === 'active').map((n) => n.fret)))
+  const zoomed = narrow && zoomPref && canZoom
   // Single notes in a run are labelled with their note (or interval) under the tab.
   const columns = shapes.columns.map((c) => (c.notes.length === 1 ? { ...c, label: noteLabel(c.notes[0]) } : c))
   // Open strings follow the tuning's own spelling (Eb standard reads Eb, not D#), otherwise the key's.
@@ -186,6 +205,20 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
     .filter(Boolean)
     .join(' · ')
 
+  // The key's chords: the chord picker on top in Chords view, reference under the neck in Scale view.
+  const chordStrip = (
+    <DiatonicChords
+      keyName={keyName}
+      scaleId={scaleType}
+      sevenths={sevenths}
+      onSeventhsChange={setSevenths}
+      silent
+      onPick={pickChord}
+      highlight={view === 'chord' ? (c) => c.degree === picked.degree : undefined}
+      title={`Chords in ${keyName}`}
+    />
+  )
+
   return (
     <section className="page fretboard-page">
       <PageHeader title="Fretboard" summary="Find a voicing in any key and pin it to practise." />
@@ -193,16 +226,7 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
       {/* 1. Where you are: the key, its chords, the scale and what to look at. */}
       <div className="explore-setup">
         <KeyPicker value={keyName} onChange={onKeyChange} />
-        <DiatonicChords
-          keyName={keyName}
-          scaleId={scaleType}
-          sevenths={sevenths}
-          onSeventhsChange={setSevenths}
-          silent
-          onPick={pickChord}
-          highlight={view === 'chord' ? (c) => c.degree === picked.degree : undefined}
-          title={`Chords in ${keyName}`}
-        />
+        {view === 'chord' && chordStrip}
         <div className="explore-row">
           <Field label="Scale / mode" className="scale-field">
             <select value={scaleType} onChange={(e) => onScaleChange(e.target.value)}>
@@ -243,8 +267,13 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
             {heading.title}
             <small>{heading.sub}</small>
           </h2>
+          {narrow && canZoom && (
+            <button type="button" className="neck-zoom-button" onClick={() => setZoomPref(!zoomPref)} aria-pressed={!zoomPref}>
+              {zoomPref ? 'Whole neck' : 'Zoom in'}
+            </button>
+          )}
         </div>
-        <Fretboard tuning={tuning} intervals={model.intervals} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
+        <Fretboard zoom={zoomed} tuning={tuning} intervals={model.intervals} notes={fretboardNotes} label={noteLabel} stringName={stringName} onNoteClick={(n) => playPitch(tuning[n.string] + n.fret)} />
         <ul className="legend">
           {LEGEND.map(([role, text]) => (
             <li key={role}>
@@ -314,6 +343,8 @@ export default function FretboardPage({ keyName, onKeyChange, scaleType, onScale
           </div>
         </Disclosure>
       </div>
+
+      {view !== 'chord' && <div className="chord-reference">{chordStrip}</div>}
 
       {/* 4. Everything pinned, as one looping tab. */}
       <PracticeTab

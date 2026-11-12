@@ -26,6 +26,26 @@ const NoteMark = ({ role }) => {
 const FULL_WIDTH = FRET_X[NUM_FRETS] + 12
 const FULL_MIN_WIDTH = 980
 
+/**
+ * The frets to draw when zoomed in on a shape: one spare fret either side, at least five frets, or null when the
+ * shape is too wide to zoom (the whole neck, all positions) or there is nothing to zoom on.
+ */
+export function zoomWindow(focusedFrets, frets = NUM_FRETS) {
+  if (!focusedFrets.length) return null
+  const fretted = focusedFrets.filter((f) => f > 0)
+  const min = fretted.length ? Math.min(...fretted) : 1
+  const max = Math.max(1, ...focusedFrets)
+  if (max - min > 6) return null
+  let lo = focusedFrets.includes(0) ? 0 : Math.max(0, min - 1)
+  let hi = Math.min(frets, max + 1)
+  while (hi - lo < 5) {
+    if (hi < frets) hi++
+    else if (lo > 0) lo--
+    else break
+  }
+  return { lo, hi, x0: lo === 0 ? LABEL_W : FRET_X[lo - 1], x1: FRET_X[hi] + 6 }
+}
+
 const noteX = (fret) => (fret === 0 ? LABEL_W + OPEN_W / 2 : (FRET_X[fret - 1] + FRET_X[fret]) / 2)
 
 /**
@@ -33,8 +53,9 @@ const noteX = (fret) => (fret === 0 ? LABEL_W + OPEN_W / 2 : (FRET_X[fret - 1] +
  * 'faint' (in key), 'shape' (part of the selected shape) or 'active' (currently selected/playing).
  * Roles (colour/shape) come from the interval read against `intervals` (the scale or chord formula), or from a
  * note's `degree` name ('♭3', '♯4') when it has one. An optional `role` overrides both. `frets` draws a shorter neck.
+ * `zoom` draws only the frets around the shape (phones), across the full width, instead of a neck that scrolls.
  */
-export default function Fretboard({ tuning, intervals = [], notes, label, stringName, onNoteClick, frets = NUM_FRETS }) {
+export default function Fretboard({ tuning, intervals = [], notes, label, stringName, onNoteClick, frets = NUM_FRETS, zoom = false }) {
   const strings = tuning.length
   const width = FRET_X[frets] + 12
   const boardBottom = TOP + (strings - 1) * STRING_GAP
@@ -47,18 +68,26 @@ export default function Fretboard({ tuning, intervals = [], notes, label, string
   const scroller = useRef(null)
   const focused = notes.filter((n) => n.level === 'shape' || n.level === 'active').map((n) => n.fret)
   const focusFret = focused.length ? Math.min(...focused) : null
+  const view = zoom ? zoomWindow(focused, frets) : null
   useEffect(() => {
     const el = scroller.current
-    if (focusFret === null || !el || el.scrollWidth <= el.clientWidth) return
+    if (view || focusFret === null || !el || el.scrollWidth <= el.clientWidth) return
     const x = (noteX(focusFret) / width) * el.scrollWidth
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     el.scrollTo({ left: Math.max(0, x - 48), behavior: reduceMotion ? 'auto' : 'smooth' })
-  }, [focusFret, width])
+  }, [focusFret, width, view])
+  const box = view ? { x: view.x0 - LABEL_W, w: view.x1 - view.x0 + LABEL_W } : { x: 0, w: width }
 
   return (
     <>
       <div className="fretboard-scroll" ref={scroller}>
-        <svg className="fretboard" style={{ minWidth: `${Math.round((FULL_MIN_WIDTH * width) / FULL_WIDTH)}px`, maxWidth: `${Math.round(width * 1.15)}px` }} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Guitar fretboard">
+        <svg
+          className={`fretboard${view ? ' zoomed' : ''}`}
+          style={view ? undefined : { minWidth: `${Math.round((FULL_MIN_WIDTH * width) / FULL_WIDTH)}px`, maxWidth: `${Math.round(width * 1.15)}px` }}
+          viewBox={`${box.x} 0 ${box.w} ${height}`}
+          role="img"
+          aria-label={view ? `Guitar fretboard, frets ${view.lo} to ${view.hi}` : 'Guitar fretboard'}
+        >
           <rect className="board" x={NUT_X} y={TOP - 12} width={FRET_X[frets] - NUT_X} height={boardBottom - TOP + 24} rx="3" />
 
           {MARKERS.filter((f) => f <= frets).map((f) => (
@@ -78,9 +107,11 @@ export default function Fretboard({ tuning, intervals = [], notes, label, string
           {tuning.map((_, s) => (
             <g key={s}>
               <line className="string" x1={LABEL_W + 4} x2={FRET_X[frets]} y1={y(s)} y2={y(s)} strokeWidth={0.8 + (strings - 1 - s) * 0.35} />
-              <text className="string-name" x={LABEL_W / 2} y={y(s)}>
-                {stringName(s)}
-              </text>
+              {!view && (
+                <text className="string-name" x={LABEL_W / 2} y={y(s)}>
+                  {stringName(s)}
+                </text>
+              )}
             </g>
           ))}
 
@@ -90,7 +121,19 @@ export default function Fretboard({ tuning, intervals = [], notes, label, string
             </text>
           ))}
 
-          {notes.map((n) => {
+          {/* Zoomed in, the string names sit in their own strip at the left edge, over whatever fret comes before. */}
+          {view && (
+            <g>
+              <rect className="string-names-bg" x={box.x} y={0} width={LABEL_W} height={height} />
+              {tuning.map((_, s) => (
+                <text key={s} className="string-name" x={box.x + LABEL_W / 2} y={y(s)}>
+                  {stringName(s)}
+                </text>
+              ))}
+            </g>
+          )}
+
+          {(view ? notes.filter((n) => n.fret >= view.lo && n.fret <= view.hi) : notes).map((n) => {
             const role = n.role ?? (n.degree ? degreeRole(n.degree) : noteRole(n.interval, intervals))
             return (
               <g key={`${n.string}-${n.fret}`} className={`note ${role} ${n.level}`} transform={`translate(${noteX(n.fret)} ${y(n.string)})`} onClick={() => onNoteClick?.(n)}>
@@ -101,7 +144,7 @@ export default function Fretboard({ tuning, intervals = [], notes, label, string
           })}
         </svg>
       </div>
-      <p className="scroll-hint">Swipe the neck to see more frets.</p>
+      {!view && <p className="scroll-hint">Swipe the neck to see more frets.</p>}
     </>
   )
 }
