@@ -15,6 +15,8 @@ import './Drums.css'
 import { Disclosure, PageHeader } from './layout.jsx'
 
 const DEFAULT_LOOP = 'basic-rock'
+// The step editor starts open where there's room for it, folded on phones (it remembers what you choose).
+const WIDE = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 720px)').matches
 const CURRENT_KEY = 'music.drums.current'
 
 const meterOf = (loop) => METERS.find((m) => m.beats === loop.beats && m.steps === loop.steps)
@@ -82,7 +84,7 @@ export default function DrumsPage() {
 function GrooveMode() {
   const [loopId, setLoopId] = usePersistentState('music.drums.loop', DEFAULT_LOOP)
   const [bpm, setBpm] = usePersistentState('music.drums.bpm', presetById(DEFAULT_LOOP).bpm)
-  const [style, setStyle] = usePersistentState('music.drums.style', 'All')
+  const [storedStyle, setStyle] = usePersistentState('music.drums.style', null)
   const [volume, setVolume] = usePersistentState('music.drums.volume', 0.8)
   const [humanize, setHumanize] = usePersistentState('music.drums.humanize', 0)
   const [paint, setPaint] = usePersistentState('music.drums.paint', 'x')
@@ -96,6 +98,7 @@ function GrooveMode() {
   useWakeLock(playing)
   const engine = useRef(null)
   const swingDrag = useRef(false)
+  const row = useRef(null)
 
   const loop = history.present
   const source = presetById(loopId)
@@ -124,7 +127,15 @@ function GrooveMode() {
       if (ac) playDrum(kit.id, voice, LEVELS[level], ac.currentTime, volume)
     }, () => {})
   }
-  const shown = style === 'All' ? PRESETS : PRESETS.filter((p) => p.style === style)
+  // The style row starts on the loaded groove's style; 'All' (older versions) does too.
+  const style = STYLES.includes(storedStyle) ? storedStyle : (source?.style ?? STYLES[0])
+  const shown = PRESETS.filter((p) => p.style === style)
+  // On phones the row scrolls sideways: show the loaded groove when the row changes (never scrolls the page).
+  useEffect(() => {
+    const el = row.current
+    const card = el?.querySelector('.is-loaded')?.parentElement
+    if (el && card && el.scrollWidth > el.clientWidth) el.scrollLeft = card.offsetLeft - el.offsetLeft
+  }, [style])
 
   // Warm up the drums of the loaded groove so the first Play starts at once.
   useEffect(() => {
@@ -200,163 +211,173 @@ function GrooveMode() {
 
   return (
     <>
-      <div className="stage drums-stage">
-        <div className="drums-now">
-          <h2>
-            {source?.name ?? 'Groove'}
-            {edited && <span className="edited-tag"> (edited)</span>}
-            <small>
-              {meterLabel(loop)}
-              {barCount(loop) > 1 ? ` · ${barCount(loop)} bars` : ''}
-              {loop.swing > 0.5 ? ` · swing ${Math.round(loop.swing * 100)}%` : ''}
-            </small>
-          </h2>
-          <div className="drums-transport">
-            <button type="button" className="primary play-button drums-play" onClick={toggle} aria-pressed={playing}>
-              {playing ? (loading ? 'Loading…' : 'Stop') : 'Play'}
-            </button>
-            <Stepper label="Tempo (BPM)" value={bpm} onChange={setBpm} min={30} max={300} fallback={loop.bpm} className="tempo-field" />
-            <Field label="Kit" className="drums-kit">
-              <select value={kit.id} onChange={(e) => setKitId(e.target.value)}>
-                {KITS.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
+      <div className="drums-main">
+        <section className="drums-presets" aria-label="Grooves">
+          <div className="chips drum-styles" role="radiogroup" aria-label="Style">
+            {STYLES.map((s) => (
+              <button key={s} type="button" role="radio" aria-checked={style === s} className={`chip${style === s ? ' on' : ''}`} onClick={() => setStyle(s)}>
+                {s}
+              </button>
+            ))}
           </div>
-        </div>
-        <DrumEditor
-          loop={loop}
-          paint={paint}
-          onPaintChange={setPaint}
-          onEdit={edit}
-          onContinue={(next) => dispatch({ type: 'continue', loop: next })}
-          onAudition={audition}
-          playing={playing && !loading}
-          current={step}
-          toolbar={
-            <span className="edit-actions">
-              <button type="button" onClick={() => dispatch({ type: 'undo' })} disabled={!history.past.length} title="Undo (Ctrl+Z)">
-                Undo
-              </button>
-              <button type="button" onClick={() => dispatch({ type: 'redo' })} disabled={!history.future.length} title="Redo (Ctrl+Shift+Z)">
-                Redo
-              </button>
-              <button type="button" onClick={() => edit(clearSteps(loop))}>
-                Clear
-              </button>
-              {edited && source && (
-                <button type="button" onClick={() => edit(source)}>
-                  Reset
+          <ul className="preset-grid" aria-label={`${style} grooves`} ref={row}>
+            {shown.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className={`preset-card${p.id === loopId ? ' is-loaded' : ''}`}
+                  aria-pressed={p.id === loopId}
+                  aria-label={`${p.name}, ${meterLabel(p)}, ${p.bpm} BPM`}
+                  onClick={() => pick(p)}
+                >
+                  <span className="preset-head">
+                    <strong>{p.name}</strong>
+                    <small>
+                      {meterLabel(p)} · {p.bpm} bpm
+                    </small>
+                  </span>
+                  <MiniGrid loop={p} />
                 </button>
-              )}
-            </span>
-          }
-        />
-        {failed && (
-          <p className="error" role="alert">
-            The drum sounds didn’t load. Check your connection and press Play again.
-          </p>
-        )}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className="drums-player">
+          <div className="stage drums-stage">
+            <div className="drums-now">
+              <h2>
+                {source?.name ?? 'Groove'}
+                {edited && <span className="edited-tag"> (edited)</span>}
+                <small>
+                  {meterLabel(loop)}
+                  {barCount(loop) > 1 ? ` · ${barCount(loop)} bars` : ''}
+                  {loop.swing > 0.5 ? ` · swing ${Math.round(loop.swing * 100)}%` : ''}
+                </small>
+              </h2>
+              <div className="drums-transport">
+                <button type="button" className="primary play-button drums-play" onClick={toggle} aria-pressed={playing}>
+                  {playing ? (loading ? 'Loading…' : 'Stop') : 'Play'}
+                </button>
+                <Stepper label="Tempo (BPM)" value={bpm} onChange={setBpm} min={30} max={300} fallback={loop.bpm} className="tempo-field" />
+                <Field label="Kit" className="drums-kit">
+                  <select value={kit.id} onChange={(e) => setKitId(e.target.value)}>
+                    {KITS.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            </div>
+            <Disclosure
+              label="Edit steps"
+              summary={`${loopTracks(loop).length} drums${edited ? ' · edited' : ''}`}
+              storageKey="music.drums.editOpen"
+              defaultOpen={WIDE}
+              className="drum-edit"
+            >
+              <DrumEditor
+                loop={loop}
+                paint={paint}
+                onPaintChange={setPaint}
+                onEdit={edit}
+                onContinue={(next) => dispatch({ type: 'continue', loop: next })}
+                onAudition={audition}
+                playing={playing && !loading}
+                current={step}
+                toolbar={
+                  <span className="edit-actions">
+                    <button type="button" onClick={() => dispatch({ type: 'undo' })} disabled={!history.past.length} title="Undo (Ctrl+Z)">
+                      Undo
+                    </button>
+                    <button type="button" onClick={() => dispatch({ type: 'redo' })} disabled={!history.future.length} title="Redo (Ctrl+Shift+Z)">
+                      Redo
+                    </button>
+                    <button type="button" onClick={() => edit(clearSteps(loop))}>
+                      Clear
+                    </button>
+                    {edited && source && (
+                      <button type="button" onClick={() => edit(source)}>
+                        Reset
+                      </button>
+                    )}
+                  </span>
+                }
+              />
+            </Disclosure>
+            {failed && (
+              <p className="error" role="alert">
+                The drum sounds didn’t load. Check your connection and press Play again.
+              </p>
+            )}
+          </div>
+          <Disclosure
+            label="Settings"
+            summary={[
+              clickVoice ? `click: ${CLICKS.find((c) => c.value === clickVoice).label.toLowerCase()}` : null,
+              meter?.id.replace('-8', '') ?? meterLabel(loop),
+              `${barCount(loop)} bar${barCount(loop) > 1 ? 's' : ''}`,
+              loop.swing > 0.5 ? `swing ${Math.round(loop.swing * 100)}%` : 'straight',
+              humanize ? `humanize ${Math.round(humanize * 100)}%` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            storageKey="music.drums.settingsOpen"
+          >
+            <div className="field-grid">
+              <Field label="Time signature">
+                <select
+                  value={meter?.id ?? ''}
+                  onChange={(e) => {
+                    const m = METERS.find((x) => x.id === e.target.value)
+                    if (m) edit(setGrid(loop, m))
+                  }}
+                >
+                  {!meter && <option value="">{meterLabel(loop)}</option>}
+                  {METERS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Choice label="Bars" options={[1, 2, 4].map((b) => ({ value: b, label: String(b) }))} value={barCount(loop)} onChange={(bars) => edit(setGrid(loop, { bars }))} />
+              <Field label={loop.steps === 3 ? 'Swing (already in the triplet grid)' : `Swing ${loop.swing > 0.5 ? `${Math.round(loop.swing * 100)}%` : 'off'}`}>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="0.75"
+                  step="0.01"
+                  value={loop.swing > 0.5 ? loop.swing : 0.5}
+                  disabled={loop.steps === 3}
+                  onChange={(e) => {
+                    // One drag of the slider is one undo step.
+                    dispatch({ type: swingDrag.current ? 'continue' : 'set', loop: { ...loop, swing: Number(e.target.value) > 0.505 ? Number(e.target.value) : 0 } })
+                    swingDrag.current = true
+                  }}
+                  onPointerUp={() => (swingDrag.current = false)}
+                  onKeyUp={() => (swingDrag.current = false)}
+                  onBlur={() => (swingDrag.current = false)}
+                />
+              </Field>
+              <Field label={`Humanize ${humanize ? `${Math.round(humanize * 100)}%` : 'off'}`}>
+                <input type="range" min="0" max="1" step="0.05" value={humanize} onChange={(e) => setHumanize(Number(e.target.value))} />
+              </Field>
+              <Choice label="Click on every beat" options={[{ value: null, label: 'Off' }, ...CLICKS]} value={clickVoice} onChange={setClick} />
+              <Field label={`Volume ${Math.round(volume * 100)}%`}>
+                <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(e) => setVolume(Number(e.target.value))} />
+              </Field>
+            </div>
+            <p className="hint">Swing pushes every second 16th (or 8th) later, like a hip-hop or shuffle feel. Humanize adds a drummer’s small timing and loudness changes. The {kit.name.toLowerCase()} kit is {kit.detail}, recorded from {kit.credit}; hand percussion from {PERC_CREDIT}. All free (CC0).</p>
+          </Disclosure>
+        </div>
       </div>
 
-      <section className="drums-presets" aria-labelledby="drum-presets-title">
-        <div className="section-title">
-          <h2 id="drum-presets-title">Grooves</h2>
-        </div>
-        <div className="chips drum-styles" role="radiogroup" aria-label="Style">
-          {['All', ...STYLES].map((s) => (
-            <button key={s} type="button" role="radio" aria-checked={style === s} className={`chip${style === s ? ' on' : ''}`} onClick={() => setStyle(s)}>
-              {s}
-            </button>
-          ))}
-        </div>
-        <ul className="preset-grid">
-          {shown.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                className={`preset-card${p.id === loopId ? ' is-loaded' : ''}`}
-                aria-pressed={p.id === loopId}
-                aria-label={`${p.name}, ${meterLabel(p)}, ${p.bpm} BPM`}
-                onClick={() => pick(p)}
-              >
-                <span className="preset-head">
-                  <strong>{p.name}</strong>
-                  <small>
-                    {meterLabel(p)} · {p.bpm} bpm
-                  </small>
-                </span>
-                <MiniGrid loop={p} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
 
-      <Disclosure
-        label="Settings"
-        summary={[
-          clickVoice ? `click: ${CLICKS.find((c) => c.value === clickVoice).label.toLowerCase()}` : null,
-          meter?.id.replace('-8', '') ?? meterLabel(loop),
-          `${barCount(loop)} bar${barCount(loop) > 1 ? 's' : ''}`,
-          loop.swing > 0.5 ? `swing ${Math.round(loop.swing * 100)}%` : 'straight',
-          humanize ? `humanize ${Math.round(humanize * 100)}%` : null,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-        storageKey="music.drums.settingsOpen"
-      >
-        <div className="field-grid">
-          <Field label="Time signature">
-            <select
-              value={meter?.id ?? ''}
-              onChange={(e) => {
-                const m = METERS.find((x) => x.id === e.target.value)
-                if (m) edit(setGrid(loop, m))
-              }}
-            >
-              {!meter && <option value="">{meterLabel(loop)}</option>}
-              {METERS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Choice label="Bars" options={[1, 2, 4].map((b) => ({ value: b, label: String(b) }))} value={barCount(loop)} onChange={(bars) => edit(setGrid(loop, { bars }))} />
-          <Field label={loop.steps === 3 ? 'Swing (already in the triplet grid)' : `Swing ${loop.swing > 0.5 ? `${Math.round(loop.swing * 100)}%` : 'off'}`}>
-            <input
-              type="range"
-              min="0.5"
-              max="0.75"
-              step="0.01"
-              value={loop.swing > 0.5 ? loop.swing : 0.5}
-              disabled={loop.steps === 3}
-              onChange={(e) => {
-                // One drag of the slider is one undo step.
-                dispatch({ type: swingDrag.current ? 'continue' : 'set', loop: { ...loop, swing: Number(e.target.value) > 0.505 ? Number(e.target.value) : 0 } })
-                swingDrag.current = true
-              }}
-              onPointerUp={() => (swingDrag.current = false)}
-              onKeyUp={() => (swingDrag.current = false)}
-              onBlur={() => (swingDrag.current = false)}
-            />
-          </Field>
-          <Field label={`Humanize ${humanize ? `${Math.round(humanize * 100)}%` : 'off'}`}>
-            <input type="range" min="0" max="1" step="0.05" value={humanize} onChange={(e) => setHumanize(Number(e.target.value))} />
-          </Field>
-          <Choice label="Click on every beat" options={[{ value: null, label: 'Off' }, ...CLICKS]} value={clickVoice} onChange={setClick} />
-          <Field label={`Volume ${Math.round(volume * 100)}%`}>
-            <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(e) => setVolume(Number(e.target.value))} />
-          </Field>
-        </div>
-        <p className="hint">Swing pushes every second 16th (or 8th) later, like a hip-hop or shuffle feel. Humanize adds a drummer’s small timing and loudness changes. The {kit.name.toLowerCase()} kit is {kit.detail}, recorded from {kit.credit}; hand percussion from {PERC_CREDIT}. All free (CC0).</p>
-      </Disclosure>
 
-      <p className="page-hint">Press a groove to load it, then change any step. Space plays and stops; Ctrl+Z undoes.</p>
+      <p className="page-hint">Press a groove to play it, then open Edit steps to change it. Space plays and stops; Ctrl+Z undoes.</p>
     </>
   )
 }
