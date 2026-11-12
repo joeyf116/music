@@ -18,6 +18,7 @@ const AccountPage = lazy(() => import('./components/AccountPage.jsx'))
 const CommunityPage = lazy(() => import('./components/CommunityPage.jsx'))
 const DrumsPage = lazy(() => import('./components/DrumsPage.jsx'))
 const EarTraining = lazy(() => import('./components/EarTraining.jsx'))
+const PracticePage = lazy(() => import('./components/PracticePage.jsx'))
 
 const PRIVACY_URL = 'https://joeyf116.github.io/music/privacy.html'
 
@@ -26,6 +27,11 @@ const PAGES = [
     id: 'fretboard',
     label: 'Fretboard',
     icon: <path d="M4 6h16M4 10h16M4 14h16M4 18h16M8 4v16M14 4v16" />,
+  },
+  {
+    id: 'practice',
+    label: 'Practice',
+    icon: <path d="M4 6h16M4 12h9M4 18h6M15 14.5v6l5-3Z" />,
   },
   {
     id: 'drums',
@@ -84,7 +90,7 @@ export default function App() {
   const stringName = (s) => pcName(tuning[s], tuningSpec.flats ?? usesFlats(safeKey))
 
   return (
-    <PlayerProvider tuning={tuning} keyName={safeKey}>
+    <PlayerProvider tuning={tuning} keyName={safeKey} scaleType={scaleType}>
     <div className="app">
       <header className="site-header">
         <a className="brand" href="#fretboard">
@@ -116,6 +122,17 @@ export default function App() {
           <CommunityPage view={page === 'resources' ? 'links' : 'posts'} />
         ) : page === 'drums' ? (
           <DrumsPage />
+        ) : page === 'practice' ? (
+          <PracticePage
+            keyName={safeKey}
+            onKeyChange={setKey}
+            scaleType={scaleType}
+            onScaleChange={setScaleType}
+            tuning={tuning}
+            tuningSpec={tuningSpec}
+            tuningId={tuningId}
+            onTuningChange={setTuningId}
+          />
         ) : page === 'quiz' ? (
           <EarTraining tuning={tuning} tuningId={tuningId} onTuningChange={setTuningId} stringName={stringName} keyName={safeKey} />
         ) : (
