@@ -7,6 +7,7 @@ import { LEVELS, LEVEL_NAMES, barCount, isValidLoop, loopTracks, meterLabel, voi
 import { PRESETS, STYLES, presetById, presetKit } from '../lib/drumPresets.js'
 import { DEFAULT_METRONOME, METRONOME_KEY, metronomeSettings } from '../lib/rhythmView.js'
 import usePersistentState from '../lib/usePersistentState.js'
+import useWakeLock from '../lib/useWakeLock.js'
 import { Choice, Field, Stepper } from './controls.jsx'
 import DrumEditor from './DrumEditor.jsx'
 import Metronome from './Metronome.jsx'
@@ -92,6 +93,7 @@ function GrooveMode() {
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
   const [step, setStep] = useState(-1)
+  useWakeLock(playing)
   const engine = useRef(null)
   const swingDrag = useRef(false)
 

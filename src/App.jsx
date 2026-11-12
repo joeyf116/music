@@ -1,10 +1,6 @@
-import AccountPage from './components/AccountPage.jsx'
-import CommunityPage from './components/CommunityPage.jsx'
-import DrumsPage from './components/DrumsPage.jsx'
+import { Suspense, lazy } from 'react'
 import FretboardPage from './components/FretboardPage.jsx'
 import Logo from './components/Logo.jsx'
-import EarTraining from './components/EarTraining.jsx'
-import Resources from './components/Resources.jsx'
 import { displayName, initialOf } from './lib/auth.js'
 import { KEYS, TUNINGS, pcName, usesFlats } from './lib/theory.js'
 import { useAuth } from './lib/useAuth.jsx'
@@ -12,6 +8,13 @@ import useHashPage from './lib/useHashPage.js'
 import useSettingsSync from './lib/useSettingsSync.js'
 import usePersistentState from './lib/usePersistentState.js'
 import './App.css'
+
+// Pages other than the Fretboard load their code the first time you open them.
+const AccountPage = lazy(() => import('./components/AccountPage.jsx'))
+const CommunityPage = lazy(() => import('./components/CommunityPage.jsx'))
+const DrumsPage = lazy(() => import('./components/DrumsPage.jsx'))
+const EarTraining = lazy(() => import('./components/EarTraining.jsx'))
+const Resources = lazy(() => import('./components/Resources.jsx'))
 
 const PRIVACY_URL = 'https://joeyf116.github.io/music/privacy.html'
 
@@ -109,6 +112,7 @@ export default function App() {
       </header>
 
       <main>
+        <Suspense fallback={<p className="page-loading" role="status">Loading…</p>}>
         {page === 'account' ? (
           <AccountPage />
         ) : page === 'community' ? (
@@ -133,6 +137,7 @@ export default function App() {
             onBpmChange={setBpm}
           />
         )}
+        </Suspense>
       </main>
 
       <footer className="site-footer">
